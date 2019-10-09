@@ -1,5 +1,6 @@
 import abc
 import re
+import math
 
 
 #interface defining all functions
@@ -29,8 +30,7 @@ class IMathematicalFunction:
         """
         raise NotImplementedError()
 
-    @staticmethod
-    def generate_from(string):
+    def generate_from(self, string):
         """
         Breaks down a string into a function that operates on two subfunctions (to be determined by that function). Effectively recursive.
 
@@ -41,8 +41,7 @@ class IMathematicalFunction:
             (instance of IMathematicalFunction): the function that this string represents
         """
         #strip redundant brackets
-        while string.startswith('(') and string.endswith(')'):
-            string = string[1:len(string) - 1]
+        string = self.strip_brackets(string)
 
         #look valid places for operators to be
         valid_indexes = []
@@ -99,6 +98,7 @@ class IMathematicalFunction:
                     operator = match
 
             raw_items = [string[:operator[0].start()], string[operator[0].end():]]
+            raw_items = [self.strip_brackets(item) for item in raw_items]
 
             if 'default values' in operator[1]:
                 for i in range(len(raw_items)):
@@ -123,6 +123,12 @@ class IMathematicalFunction:
                     items.append(item)
 
             return operator[1]['class'](*items)
+    
+    def strip_brackets(self, string):
+        while string.startswith('(') and string.endswith(')'):
+            string = string[1:len(string) - 1]
+        
+        return string
 
 
 #top level parent function - other classes should interact with this
@@ -130,7 +136,7 @@ class Function(IMathematicalFunction):
     def __init__(self, string):
         super().__init__()
 
-        self.generate_from(string)
+        self._subfuncs.append(self.generate_from(string))
 
     def evaluate(self, datatable):
         return self._subfuncs[0].evaluate(datatable)
@@ -197,6 +203,93 @@ class Power(IMathematicalFunction):
         return pow(self._subfuncs[0].evaluate(datatable), self._subfuncs[1].evaluate(datatable))
 
 
+class Sin(IMathematicalFunction):
+    def __init__(self, item0, item1):
+        super().__init__(item0, item1)
+    
+    def evaluate(self, datatable):
+        return self._subfuncs[0].evaluate(datatable) * math.sin(self._subfuncs[1].evaluate(datatable))
+
+
+class Cos(IMathematicalFunction):
+    def __init__(self, item0, item1):
+        super().__init__(item0, item1)
+    
+    def evaluate(self, datatable):
+        return self._subfuncs[0].evaluate(datatable) * math.cos(self._subfuncs[1].evaluate(datatable))
+
+
+class Tan(IMathematicalFunction):
+    def __init__(self, item0, item1):
+        super().__init__(item0, item1)
+    
+    def evaluate(self, datatable):
+        return self._subfuncs[0].evaluate(datatable) * math.tan(self._subfuncs[1].evaluate(datatable))
+
+
+class ArcSin(IMathematicalFunction):
+    def __init__(self, item0, item1):
+        super().__init__(item0, item1)
+    
+    def evaluate(self, datatable):
+        return self._subfuncs[0].evaluate(datatable) * math.asin(self._subfuncs[1].evaluate(datatable))
+
+
+class ArcCos(IMathematicalFunction):
+    def __init__(self, item0, item1):
+        super().__init__(item0, item1)
+    
+    def evaluate(self, datatable):
+        return self._subfuncs[0].evaluate(datatable) * math.acos(self._subfuncs[1].evaluate(datatable))
+
+
+class ArcTan(IMathematicalFunction):
+    def __init__(self, item0, item1):
+        super().__init__(item0, item1)
+    
+    def evaluate(self, datatable):
+        return self._subfuncs[0].evaluate(datatable) * math.atan(self._subfuncs[1].evaluate(datatable))
+
+
+class Deg(IMathematicalFunction):
+    def __init__(self, item0, item1):
+        super().__init__(item0, item1)
+    
+    def evaluate(self, datatable):
+        return self._subfuncs[0].evaluate(datatable) * math.degrees(self._subfuncs[1].evaluate(datatable))
+
+
+class Rad(IMathematicalFunction):
+    def __init__(self, item0, item1):
+        super().__init__(item0, item1)
+    
+    def evaluate(self, datatable):
+        return self._subfuncs[0].evaluate(datatable) * math.radians(self._subfuncs[1].evaluate(datatable))
+
+
+class Absolute(IMathematicalFunction):
+    def __init__(self, item0, item1):
+        super().__init__(item0, item1)
+    
+    def evaluate(self, datatable):
+        return self._subfuncs[0].evaluate(datatable) * abs(self._subfuncs[1].evaluate(datatable))
+
+
+class NatLog(IMathematicalFunction):
+    def __init__(self, item0, item1):
+        super().__init__(item0, item1)
+    
+    def evaluate(self, datatable):
+        return self._subfuncs[0].evaluate(datatable) * math.log(self._subfuncs[1].evaluate(datatable))
+
+class BaseTenLog(IMathematicalFunction):
+    def __init__(self, item0, item1):
+        super().__init__(item0, item1)
+    
+    def evaluate(self, datatable):
+        return self._subfuncs[0].evaluate(datatable) * math.log10(self._subfuncs[1].evaluate(datatable))
+
+
 #lookup for all operators: variable and float aren't registered as they end each branch so they are detected differently
 operator_register = [
     {
@@ -230,5 +323,103 @@ operator_register = [
         "class": Power,
         "expression": re.compile('[\^]'),
         "priority": 1
+    },
+    {
+        "name": "sine",
+        "class": Sin,
+        "expression": re.compile('[s][i][n]'),
+        "priority": 0,
+        "default values": ["1"]
+    },
+    {
+        "name": "cosine",
+        "class": Cos,
+        "expression": re.compile('[c][o][s]'),
+        "priority": 0,
+        "default values": ["1"]
+    },
+    {
+        "name": "tangent",
+        "class": Tan,
+        "expression": re.compile('[t][a][n]'),
+        "priority": 0,
+        "default values": ["1"]
+    },
+    {
+        "name": "arcsine",
+        "class": ArcSin,
+        "expression": re.compile('[a][s][i][n]'),
+        "priority": 0,
+        "default values": ["1"]
+    },
+    {
+        "name": "arccosine",
+        "class": ArcCos,
+        "expression": re.compile('[a][c][o][s]'),
+        "priority": 0,
+        "default values": ["1"]
+    },
+    {
+        "name": "arctangent",
+        "class": ArcTan,
+        "expression": re.compile('[a][t][a][n]'),
+        "priority": 0,
+        "default values": ["1"]
+    },
+    {
+        "name": "arcsine verbose",
+        "class": ArcSin,
+        "expression": re.compile('[a][r][c][s][i][n]'),
+        "priority": 0,
+        "default values": ["1"]
+    },
+    {
+        "name": "arccosine verbose",
+        "class": ArcCos,
+        "expression": re.compile('[a][r][c][c][o][s]'),
+        "priority": 0,
+        "default values": ["1"]
+    },
+    {
+        "name": "arctangent verbose",
+        "class": ArcTan,
+        "expression": re.compile('[a][r][c][t][a][n]'),
+        "priority": 0,
+        "default values": ["1"]
+    },
+    {
+        "name": "radians to degrees",
+        "class": Deg,
+        "expression": re.compile('[d][e][g]'),
+        "priority": 0,
+        "default values": ["1"]
+    },
+    {
+        "name": "degrees to radians",
+        "class": Rad,
+        "expression": re.compile('[r][a][d]'),
+        "priority": 0,
+        "default values": ["1"]
+    },
+    {
+        "name": "absolute value",
+        "class": Absolute,
+        "expression": re.compile('[a][b][s]'),
+        "priority": 0,
+        "default values": ["1"]
+    },
+    {
+        "name": "natural logarithm",
+        "class": NatLog,
+        "expression": re.compile('[l][n]'),
+        "priority": 0,
+        "default values": ["1"]
+    },
+    {
+        "name": "base 10 logarithm",
+        "class": BaseTenLog,
+        "expression": re.compile('[l][o][g]'),
+        "priority": 0,
+        "default values": ["1"]
     }
 ]
