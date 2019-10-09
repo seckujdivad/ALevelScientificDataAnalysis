@@ -79,6 +79,11 @@ class IMathematicalFunction:
 
             raw_items = [string[:operator[0].start()], string[operator[0].end():]]
 
+            if 'default values' in operator[1]:
+                for i in range(len(raw_items)):
+                    if raw_items[i] == '' and len(operator[1]['default values']) > i:
+                        raw_items[i] = operator[1]['default values'][i]
+
             #check for variable or float
             items = []
             for item in raw_items:
@@ -177,19 +182,21 @@ operator_register = [
         "name": "addition",
         "class": Add,
         "expression": re.compile('[+]'),
-        "priority": 4
+        "priority": 4,
+        "default values": ["0"]
     },
     {
         "name": "subtraction",
         "class": Subtract,
         "expression": re.compile('[-]'),
-        "priority": 5
+        "priority": 5,
+        "default values": ["0"]
     },
     {
         "name": "multiplication",
         "class": Multiply,
         "expression": re.compile('[*]'),
-        "priority": 3
+        "priority": 3,
     },
     {
         "name": "division",
