@@ -138,6 +138,7 @@ class Add(IMathematicalFunction):
     def evaluate(self, datatable):
         return sum([subfunc.evaluate(datatable) for subfunc in self._subfuncs])
 
+
 class Subtract(IMathematicalFunction):
     def __init__(self, item0, item1):
         super().__init__(item0, item1)
@@ -145,12 +146,29 @@ class Subtract(IMathematicalFunction):
     def evaluate(self, datatable):
         return self._subfuncs[0].evaluate(datatable) - self._subfuncs[1].evaluate(datatable)
 
+
 class Multiply(IMathematicalFunction):
     def __init__(self, item0, item1):
         super().__init__(item0, item1)
     
     def evaluate(self, datatable):
         return self._subfuncs[0].evaluate(datatable) * self._subfuncs[1].evaluate(datatable)
+
+
+class Division(IMathematicalFunction):
+    def __init__(self, item0, item1):
+        super().__init__(item0, item1)
+    
+    def evaluate(self, datatable):
+        return self._subfuncs[0].evaluate(datatable) / self._subfuncs[1].evaluate(datatable)
+
+
+class Power(IMathematicalFunction):
+    def __init__(self, item0, item1):
+        super().__init__(item0, item1)
+    
+    def evaluate(self, datatable):
+        return pow(self._subfuncs[0].evaluate(datatable), self._subfuncs[1].evaluate(datatable))
 
 
 #lookup for all operators: variable and float aren't registered as they end each branch so they are detected differently
@@ -171,6 +189,18 @@ operator_register = [
         "name": "multiplication",
         "class": Multiply,
         "expression": re.compile('[*]'),
+        "priority": 3
+    },
+    {
+        "name": "division",
+        "class": Division,
+        "expression": re.compile('[\/]'),
+        "priority": 3
+    },
+    {
+        "name": "raise to power",
+        "class": Power,
+        "expression": re.compile('[\^]'),
         "priority": 3
     }
 ]
