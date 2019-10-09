@@ -145,6 +145,13 @@ class Subtract(IMathematicalFunction):
     def evaluate(self, datatable):
         return self._subfuncs[0].evaluate(datatable) - self._subfuncs[1].evaluate(datatable)
 
+class Multiply(IMathematicalFunction):
+    def __init__(self, item0, item1):
+        super().__init__(item0, item1)
+    
+    def evaluate(self, datatable):
+        return self._subfuncs[0].evaluate(datatable) * self._subfuncs[1].evaluate(datatable)
+
 
 #lookup for all operators: variable and float aren't registered as they end each branch so they are detected differently
 operator_register = [
@@ -159,5 +166,11 @@ operator_register = [
         "class": Subtract,
         "expression": re.compile('[-]'),
         "priority": 5
+    },
+    {
+        "name": "multiplication",
+        "class": Multiply,
+        "expression": re.compile('[*]'),
+        "priority": 3
     }
 ]
