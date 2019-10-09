@@ -73,6 +73,10 @@ class IMathematicalFunction:
         
         else:
             operator = matches[0]
+            for match in matches:
+                if match[1]['priority'] > operator[1]['priority']:
+                    operator = match
+
             raw_items = [string[:operator[0].start()], string[operator[0].end():]]
 
             #check for variable or float
@@ -148,12 +152,12 @@ operator_register = [
         "name": "addition",
         "class": Add,
         "expression": re.compile('[+]'),
-        "priority": 1
+        "priority": 4
     },
     {
         "name": "subtraction",
         "class": Subtract,
         "expression": re.compile('[-]'),
-        "priority": 0
+        "priority": 5
     }
 ]
