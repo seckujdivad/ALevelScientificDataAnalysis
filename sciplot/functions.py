@@ -4,21 +4,42 @@ import re
 
 #interface defining all functions
 class IMathematicalFunction:
-    def __init__(self, *args, autoexpand = True):
+    def __init__(self, *args, autoparse = True):
         self._subfuncs = []
-
-        for item in args:
-            if not isinstance(item, IMathematicalFunction):
-                self.generate_from(item)
-            
-            else:
-                self._subfuncs.append(item)
+        
+        if autoparse:
+            for item in args: #check sub functions - if they have already been parsed into objects, leave them. if they are still strings, parse into objects
+                if not isinstance(item, IMathematicalFunction):
+                    self._subfuncs.append(self.generate_from(item))
+                
+                else:
+                    self._subfuncs.append(item)
 
     @abc.abstractclassmethod
     def evaluate(self, datatable):
+        """
+        Evaluate this function using the variables provided in datatable. Recursively evaluates the whole function tree.
+        This should be overwritten by the inheriting class.
+
+        Args:
+            datatable (dict): all the values to be substituted into variables (defined {variable})
+        
+        Returns:
+            (float): the result of the function
+        """
         raise NotImplementedError()
 
-    def generate_from(self, string):
+    @staticmethod
+    def generate_from(string):
+        """
+        Breaks down a string into a function that operates on two subfunctions (to be determined by that function). Effectively recursive.
+
+        Args:
+            string (str): the string to be broken down
+        
+        Returns:
+            (instance of IMathematicalFunction): the function that this string represents
+        """
         #strip redundant brackets
         while string.startswith('(') and string.endswith(')'):
             string = string[1:len(string) - 1]
@@ -51,7 +72,7 @@ class IMathematicalFunction:
                 else:
                     raise ValueError()
             
-            if bracket_level == 0 and not is_variable: #this means we can search for functions
+            if bracket_level == 0 and not is_variable: #operators at this character could be parsable
                 valid_indexes.append(i)
         
         #find locations of operators in the string
@@ -101,7 +122,7 @@ class IMathematicalFunction:
                 else:
                     items.append(item)
 
-            self._subfuncs.append(operator[1]['class'](*items))
+            return operator[1]['class'](*items)
 
 
 #top level parent function - other classes should interact with this
@@ -118,7 +139,7 @@ class Function(IMathematicalFunction):
 #sub functions
 class Float(IMathematicalFunction):
     def __init__(self, item0):
-        super().__init__(autoexpand = False)
+        super().__init__(autoparse = False)
 
         self._value = float(item0)
     
@@ -128,7 +149,7 @@ class Float(IMathematicalFunction):
 
 class Variable(IMathematicalFunction):
     def __init__(self, item0):
-        super().__init__(autoexpand = False)
+        super().__init__(autoparse = False)
 
         self._name = item0
     
