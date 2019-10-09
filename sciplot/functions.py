@@ -202,12 +202,12 @@ operator_register = [
         "name": "division",
         "class": Division,
         "expression": re.compile('[\/]'),
-        "priority": 3
+        "priority": 2
     },
     {
         "name": "raise to power",
         "class": Power,
         "expression": re.compile('[\^]'),
-        "priority": 3
+        "priority": 1
     }
 ]
