@@ -134,12 +134,26 @@ class Add(IMathematicalFunction):
     def evaluate(self, datatable):
         return sum([subfunc.evaluate(datatable) for subfunc in self._subfuncs])
 
+class Subtract(IMathematicalFunction):
+    def __init__(self, item0, item1):
+        super().__init__(item0, item1)
+    
+    def evaluate(self, datatable):
+        return self._subfuncs[0].evaluate(datatable) - self._subfuncs[1].evaluate(datatable)
 
-#lookup for all operators: variable and float aren't registered as they end each branch. Therefore, they are detected differently
+
+#lookup for all operators: variable and float aren't registered as they end each branch so they are detected differently
 operator_register = [
     {
         "name": "addition",
         "class": Add,
-        "expression": re.compile('[+]')
+        "expression": re.compile('[+]'),
+        "priority": 1
+    },
+    {
+        "name": "subtraction",
+        "class": Subtract,
+        "expression": re.compile('[-]'),
+        "priority": 0
     }
 ]
