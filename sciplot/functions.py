@@ -45,7 +45,7 @@ class IMathematicalFunction:
                 bracket_level += 1
             
             if string[i] == ')':
-                if bracket_level > 1:
+                if bracket_level > 0:
                     bracket_level -= 1
                 
                 else:
