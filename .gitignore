@@ -125,3 +125,4 @@ dmypy.json
 # project specific
 ## vscode
 /vscode/
+/.vscode/
