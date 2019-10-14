@@ -22,6 +22,14 @@ class TestFunction(unittest.TestCase):
     def test_subtraction(self):
         self.asserter('10-5', 10 - 5)
     
+    def test_multiplication(self):
+        self.asserter('5*10', 5 * 10)
+        self.asserter('5*0.5', 2.5)
+    
+    def test_division(self):
+        self.asserter('12/3', 4)
+        self.asserter('5/0.5', 10)
+    
     def test_bidmas(self):
         self.asserter('3-5*3', 3 - (5 * 3))
         self.asserter('(3-5)*3', (3 - 5) * 3)
