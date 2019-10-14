@@ -42,6 +42,7 @@ class IMathematicalFunction:
         """
         #strip redundant brackets
         string = self.strip_brackets(string)
+        string = self.remove_all_spaces(string)
 
         #look valid places for operators to be
         valid_indexes = []
@@ -129,6 +130,9 @@ class IMathematicalFunction:
             string = string[1:len(string) - 1]
         
         return string
+    
+    def remove_all_spaces(self, string):
+        return string.replace(' ', '')
 
 
 #top level parent function - other classes should interact with this
@@ -315,13 +319,13 @@ operator_register = [
     {
         "name": "division",
         "class": Division,
-        "expression": re.compile('[\/]'),
+        "expression": re.compile('[\\/]'),
         "priority": 2
     },
     {
         "name": "raise to power",
         "class": Power,
-        "expression": re.compile('[\^]'),
+        "expression": re.compile('[\\^]'),
         "priority": 1
     },
     {
