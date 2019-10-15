@@ -1,12 +1,35 @@
 import tkinter as tk
 import abc
+import threading
+
+
+class App(tk.Tk):
+    def __init__(self, form, form_args = [], form_kwargs = {}):
+        super().__init__()
+
+        self._form = None
+        self.set_form(form(self, *form_args, **form_kwargs))
+
+        self.mainloop()
+
+    def set_form(self, form):
+        if isinstance(form, Form):
+            if self._form is not None:
+                self._form.hide()
+            
+            self._form = form
+            self._form.root = self
+            self._form.show()
+        
+        else:
+            raise TypeError('"form" must be of type Form, not {}'.format(type(form)))
 
 
 class Form(tk.Frame):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.root = args[0]
+        self.root = args[0] #parent form or application object
     
     def __del__(self):
         pass
