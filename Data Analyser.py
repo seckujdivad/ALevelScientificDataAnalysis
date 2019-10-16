@@ -1,38 +1,28 @@
-import tkforms
+import wx
+
+import forms
 
 
-class MainForm(tkforms.Form):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-    
-    def _on_show(self):
-        self.root.title('Data Analyser')
+class RootFrame(wx.Frame):
+    def __init__(self, parent):
+        super().__init__(parent, wx.ID_ANY, title = "Data Analyser")
 
-    def _on_hide(self):
-        pass
+        self.SetSizeHints(wx.DefaultSize, wx.DefaultSize)
 
+        self._pnl_frames = wx.Panel(self, wx.ID_ANY)
 
-class GraphingForm(tkforms.Form):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-    
-    def _on_show(self):
-        pass
-
-    def _on_hide(self):
-        pass
+        self.subframes = {}
 
 
-class DataForm(tkforms.Form):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-    
-    def _on_show(self):
-        pass
+class App:
+    def __init__(self):
+        self.wx_app = wx.App()
 
-    def _on_hide(self):
-        pass
+        self.frame_root = RootFrame(None)
+        self.frame_root.Show(True)
+
+        self.wx_app.MainLoop()
 
 
 if __name__ == '__main__':
-    app = tkforms.App(form = MainForm)
+    App()
