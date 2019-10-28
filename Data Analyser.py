@@ -9,9 +9,29 @@ class RootFrame(wx.Frame):
 
         self.SetSizeHints(wx.DefaultSize, wx.DefaultSize)
 
-        self._pnl_frames = wx.Panel(self, wx.ID_ANY)
+        self._gbs_main = wx.GridBagSizer(0, 0)
+        self._gbs_main.SetFlexibleDirection(wx.BOTH)
+        self._gbs_main.SetNonFlexibleGrowMode(wx.FLEX_GROWMODE_SPECIFIED)
+
+        self._btn_test = wx.Button(self, wx.ID_ANY, "Test button")
+        self._gbs_main.Add(self._btn_test, wx.GBPosition(0, 0), wx.GBSpan(1, 1), wx.ALL | wx.EXPAND, 0)
+
+        self._frame_data = forms.DataFrame(self)
+        self._gbs_main.Add(self._frame_data, wx.GBPosition(1, 0), wx.GBSpan(1, 1), wx.ALL | wx.EXPAND, 0)
+        self._frame_data.Show(True)
+
+        for i in range(1):
+            self._gbs_main.AddGrowableCol(i)
+        
+        for j in range(2):
+            self._gbs_main.AddGrowableRow(j)
 
         self.subframes = {}
+
+        self.SetSizer(self._gbs_main)
+        self.Layout()
+
+        self.Centre(wx.BOTH)
 
 
 class App:
