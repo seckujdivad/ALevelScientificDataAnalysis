@@ -41,8 +41,8 @@ class IMathematicalFunction:
             (instance of IMathematicalFunction): the function that this string represents
         """
         #strip redundant brackets
-        string = self.strip_brackets(string)
-        string = self.remove_all_spaces(string)
+        string = self._strip_brackets(string)
+        string = self._remove_all_spaces(string)
 
         #look for valid places for operators to be
         valid_indexes = []
@@ -99,7 +99,7 @@ class IMathematicalFunction:
                     operator = match
 
             raw_items = [string[:operator[0].start()], string[operator[0].end():]]
-            raw_items = [self.strip_brackets(item) for item in raw_items]
+            raw_items = [self._strip_brackets(item) for item in raw_items]
 
             if 'default values' in operator[1]:
                 for i in range(len(raw_items)):
@@ -125,13 +125,15 @@ class IMathematicalFunction:
 
             return operator[1]['class'](*items)
     
-    def strip_brackets(self, string):
+    @staticmethod
+    def _strip_brackets(string):
         while string.startswith('(') and string.endswith(')'):
             string = string[1:len(string) - 1]
         
         return string
     
-    def remove_all_spaces(self, string):
+    @staticmethod
+    def _remove_all_spaces(string):
         return string.replace(' ', '')
 
 
