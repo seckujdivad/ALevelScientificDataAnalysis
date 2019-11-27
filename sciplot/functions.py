@@ -44,13 +44,13 @@ class IMathematicalFunction:
         string = _strip_brackets(string)
         string = _remove_all_spaces(string)
 
-        #look valid places for operators to be
+        #look for valid places for operators to be
         valid_indexes = []
 
         bracket_level = 0
         is_variable = False
         for i in range(len(string)):
-            if string[i] == '{':
+            if string[i] == '{': #brackets inside a variable don't affect operators, so don't count them
                 if is_variable:
                     raise ValueError('{}: can\'t use { when not opening a variable names'.format(i))
                 else:
