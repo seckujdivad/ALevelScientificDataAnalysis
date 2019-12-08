@@ -1,6 +1,7 @@
 import wx
 import wx.lib.agw.ribbon as ribbon
 import typing
+import functools
 
 import forms
 
@@ -41,6 +42,7 @@ class RootFrame(wx.Frame):
             new_frame = FrameType(self._pnl_sub, self)
             self._subframes[new_frame.identifier] = new_frame
             self._tlbr_panelswitch_tools[new_frame.identifier] = self._tlbr_panelswitch.AddTool(wx.ID_ANY, new_frame.styling_name, new_frame.styling_icon)
+            self.Bind(wx.EVT_TOOL, functools.partial(self.toolbar_form_clicked, new_frame.identifier), self._tlbr_panelswitch_tools[new_frame.identifier])
 
             if isinstance(new_frame, forms.manifest[0]):
                 self.set_form(new_frame.identifier)
@@ -59,11 +61,16 @@ class RootFrame(wx.Frame):
         self.Centre(wx.BOTH)
     
     def set_form(self, form):
-        if self._current_frame is not None:
-            self._subframes[self._current_frame].Hide()
-        
-        self._subframes[form].Show()
-        self._current_frame = form
+        if self._current_frame != form:
+            if self._current_frame is not None:
+                self._subframes[self._current_frame].Hide()
+            
+                self._subframes[form].Show()
+                self._current_frame = form
+    
+    def toolbar_form_clicked(self, name, event):
+        self.set_form(name)
+        event.Skip()
 
 
 class App(wx.App):
