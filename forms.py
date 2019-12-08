@@ -1,11 +1,26 @@
 import wx
+import typing
 
 
-class DataFrame(wx.Panel):
-    def __init__(self, parent):
+class SubFrame(wx.Panel):
+    def __init__(self, parent, root_frame):
         super().__init__(parent, wx.ID_ANY)
 
-        self.SetSizeHints(wx.DefaultSize, wx.DefaultSize)
+        self.root_frame = root_frame
+        self.parent = parent
+
+        self.identifier = 'null'
+        self.styling_name = '<blank>'
+        self.styling_icon = wx.Bitmap('resources/toolbar/blank.bmp')
+
+
+class DataFrame(SubFrame):
+    def __init__(self, parent, root_frame):
+        super().__init__(parent, root_frame)
+
+        self.identifier = 'data'
+        self.styling_name = 'Data'
+        self.styling_icon = wx.Bitmap('resources/toolbar/data.bmp')
 
         self._gbs_main = wx.GridBagSizer(0, 0)
         self._gbs_main.SetFlexibleDirection(wx.BOTH)
@@ -22,5 +37,23 @@ class DataFrame(wx.Panel):
 
         self.SetSizer(self._gbs_main)
         self.Layout()
+        self._gbs_main.Fit(self)
 
-        self.Centre(wx.BOTH)
+
+class GraphFrame(SubFrame):
+    pass
+
+
+class TablesFrame(SubFrame):
+    pass
+
+
+class FormulaeFrame(SubFrame):
+    pass
+
+
+class ConstantsFrame(SubFrame):
+    pass
+
+
+manifest: typing.List[SubFrame] = [DataFrame] #, GraphFrame, TablesFrame, FormulaeFrame, ConstantsFrame]

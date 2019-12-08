@@ -1,67 +1,79 @@
 import wx
 import wx.lib.agw.ribbon as ribbon
+import typing
 
 import forms
 
 
 class RootFrame(wx.Frame):
-    def __init__(self, parent):
+    def __init__(self, parent, app):
         super().__init__(parent, wx.ID_ANY, title = "Data Analyser")
 
+        self.app = app
+
         self.SetSizeHints(wx.DefaultSize, wx.DefaultSize)
+
+        self.SetSize(800, 600)
 
         #make sizer (organises the elements in the frame)
         self._gbs_main = wx.GridBagSizer(0, 0)
         self._gbs_main.SetFlexibleDirection(wx.BOTH)
         self._gbs_main.SetNonFlexibleGrowMode(wx.FLEX_GROWMODE_SPECIFIED)
 
-        #make ribbon
-        self._rbn_main = ribbon.RibbonBar(self, wx.ID_ANY)
-
-        ##ribbon home
-        self._rbn_pg_home = ribbon.RibbonPage(self._rbn_main, wx.ID_ANY, "Home", wx.NullBitmap)
-        self._rbn_pnl_home = ribbon.RibbonPanel(self._rbn_pg_home, wx.ID_ANY, "Toolbar", wx.NullBitmap, wx.DefaultPosition, wx.DefaultSize, agwStyle = ribbon.RIBBON_PANEL_NO_AUTO_MINIMISE)
-
-        ###load/save toolbar
-        self._rbn_pnl_home_file = ribbon.RibbonToolBar(self._rbn_pnl_home, wx.ID_ANY)
-        self._rbn_pnl_home_file.AddTool(wx.ID_ANY, wx.ArtProvider.GetBitmap(wx.ART_NEW, wx.ART_OTHER, wx.Size(16, 15)))
-        self._rbn_pnl_home_file.AddTool(wx.ID_ANY, wx.ArtProvider.GetBitmap(wx.ART_FILE_OPEN, wx.ART_OTHER, wx.Size(16, 15)))
-        self._rbn_pnl_home_file.AddSeparator()
-        self._rbn_pnl_home_file.AddTool(wx.ID_ANY, wx.ArtProvider.GetBitmap(wx.ART_FILE_SAVE, wx.ART_OTHER, wx.Size(16, 15)))
-        self._rbn_pnl_home_file.SetRows(1, 3)
-
-        self._rbn_main.Realize()
-        self._gbs_main.Add(self._rbn_main, wx.GBPosition(0, 0), wx.GBSpan(1, 2), wx.ALL | wx.EXPAND, 0)
-
-        self._btn_test = wx.Button(self, wx.ID_ANY, "Test button")
-        self._gbs_main.Add(self._btn_test, wx.GBPosition(1, 0), wx.GBSpan(1, 1), wx.ALL | wx.EXPAND, 0)
-
-        self._frame_data = forms.DataFrame(self)
-        self._gbs_main.Add(self._frame_data, wx.GBPosition(1, 1), wx.GBSpan(1, 1), wx.ALL | wx.EXPAND, 0)
-        self._frame_data.Show(True)
-
-        for i in range(2):
+        #set growable regions
+        for i in range(0, 1, 1):
             self._gbs_main.AddGrowableCol(i)
         
         for j in range(1, 2, 1):
             self._gbs_main.AddGrowableRow(j)
 
-        self.subframes = {}
+        #make toolbar
+        self._tlbr_panelswitch = wx.ToolBar(self, wx.ID_ANY)
+        self._tlbr_panelswitch_tools = {}
 
+        #make panel embedding UI
+        self._pnl_sub = wx.Panel(self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize)
+        self._gbs_main.Add(self._pnl_sub, wx.GBPosition(1, 0), wx.GBSpan(1, 1), wx.EXPAND, 0)        
+
+        self._subframes: typing.Dict[str, forms.SubFrame] = {} #type hints - only for editor
+        self._current_frame = None
+        for FrameType in forms.manifest:
+            new_frame = FrameType(self._pnl_sub, self)
+            self._subframes[new_frame.identifier] = new_frame
+            self._tlbr_panelswitch_tools[new_frame.identifier] = self._tlbr_panelswitch.AddTool(wx.ID_ANY, new_frame.styling_name, new_frame.styling_icon)
+
+            if isinstance(new_frame, forms.manifest[0]):
+                self.set_form(new_frame.identifier)
+
+        #controls have been added, make toolbar static
+        self._tlbr_panelswitch.Realize()
+        self._gbs_main.Add(self._tlbr_panelswitch, wx.GBPosition(0, 0), wx.GBSpan(1, 1), wx.ALL | wx.EXPAND, 0)
+
+        #make status bar
+        self._sb_main = self.CreateStatusBar(1, wx.STB_SIZEGRIP, wx.ID_ANY)
+
+        #configure layout
         self.SetSizer(self._gbs_main)
         self.Layout()
 
         self.Centre(wx.BOTH)
+    
+    def set_form(self, form):
+        if self._current_frame is not None:
+            self._subframes[self._current_frame].Hide()
+        
+        self._subframes[form].Show()
+        self._current_frame = form
 
 
-class App:
+class App(wx.App):
     def __init__(self):
-        self.wx_app = wx.App()
+        super().__init__()
 
-        self.frame_root = RootFrame(None)
+        self.frame_root = RootFrame(None, self)
         self.frame_root.Show(True)
 
-        self.wx_app.MainLoop()
+        self.MainLoop()
 
 
 if __name__ == '__main__':
