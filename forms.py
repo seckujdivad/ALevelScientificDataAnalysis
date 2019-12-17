@@ -13,6 +13,7 @@ class SubFrame(wx.Panel):
         self.identifier = 'null'
         self.styling_name = '<blank>'
         self.styling_icon = wx.Bitmap('resources/toolbar/blank.bmp')
+        self.toolbar_index = -1
 
 
 class DataFrame(SubFrame):
