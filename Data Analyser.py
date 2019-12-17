@@ -65,9 +65,11 @@ class RootFrame(wx.Frame):
         self.Layout()
 
         self.Centre(wx.BOTH)
+
+        self.set_form("data", True)
     
-    def set_form(self, form):
-        if self._current_frame != form:
+    def set_form(self, form, override = False):
+        if override or self._current_frame != form:
             if self._subframes[form].toolbar_index == -1:
                 raise Exception("This form hasn't been connected to a SimpleBook")
 
