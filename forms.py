@@ -62,11 +62,17 @@ class GraphFrame(SubFrame):
         self.styling_icon = wx.Bitmap('resources/toolbar/graph.bmp')
 
 
-class TablesFrame(SubFrame):
-    pass
-
-
 class FormulaeFrame(SubFrame):
+    def __init__(self, parent, root_frame):
+        super().__init__(parent, root_frame)
+
+        #toolbar
+        self.identifier = 'formulae'
+        self.styling_name = 'Formulae'
+        self.styling_icon = wx.Bitmap('resources/toolbar/formulae.bmp')
+
+
+class TablesFrame(SubFrame):
     pass
 
 
@@ -74,4 +80,4 @@ class ConstantsFrame(SubFrame):
     pass
 
 
-manifest: typing.List[SubFrame] = [DataFrame, GraphFrame] #, TablesFrame, FormulaeFrame, ConstantsFrame]
+manifest: typing.List[SubFrame] = [DataFrame, GraphFrame, FormulaeFrame]# TablesFrame, , ConstantsFrame]
