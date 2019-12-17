@@ -15,6 +15,7 @@ class RootFrame(wx.Frame):
         self.SetSizeHints(wx.DefaultSize, wx.DefaultSize)
 
         self.SetSize(800, 600)
+        self.SetMinSize(wx.Size(500, 400))
 
         #make sizer (organises the elements in the frame)
         self._gbs_main = wx.GridBagSizer(0, 0)
