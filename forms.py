@@ -41,15 +41,34 @@ class DataFrame(SubFrame):
         self._dvl_columns = []
         self._dvl_columns.append(self._dvl_data.AppendTextColumn("Column 1"))
         self._dvl_columns.append(self._dvl_data.AppendTextColumn("Column 2"))
-        self._dvl_data.AppendItem([1, 2])
-        self._gbs_main.Add(self._dvl_data, wx.GBPosition(0, 0), wx.GBSpan(1, 1), wx.ALL | wx.EXPAND, 0)
+        #self._dvl_data.AppendItem([1, 2])
+        self._gbs_main.Add(self._dvl_data, wx.GBPosition(0, 0), wx.GBSpan(2, 1), wx.ALL | wx.EXPAND)
+
+        self._entry_new_column = wx.TextCtrl(self, wx.ID_ANY)
+        self._entry_new_column.SetMaxSize(wx.DefaultSize)
+        self._entry_new_column.SetMinSize(wx.DefaultSize)
+
+        self._gbs_main.Add(self._entry_new_column, wx.GBPosition(0, 1), wx.GBSpan(1, 1), wx.ALL | wx.EXPAND)
+
+        self._btn_new_column = wx.Button(self, wx.ID_ANY, "New Column")
+        self._btn_new_column.Bind(wx.EVT_BUTTON, self._new_column_clicked)
+        self._gbs_main.Add(self._btn_new_column, wx.GBPosition(1, 1), wx.GBSpan(1, 1), wx.ALL | wx.EXPAND)
         
         #finalise layout
+        self._gbs_main.AddGrowableRow(1)
+
         self.SetSizer(self._gbs_main)
         self.Layout()
         self._gbs_main.Fit(self)
 
         self.SetBackgroundColour('#FFFFFF')
+    
+    def _new_column_clicked(self, event):
+        self._create_new_column(self._entry_new_column.GetValue())
+        event.Skip()
+    
+    def _create_new_column(self, title):
+        self._dvl_columns.append(self._dvl_data.AppendTextColumn(title))
 
 
 class GraphFrame(SubFrame):
