@@ -60,8 +60,6 @@ class DataFrame(SubFrame):
         self.SetSizer(self._gbs_main)
         self.Layout()
         self._gbs_main.Fit(self)
-
-        self.SetBackgroundColour('#FFFFFF')
     
     def _new_column_clicked(self, event):
         self._create_new_column(self._entry_new_column.GetValue())
