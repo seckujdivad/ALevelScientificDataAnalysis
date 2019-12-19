@@ -35,7 +35,7 @@ class RootFrame(wx.Frame):
 
         #make toolbar
         self._tlbr_panelswitch = wx.ToolBar(self, wx.ID_ANY)
-        self._tlbr_panelswitch_tools = {}
+        self._tlbr_panelswitch_tools: typing.Dict[str, wx.ToolBarToolBase] = {}
 
         #make panel embedding UI
         self._bk_sub = wx.Simplebook(self, wx.ID_ANY)
