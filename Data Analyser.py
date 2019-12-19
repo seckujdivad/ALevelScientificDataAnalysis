@@ -29,6 +29,10 @@ class RootFrame(wx.Frame):
         for j in range(1, 2, 1):
             self._gbs_main.AddGrowableRow(j)
 
+        #make status bar
+        self._sb_main = self.CreateStatusBar(1, wx.STB_SIZEGRIP, wx.ID_ANY)
+        self._sb_main.PushStatusText("")
+
         #make toolbar
         self._tlbr_panelswitch = wx.ToolBar(self, wx.ID_ANY)
         self._tlbr_panelswitch_tools = {}
@@ -44,6 +48,7 @@ class RootFrame(wx.Frame):
             new_frame = FrameType(self._bk_sub, self)
             self._subframes[new_frame.identifier] = new_frame
             self._tlbr_panelswitch_tools[new_frame.identifier] = self._tlbr_panelswitch.AddTool(wx.ID_ANY, new_frame.styling_name, new_frame.styling_icon)
+            self._tlbr_panelswitch_tools[new_frame.identifier].SetLongHelp(new_frame.styling_name)
 
             self.Bind(wx.EVT_TOOL, functools.partial(self.toolbar_form_clicked, new_frame.identifier), self._tlbr_panelswitch_tools[new_frame.identifier])
             self._bk_sub.ShowNewPage(new_frame)
@@ -57,9 +62,6 @@ class RootFrame(wx.Frame):
         #controls have been added, make toolbar static
         self._tlbr_panelswitch.Realize()
         self._gbs_main.Add(self._tlbr_panelswitch, wx.GBPosition(0, 0), wx.GBSpan(1, 1), wx.ALL | wx.EXPAND, 0)
-
-        #make status bar
-        self._sb_main = self.CreateStatusBar(1, wx.STB_SIZEGRIP, wx.ID_ANY)
 
         #configure layout
         self.SetSizer(self._gbs_main)
@@ -75,6 +77,8 @@ class RootFrame(wx.Frame):
                 raise Exception("This form hasn't been connected to a SimpleBook")
 
             self._bk_sub.SetSelection(self._subframes[form].toolbar_index)
+            self._sb_main.PopStatusText()
+            self._sb_main.PushStatusText(self._subframes[form].styling_name)
             self._current_frame = form
     
     def toolbar_form_clicked(self, name, event):
