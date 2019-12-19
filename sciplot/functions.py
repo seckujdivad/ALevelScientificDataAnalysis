@@ -93,14 +93,17 @@ class IMathematicalFunction:
             raise ValueError('No valid operators found in {}'.format(string))
         
         else:
+            #find highest priority operator and process that first
             operator = matches[0]
             for match in matches:
                 if match[1]['priority'] > operator[1]['priority']:
                     operator = match
 
+            #remove the operator and split the strings either side
             raw_items = [string[:operator[0].start()], string[operator[0].end():]]
             raw_items = [_strip_brackets(item) for item in raw_items]
 
+            #insert a default value for the operator if the value is missing (e.g. sin2 -> 1sin(2))
             if 'default values' in operator[1]:
                 for i in range(len(raw_items)):
                     if raw_items[i] == '' and len(operator[1]['default values']) > i:
@@ -109,6 +112,7 @@ class IMathematicalFunction:
             #check for variable or float
             items = []
             for item in raw_items:
+                #check for float
                 is_float = True
                 for char in item:
                     if char not in '1234567890.':
@@ -117,15 +121,13 @@ class IMathematicalFunction:
                 if is_float:
                         items.append(Float(item))
                 
-                elif item.startswith('{') and item.endswith('}'):
+                elif item.startswith('{') and item.endswith('}'): #check for variable
                     items.append(Variable(item[1:len(item) - 1]))
                 
                 else:
-                    items.append(item)
+                    items.append(item) #further evaluation needed
 
             return operator[1]['class'](*items)
-    
-    
 
 
 #top level parent function - other classes should interact with this
