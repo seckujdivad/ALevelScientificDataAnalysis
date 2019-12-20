@@ -29,3 +29,13 @@ class TestDatabase(unittest.TestCase):
         result = db.query(q)
         self.assertEqual(result, [(1, 1, "Hello")])
         db.close()
+    
+    def test_write(self):
+        db = database.Database('../resources/test datasets/database.db')
+        q0 = database.Query('BEGIN;', [], 0)
+        q1 = database.Query('INSERT INTO TestTable ("Value", "String") VALUES (55, "Hello World!");', [], 0)
+        q2 = database.Query('SELECT "Value", "String" FROM TestTable WHERE "Value" = 55;', [], 1)
+        q3 = database.Query('ROLLBACK;', [], 0)
+        result = db.query([q0, q1, q2, q3])
+        self.assertEqual(result, [[(55, "Hello World!")]])
+        db.close()
