@@ -9,7 +9,7 @@ import typing
 class Query:
     query: str
     arguments: list
-    fetchmode: int #0: fetch none, 1: fetch all, 2: fetch one, 3: fetch many
+    fetchmode: int #0: fetch none, 1: fetch all, 2: fetch one, 3: fetch many, -1: blank interrupt (used internally)
 
 
 class Database:
@@ -23,13 +23,15 @@ class Database:
         self._connection: sqlite3.Connection = None
 
         self._pipe, pipe = mp.Pipe()
-        threading.Thread(target = self._queryd, args = [path, pipe], name = 'SQLite3 Database Query Thread', daemon = True).start()
+        self._query_thread = threading.Thread(target = self._queryd, args = [path, pipe], name = 'SQLite3 Database Query Thread', daemon = True)
+        self._query_thread.start()
 
         self._data_output = {}
         self._data_written_event = threading.Event()
         self._data_counter = 0
         self._data_counter_event = threading.Event()
         self._data_counter_event.set()
+        self._query_thread_release_event = threading.Event()
 
         self._running = True
     
@@ -45,19 +47,24 @@ class Database:
 
             return_values = []
             for query in queries:
-                for line in query.query.splitlines():
+                if query.fetchmode != -1: #blank interrupt, skip this query
+                    for line in query.query.splitlines():
+                        cursor = self._connection.execute(line, query.arguments)
 
-                        return_values.append(cursor.fetchall())
+                        if query.fetchmode == 1:
+                            return_values.append(cursor.fetchall())
 
-                        return_values.append(cursor.fetchone())
+                        elif query.fetchmode == 2:
+                            return_values.append(cursor.fetchone())
 
-                    elif query.fetchmode == 3:
-                        return_values.append(cursor.fetchmany())
+                        elif query.fetchmode == 3:
+                            return_values.append(cursor.fetchmany())
                 
             if len(return_values) > 0:
                 self._data_output[counter] = return_values
-                self._data_written_event.set()
-                self._data_written_event.wait()
+                self._query_thread_release_event.clear()
+                self._data_written_event.set() #release all waiting query calls
+                self._query_thread_release_event.wait() #wait for the data to be claimed by a thread
         
         self._connection.close()
 
@@ -78,7 +85,7 @@ class Database:
             #check if any of the queries expect a response
             wait_for_value = False
             for q in query:
-                if q.fetchmode != 0:
+                if q.fetchmode is not in [-1, 0]:
                     wait_for_value = True
 
             self._data_counter_event.wait()
@@ -108,5 +115,16 @@ class Database:
         else:
             return self.query([query]) #don't duplicate functionality, just make another call with a corrected data format
     
-    def close(self):
+    def close(self, wait = True):
+        """
+        Closes the database and stops all running threads. Doesn't commit the database; this must be done through self.query
+
+        Args:
+            wait (bool: True): wait for the thread to exit before returning
+        """
         self._running = False
+
+        self.query(Query("", [], -1)) #interrupt the thread so that it will process _running = False
+
+        if wait:
+            self._query_thread.join() #wait for the thread to exit
