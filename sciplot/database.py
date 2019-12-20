@@ -27,10 +27,13 @@ class Database:
         self._data_counter = 0
         self._data_counter_event = threading.Event()
         self._data_counter_event.set()
+
+        self._running = True
     
     def _queryd(self, path: str, pipe):
         self._connection: sqlite3.Connection = sqlite3.connect(path)
-        while True:
+
+        while self._running:
             data: typing.Tuple[int, typing.List[Query]] = pipe.recv()
             counter, queries = data
 
@@ -51,6 +54,8 @@ class Database:
                 self._data_output[counter] = return_values
                 self._data_written_event.set()
                 self._data_written_event.wait()
+        
+        self._connection.close()
 
     def query(self, query: typing.Union[Query, typing.List[Query]]):
         if type(query) == list:
@@ -83,3 +88,6 @@ class Database:
 
         else:
             return self.query([query])
+    
+    def close(self):
+        self._running = False
