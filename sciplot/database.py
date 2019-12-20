@@ -59,6 +59,18 @@ class Database:
         self._connection.close()
 
     def query(self, query: typing.Union[Query, typing.List[Query]]):
+        """
+        Sends a Query object (or a list of Query objects) to the database. If any Query objects expect a response, hang until one is recieved.
+
+        Args:
+            query: (Query or list of Query): Queries to be executed
+        
+        Returns:
+            list of:
+                tuple: fetchmode = 2
+                list of tuple: fetchmode = 1, 3
+            for each query where fetchmode =/= 0
+        """
         if type(query) == list:
             wait_for_value = False
             for q in query:
