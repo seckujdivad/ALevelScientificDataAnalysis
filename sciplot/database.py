@@ -85,7 +85,7 @@ class Database:
             #check if any of the queries expect a response
             wait_for_value = False
             for q in query:
-                if q.fetchmode is not in [-1, 0]:
+                if q.fetchmode not in [-1, 0]:
                     wait_for_value = True
 
             self._data_counter_event.wait()
