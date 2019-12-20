@@ -39,16 +39,17 @@ class Database:
 
             return_values = []
             for query in queries:
-                cursor = self._connection.execute(query.query, query.arguments)
+                for line in query.query.splitlines():
+                    cursor = self._connection.execute(line, query.arguments)
 
-                if query.fetchmode == 1:
-                    return_values.append(cursor.fetchall())
+                    if query.fetchmode == 1:
+                        return_values.append(cursor.fetchall())
 
-                elif query.fetchmode == 2:
-                    return_values.append(cursor.fetchone())
+                    elif query.fetchmode == 2:
+                        return_values.append(cursor.fetchone())
 
-                elif query.fetchmode == 3:
-                    return_values.append(cursor.fetchmany())
+                    elif query.fetchmode == 3:
+                        return_values.append(cursor.fetchmany())
                 
             if len(return_values) > 0:
                 self._data_output[counter] = return_values
