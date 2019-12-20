@@ -39,3 +39,12 @@ class TestDatabase(unittest.TestCase):
         result = db.query([q0, q1, q2, q3])
         self.assertEqual(result, [[(55, "Hello World!")]])
         db.close()
+    
+    def test_multiline(self):
+        db = database.Database('../resources/test datasets/database.db')
+        query = database.Query('''BEGIN;
+        INSERT INTO TestTable ("Value", "String") VALUES (55, "Hello World!");
+        SELECT "Value", "String" FROM TestTable WHERE "Value" = 55;
+        ROLLBACK;''', [], 1)
+        self.assertEqual(db.query(query), [[], [], [(55, "Hello World!")], []])
+        db.close()
