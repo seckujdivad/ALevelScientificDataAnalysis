@@ -1,6 +1,6 @@
 import unittest
 
-import functions
+import functions #pylint: disable=import-error
 
 
 class TestFunction(unittest.TestCase):
