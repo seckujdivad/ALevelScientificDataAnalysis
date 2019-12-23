@@ -144,3 +144,42 @@ class DataFile(Database):
     def goto_rollback(self):
         query = Query("ROLLBACK", [], 1)
         self.query(query)
+
+    def list_constants(self):
+        query = Query("SELECT Value, Symbol FROM Constant ORDER BY Symbol DESC", [], 1)
+        result = self.query(query)
+        return result[0]
+
+    def add_constant(self, name: str, value: float, unit_id: int):
+        pass
+
+    def get_constant(self, name: str):
+        pass
+
+    def list_base_units(self):
+        query = Query("SELECT * FROM Unit", [], 1)
+        result = self.query(query)
+        return result[0]
+    
+    def get_base_unit(self, primary_key: int):
+        query = Query("SELECT Symbol FROM Unit WHERE UnitID = (?)", [primary_key], 2)
+        return self.query(query)[0][0]
+    
+    def get_unit(self, symbol: str):
+        query = Query("SELECT UnitCompositeID FROM UnitComposite WHERE Symbol = (?)", [symbol], 2)
+        return self.get_unit_by_id(self.query(query)[0][0])
+
+    def get_unit_by_id(self, primary_key: int):
+        query = Query("SELECT Unit.UnitID Unit.Symbol, UnitCompositeDetails.Power FROM UnitCompositeDetails INNER JOIN Unit ON Unit.UnitID = UnitCompositeDetails.UnitID WHERE UnitCompositeDetails.UnitCompositeID = (?)", [primary_key], 1)
+        return self.query(query)[0]
+    
+    def create_unit(self, symbol: str, base_units: typing.List[typing.Tuple[int, float]]):
+        queries = [Query('INSERT INTO UnitComposite (Symbol) VALUES ((?))', [symbol], 0),
+                   Query("SELECT last_insert_rowid()", [], 2)]
+        unit_id = self.query(queries)[0][0]
+
+        for base_unit_id, power in base_units:
+            query = Query('INSERT INTO UnitCompositeDetails (UnitCompositeID, UnitID, Power) VALUES ((?), (?), (?))', [unit_id, base_unit_id, power], 0)
+            self.query(query)
+            
+        return unit_id
