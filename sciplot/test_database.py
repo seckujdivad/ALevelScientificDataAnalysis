@@ -48,3 +48,13 @@ class TestDatabase(unittest.TestCase):
         ROLLBACK;''', [], 1)
         self.assertEqual(db.query(query), [[], [], [(55, "Hello World!")], []])
         db.close()
+
+
+class TestDataFile(unittest.TestCase):
+    def connect_db(self):
+        return database.DataFile('../resources/test datasets/datafile.db')
+
+    def test_list_constants(self):
+        df = self.connect_db()
+        self.assertEqual(df.list_constants(), [(3.141592653589793, 'pi'), (9.80665, 'g'), (2.718281828459045, 'e')])
+        df.close()
