@@ -128,3 +128,19 @@ class Database:
 
         if wait:
             self._query_thread.join() #wait for the thread to exit
+
+
+class DataFile(Database):
+    def __init__(self, path: str):
+        super().__init__(path)
+
+        query = Query("BEGIN", [], 1)
+        self.query(query)
+    
+    def create_rollback(self):
+        queries = [Query("COMMIT", [], 0), Query("BEGIN", [], 0)]
+        self.query(queries)
+
+    def goto_rollback(self):
+        query = Query("ROLLBACK", [], 1)
+        self.query(query)
