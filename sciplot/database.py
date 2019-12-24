@@ -72,6 +72,7 @@ class Database:
                 self._query_thread_release_event.wait() #wait for the data to be claimed by a thread
         
         self._connection.close()
+        self._query_thread_release_event.clear() #release any other waiting threads
 
     def query(self, query: typing.Union[Query, typing.List[Query]]):
         """
@@ -105,24 +106,29 @@ class Database:
             if wait_for_value: #at least one query expects a value
                 cont = True
                 while cont:
-                    self._data_written_event.wait() #wait for data to be written
-
-                    if counter in self._data_output: #check if the data that has been written is for this call
-                        returned_value = self._data_output.pop(counter)
-                        result = []
-                        for identifier, data in returned_value:
-                            if identifier == 0:
-                                result.append(data)
-                            
-                            elif identifier == 1:
-                                if data[0] == "OperationalError":
-                                    raise sqlite3.OperationalError(data[1])
-
+                    if self._running: #don't block if the database thread has stopped
+                        self._data_written_event.wait() #wait for data to be written
+                    else:
                         cont = False
 
-                        self._query_thread_release_event.set()
+                    if self._running: #don't block if the database thread has stopped
+                        if counter in self._data_output: #check if the data that has been written is for this call
+                            returned_value = self._data_output.pop(counter)
+                            result = []
+                            for identifier, data in returned_value:
+                                if identifier == 0:
+                                    result.append(data)
+                                
+                                elif identifier == 1:
+                                    if data[0] == "OperationalError":
+                                        raise sqlite3.OperationalError(data[1])
 
-                    self._data_written_event.clear()
+                            cont = False
+                            self._query_thread_release_event.set()
+
+                        self._data_written_event.clear()
+                    else:
+                        cont = False
 
             return result
 
