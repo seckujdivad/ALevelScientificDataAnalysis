@@ -137,6 +137,7 @@ class DataFile(Database):
         query = Query("BEGIN", [], 1)
         self.query(query)
     
+    #management
     def create_rollback(self):
         queries = [Query("COMMIT", [], 0), Query("BEGIN", [], 0)]
         self.query(queries)
@@ -145,17 +146,25 @@ class DataFile(Database):
         query = Query("ROLLBACK", [], 1)
         self.query(query)
 
+    #constants
     def list_constants(self):
         query = Query("SELECT Value, Symbol FROM Constant ORDER BY Symbol DESC", [], 1)
         result = self.query(query)
         return result[0]
 
     def add_constant(self, name: str, value: float, unit_id: int):
-        pass
+        query = Query("INSERT INTO Constant (UnitCompositeID, Value, Symbol) VALUES ((?), (?), (?)", [unit_id, value, name], 0)
+        self.query(query)
 
     def get_constant(self, name: str):
-        pass
+        query = Query("SELECT ConstantID UnitCompositeID, Value FROM Constant WHERE Symbol = (?)", [name], 2)
+        return self.query(query)[0]
 
+    def get_constant_by_id(self, constant_id: int):
+        query = Query("SELECT UnitCompositeID, Value, Symbol FROM Constant WHERE ConstantID = (?)", [constant_id], 2)
+        return self.query(query)[0]
+
+    #base SI units
     def list_base_units(self):
         query = Query("SELECT * FROM Unit", [], 1)
         result = self.query(query)
@@ -165,6 +174,7 @@ class DataFile(Database):
         query = Query("SELECT Symbol FROM Unit WHERE UnitID = (?)", [primary_key], 2)
         return self.query(query)[0][0]
     
+    #composite units
     def get_unit(self, symbol: str):
         query = Query("SELECT UnitCompositeID FROM UnitComposite WHERE Symbol = (?)", [symbol], 2)
         return self.get_unit_by_id(self.query(query)[0][0])
