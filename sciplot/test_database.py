@@ -51,10 +51,18 @@ class TestDatabase(unittest.TestCase):
 
 
 class TestDataFile(unittest.TestCase):
-    def connect_db(self):
+    def connect_datafile(self):
         return database.DataFile('../resources/test datasets/datafile.db')
 
     def test_list_constants(self):
-        df = self.connect_db()
+        df = self.connect_datafile()
         self.assertEqual(df.list_constants(), [(3.141592653589793, 'pi'), (9.80665, 'g'), (2.718281828459045, 'e')])
+        df.close()
+    
+    def test_rollbacks(self):
+        df = self.connect_datafile()
+        query = database.Query("INSERT INTO Constant (UnitCompositeID, Value, Symbol) VALUES ((?), (?), (?))", [0, 32, "test"], 0)
+        df.query(query)
+        df.goto_rollback()
+        self.test_list_constants()
         df.close()
