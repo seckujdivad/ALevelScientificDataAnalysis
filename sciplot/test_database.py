@@ -10,7 +10,7 @@ class TestDatabase(unittest.TestCase):
         db.query(q)
         db.close()
     
-    def test_insertion(self):
+    def test_query_value_insertion(self):
         db = database.Database('../resources/test datasets/database.db')
         q = database.Query("SELECT * FROM TestTable WHERE TestTableID = (?)", [1], 0)
         db.query(q)
@@ -48,6 +48,21 @@ class TestDatabase(unittest.TestCase):
         ROLLBACK;''', [], 1)
         self.assertEqual(db.query(query), [[], [], [(55, "Hello World!")], []])
         db.close()
+    
+    def test_bad_query(self):
+        db = database.Database('../resources/test datasets/database.db')
+        query = database.Query('SELECT BadColumn FROM InvalidTableName', [], 1)
+        try:
+            db.query(query)
+
+            #this shouldn't pass
+            raise Exception('The appropriate exception was not thrown')
+        
+        except database.sqlite3.OperationalError:
+            pass #appropriate error raised, test passed
+
+        finally:
+            db.close()
 
 
 class TestDataFile(unittest.TestCase):
