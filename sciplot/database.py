@@ -48,17 +48,22 @@ class Database:
             return_values = []
             for query in queries:
                 if query.fetchmode != -1: #blank interrupt, skip this query
-                    for line in query.query.splitlines():
-                        cursor = self._connection.execute(line, query.arguments)
+                    try:
+                        for line in query.query.splitlines():
+                            cursor = self._connection.execute(line, query.arguments)
 
-                        if query.fetchmode == 1:
-                            return_values.append(cursor.fetchall())
+                            if query.fetchmode == 1:
+                                return_values.append((0, cursor.fetchall()))
 
-                        elif query.fetchmode == 2:
-                            return_values.append(cursor.fetchone())
+                            elif query.fetchmode == 2:
+                                return_values.append((0, cursor.fetchone()))
 
-                        elif query.fetchmode == 3:
-                            return_values.append(cursor.fetchmany())
+                            elif query.fetchmode == 3:
+                                return_values.append((0, cursor.fetchmany()))
+
+                    except sqlite3.OperationalError as e:
+                        return_values.append((1, ("OperationalError", str(e))))
+                        self._running = False
                 
             if len(return_values) > 0:
                 self._data_output[counter] = return_values
@@ -103,7 +108,16 @@ class Database:
                     self._data_written_event.wait() #wait for data to be written
 
                     if counter in self._data_output: #check if the data that has been written is for this call
-                        result = self._data_output.pop(counter)
+                        returned_value = self._data_output.pop(counter)
+                        result = []
+                        for identifier, data in returned_value:
+                            if identifier == 0:
+                                result.append(data)
+                            
+                            elif identifier == 1:
+                                if data[0] == "OperationalError":
+                                    raise sqlite3.OperationalError(data[1])
+
                         cont = False
 
                         self._query_thread_release_event.set()
@@ -122,12 +136,13 @@ class Database:
         Args:
             wait (bool: True): wait for the thread to exit before returning
         """
-        self._running = False
+        if self._running:
+            self._running = False
 
-        self.query(Query("", [], -1)) #interrupt the thread so that it will process _running = False
+            self.query(Query("", [], -1)) #interrupt the thread so that it will process _running = False
 
-        if wait:
-            self._query_thread.join() #wait for the thread to exit
+            if wait:
+                self._query_thread.join() #wait for the thread to exit
 
 
 class DataFile(Database):
