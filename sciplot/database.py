@@ -76,7 +76,7 @@ class Database:
 
     def query(self, query: typing.Union[Query, typing.List[Query]]):
         """
-        Sends a Query object (or a list of Query objects) to the database. If any Query objects expect a response, hang until one is recieved
+        Sends a Query object (or a list of Query objects) to the database. If any Query objects expect a response, hang until one is received
 
         Args:
             query (Query or list of Query): Queries to be executed
