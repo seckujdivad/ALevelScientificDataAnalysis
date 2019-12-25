@@ -237,8 +237,9 @@ class DataFile(Database):
         return self.get_unit_by_id(self.query(query)[0][0])
 
     def get_unit_by_id(self, primary_key: int):
-        query = Query("SELECT Unit.UnitID Unit.Symbol, UnitCompositeDetails.Power FROM UnitCompositeDetails INNER JOIN Unit ON Unit.UnitID = UnitCompositeDetails.UnitID WHERE UnitCompositeDetails.UnitCompositeID = (?)", [primary_key], 1)
-        return self.query(query)[0]
+        unit_details = self.query(Query("SELECT Unit.UnitID, UnitCompositeDetails.Power FROM UnitCompositeDetails INNER JOIN Unit ON Unit.UnitID = UnitCompositeDetails.UnitID WHERE UnitCompositeDetails.UnitCompositeID = (?)", [primary_key], 1))[0]
+        unit_symbol = self.query(Query('SELECT UnitComposite.Symbol FROM UnitComposite WHERE UnitComposite.UnitCompositeID = (?)', [primary_key], 2))[0][0]
+        return unit_symbol, unit_details
     
     def create_unit(self, symbol: str, base_units: typing.List[typing.Tuple[int, float]]):
         queries = [Query('INSERT INTO UnitComposite (Symbol) VALUES ((?));', [symbol], 0),
