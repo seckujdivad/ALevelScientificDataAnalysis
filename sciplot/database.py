@@ -45,7 +45,7 @@ class Database:
         #closing state control
         self._running = True
     
-    def _queryd(self, path: str, pipe: mp.Connection):
+    def _queryd(self, path: str, pipe):
         """
         Thread that processes queries and handles interactions with the database. Automatically started on object creation
         """
@@ -115,7 +115,7 @@ class Database:
 
             self._query_pipe_size += 1
             self._query_pipe_ready.set()
-            
+
             counter = self._response_ids
             self._response_ids += 1
             self._response_id_event.set()
