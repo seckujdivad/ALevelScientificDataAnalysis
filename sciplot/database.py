@@ -241,8 +241,8 @@ class DataFile(Database):
         return self.query(query)[0]
     
     def create_unit(self, symbol: str, base_units: typing.List[typing.Tuple[int, float]]):
-        queries = [Query('INSERT INTO UnitComposite (Symbol) VALUES ((?))', [symbol], 0),
-                   Query("SELECT last_insert_rowid()", [], 2)]
+        queries = [Query('INSERT INTO UnitComposite (Symbol) VALUES ((?));', [symbol], 0),
+                   Query("SELECT last_insert_rowid();", [], 2)]
         unit_id = self.query(queries)[0][0]
 
         for base_unit_id, power in base_units:
