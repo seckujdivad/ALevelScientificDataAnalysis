@@ -14,11 +14,12 @@ class Query:
 
     arguments (list of serialisable): arguments to replace (?) in query
 
-    fetchmode (int: 0-3): 0 - fetch none
-                          1 - fetch all
-                          2 - fetch one
-                          3 - fetch many
-                         -1 - blank interrupt (used internally)
+    fetchmode (int: 0-3):
+        0 - fetch none
+        1 - fetch all
+        2 - fetch one
+        3 - fetch many
+       -1 - blank interrupt (used internally)
     """
     query: str
     arguments: list
