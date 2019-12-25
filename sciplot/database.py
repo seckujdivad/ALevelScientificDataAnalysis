@@ -20,38 +20,43 @@ class Database:
         path (str): the path to the SQLite3 database
     """
     def __init__(self, path: str):
+        #database connection
         self._connection: sqlite3.Connection = None
 
-        self._pipe, pipe = mp.Pipe()
+        #query transfer
+        self._query_pipe, pipe = mp.Pipe()
+        self._query_pipe_size: int = 0
+        self._query_pipe_ready = threading.Event()
+        self._query_pipe_ready.clear()
+
+        #data response
+        self._response_values = {}
+        self._response_written_event = threading.Event()
+        self._response_ids = 0
+        self._response_id_event = threading.Event()
+        self._response_id_event.set()
+
+        self._response_collected_event = threading.Event()
+
+        #database thread
         self._query_thread = threading.Thread(target = self._queryd, args = [path, pipe], name = 'SQLite3 Database Query Thread', daemon = True)
         self._query_thread.start()
 
-        self._data_output = {}
-        self._data_written_event = threading.Event()
-        self._data_counter = 0
-
-        self._pipe_size = 0
-        self._pipe_release = threading.Event()
-        self._pipe_release.clear()
-
-        self._data_counter_event = threading.Event()
-        self._data_counter_event.set()
-        self._query_thread_release_event = threading.Event()
-
+        #closing state control
         self._running = True
     
-    def _queryd(self, path: str, pipe):
+    def _queryd(self, path: str, pipe: mp.Connection):
         """
         Thread that processes queries and handles interactions with the database. Automatically started on object creation
         """
         self._connection: sqlite3.Connection = sqlite3.connect(path)
 
         while self._running:
-            self._pipe_release.wait()
+            self._query_pipe_ready.wait()
             data: typing.Tuple[int, typing.List[Query]] = pipe.recv()
-            self._pipe_size -= 1
-            if self._pipe_size <= 0:
-                self._pipe_release.clear()
+            self._query_pipe_size -= 1
+            if self._query_pipe_size <= 0:
+                self._query_pipe_ready.clear()
             counter, queries = data
 
             return_values = []
@@ -75,13 +80,13 @@ class Database:
                         self._running = False
                 
             if len(return_values) > 0:
-                self._data_output[counter] = return_values
-                self._query_thread_release_event.clear()
-                self._data_written_event.set() #release all waiting query calls
-                self._query_thread_release_event.wait() #wait for the data to be claimed by a thread
+                self._response_values[counter] = return_values
+                self._response_collected_event.clear()
+                self._response_written_event.set() #release all waiting query calls
+                self._response_collected_event.wait() #wait for the data to be claimed by a thread
         
         self._connection.close()
-        self._query_thread_release_event.clear() #release any other waiting threads
+        self._response_collected_event.clear() #release any other waiting threads
 
     def query(self, query: typing.Union[Query, typing.List[Query]]):
         """
@@ -103,24 +108,28 @@ class Database:
                 if q.fetchmode not in [-1, 0]:
                     wait_for_value = True
 
-            self._data_counter_event.wait()
-            self._data_counter_event.clear()
-            self._pipe.send((self._data_counter, query))
-            self._pipe_size += 1
-            self._pipe_release.set()
-            counter = self._data_counter
-            self._data_counter += 1
-            self._data_counter_event.set()
+            self._response_id_event.wait()
+            self._response_id_event.clear()
+
+            self._query_pipe.send((self._response_ids, query))
+
+            self._query_pipe_size += 1
+            self._query_pipe_ready.set()
+            
+            counter = self._response_ids
+            self._response_ids += 1
+            self._response_id_event.set()
 
             result = None
 
             if wait_for_value: #at least one query expects a value
                 cont = True
                 while cont and self._running:
-                    self._data_written_event.wait() #wait for data to be written
+                    self._response_written_event.wait() #wait for data to be written
                     
-                    if counter in self._data_output: #check if the data that has been written is for this call
-                        returned_value = self._data_output.pop(counter)
+                    if counter in self._response_values: #check if the data that has been written is for this call
+                        returned_value = self._response_values.pop(counter)
+
                         result = []
                         for identifier, data in returned_value:
                             if identifier == 0:
@@ -131,9 +140,9 @@ class Database:
                                     raise sqlite3.OperationalError(data[1])
 
                         cont = False
-                        self._query_thread_release_event.set()
+                        self._response_collected_event.set()
 
-                    self._data_written_event.clear()
+                    self._response_written_event.clear()
 
             return result
 
