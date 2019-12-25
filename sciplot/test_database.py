@@ -94,3 +94,12 @@ class TestDataFile(unittest.TestCase):
     def test_get_si_unit(self):
         with self.connect_datafile() as df:
             self.assertEqual(df.get_base_unit(1), 's')
+    
+    def test_get_unit_by_id(self):
+        with self.connect_datafile() as df:
+            self.assertEqual(df.get_unit_by_id(1), ('N', [(1, -2.0), (2, 1.0), (3, 1.0)]))
+    
+    def test_create_unit(self):
+        with self.connect_datafile() as df:
+            self.assertEqual(df.get_unit_by_id(df.create_unit('test unit', [(1, -1), (2, 1)])), ('test unit', [(1, -1.0), (2, 1.0)]))
+            df.goto_rollback()
