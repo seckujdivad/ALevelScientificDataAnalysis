@@ -29,6 +29,11 @@ class Database:
         self._data_output = {}
         self._data_written_event = threading.Event()
         self._data_counter = 0
+
+        self._pipe_size = 0
+        self._pipe_release = threading.Event()
+        self._pipe_release.clear()
+
         self._data_counter_event = threading.Event()
         self._data_counter_event.set()
         self._query_thread_release_event = threading.Event()
@@ -42,7 +47,11 @@ class Database:
         self._connection: sqlite3.Connection = sqlite3.connect(path)
 
         while self._running:
+            self._pipe_release.wait()
             data: typing.Tuple[int, typing.List[Query]] = pipe.recv()
+            self._pipe_size -= 1
+            if self._pipe_size <= 0:
+                self._pipe_release.clear()
             counter, queries = data
 
             return_values = []
@@ -97,6 +106,8 @@ class Database:
             self._data_counter_event.wait()
             self._data_counter_event.clear()
             self._pipe.send((self._data_counter, query))
+            self._pipe_size += 1
+            self._pipe_release.set()
             counter = self._data_counter
             self._data_counter += 1
             self._data_counter_event.set()
@@ -105,30 +116,24 @@ class Database:
 
             if wait_for_value: #at least one query expects a value
                 cont = True
-                while cont:
-                    if self._running: #don't block if the database thread has stopped
-                        self._data_written_event.wait() #wait for data to be written
-                    else:
-                        cont = False
-
-                    if self._running: #don't block if the database thread has stopped
-                        if counter in self._data_output: #check if the data that has been written is for this call
-                            returned_value = self._data_output.pop(counter)
-                            result = []
-                            for identifier, data in returned_value:
-                                if identifier == 0:
-                                    result.append(data)
+                while cont and self._running:
+                    self._data_written_event.wait() #wait for data to be written
+                    
+                    if counter in self._data_output: #check if the data that has been written is for this call
+                        returned_value = self._data_output.pop(counter)
+                        result = []
+                        for identifier, data in returned_value:
+                            if identifier == 0:
+                                result.append(data)
                                 
-                                elif identifier == 1:
-                                    if data[0] == "OperationalError":
-                                        raise sqlite3.OperationalError(data[1])
+                            elif identifier == 1:
+                                if data[0] == "OperationalError":
+                                    raise sqlite3.OperationalError(data[1])
 
-                            cont = False
-                            self._query_thread_release_event.set()
-
-                        self._data_written_event.clear()
-                    else:
                         cont = False
+                        self._query_thread_release_event.set()
+
+                    self._data_written_event.clear()
 
             return result
 
