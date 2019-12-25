@@ -251,3 +251,6 @@ class DataFile(Database):
             self.query(query)
             
         return unit_id
+    
+    def list_units(self):
+        return [val[0] for val in self.query(Query('SELECT UnitCompositeID FROM UnitComposite;', [], 1))[0]] #unpack tuples
