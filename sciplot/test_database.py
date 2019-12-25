@@ -70,9 +70,8 @@ class TestDataFile(unittest.TestCase):
         return database.DataFile('../resources/test datasets/datafile.db')
 
     def test_list_constants(self):
-        df = self.connect_datafile()
-        self.assertEqual(df.list_constants(), [(3.141592653589793, 'pi'), (9.80665, 'g'), (2.718281828459045, 'e')])
-        df.close()
+        with self.connect_datafile() as df:
+            self.assertEqual(df.list_constants(), [(3.141592653589793, 'pi'), (9.80665, 'g'), (2.718281828459045, 'e')])
     
     def test_rollbacks(self):
         df = self.connect_datafile()
@@ -81,3 +80,9 @@ class TestDataFile(unittest.TestCase):
         df.goto_rollback()
         self.test_list_constants()
         df.close()
+    
+    def test_add_constant(self):
+        with self.connect_datafile() as df:
+            primary_key = df.add_constant("test unit", 0.1, 0)
+            self.assertEqual(df.get_constant_by_id(primary_key), ("test unit", 0.1, 0))
+            df.goto_rollback()
