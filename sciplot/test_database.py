@@ -103,3 +103,7 @@ class TestDataFile(unittest.TestCase):
         with self.connect_datafile() as df:
             self.assertEqual(df.get_unit_by_id(df.create_unit('test unit', [(1, -1), (2, 1)])), ('test unit', [(1, -1.0), (2, 1.0)]))
             df.goto_rollback()
+    
+    def test_list_units(self):
+        with self.connect_datafile() as df:
+            self.assertEqual(df.list_units(), [1, 2, 3])
