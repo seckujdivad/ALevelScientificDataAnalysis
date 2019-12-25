@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-import multiprocessing as mp
+import multiprocessing, multiprocessing.connection
 import sqlite3
 import threading
 import typing
@@ -24,7 +24,7 @@ class Database:
         self._connection: sqlite3.Connection = None
 
         #query transfer
-        self._query_pipe, pipe = mp.Pipe()
+        self._query_pipe, pipe = multiprocessing.Pipe()
         self._query_pipe_size: int = 0
         self._query_pipe_ready = threading.Event()
         self._query_pipe_ready.clear()
@@ -45,7 +45,7 @@ class Database:
         #closing state control
         self._running = True
     
-    def _queryd(self, path: str, pipe):
+    def _queryd(self, path: str, pipe: multiprocessing.connection.PipeConnection):
         """
         Thread that processes queries and handles interactions with the database. Automatically started on object creation
         """
