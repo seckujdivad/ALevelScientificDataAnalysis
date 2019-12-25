@@ -52,12 +52,12 @@ class Database:
 
         self._response_collected_event = threading.Event()
 
-        #database thread
-        self._query_thread = threading.Thread(target = self._queryd, args = [path, pipe], name = 'SQLite3 Database Query Thread', daemon = True)
-        self._query_thread.start()
-
         #closing state control
         self._running = True
+
+        #database thread
+        self._query_thread = threading.Thread(target = self._queryd, args = [path, pipe], name = 'SQLite3 Database Query Thread', daemon = True)
+        self._query_thread.start()        
     
     def _queryd(self, path: str, pipe: multiprocessing.connection.PipeConnection):
         """
@@ -202,9 +202,8 @@ class DataFile(Database):
         return result[0]
 
     def add_constant(self, name: str, value: float, unit_id: int):
-        query = Query("INSERT INTO Constant (UnitCompositeID, Value, Symbol) VALUES ((?), (?), (?)", [unit_id, value, name], 0)
-        self.query(query)
-                   Query("SELECT last_insert_rowid()", [], 2)]
+        queries = Query("""INSERT INTO Constant (UnitCompositeID, Value, Symbol) VALUES ((?), (?), (?))
+        SELECT last_insert_rowid();""", [unit_id, value, name], 2)
         return self.query(queries)[0]
 
     def get_constant(self, name: str):
