@@ -140,7 +140,7 @@ class Database:
         else:
             return self.query([query]) #don't duplicate functionality, just make another call with a corrected data format
     
-    def close(self, wait = True):
+    def close(self, wait: bool = True):
         """
         Closes the database and stops all running threads. Doesn't commit the database; this must be done through self.query
 
