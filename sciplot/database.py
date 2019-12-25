@@ -7,9 +7,22 @@ import typing
 
 @dataclass
 class Query:
+    """
+    Struct for sending queries to the database thread
+
+    query (str): SQLite query to be executed on the database
+
+    arguments (list of serialisable): arguments to replace (?) in query
+
+    fetchmode (int: 0-3): 0 - fetch none
+                          1 - fetch all
+                          2 - fetch one
+                          3 - fetch many
+                         -1 - blank interrupt (used internally)
+    """
     query: str
     arguments: list
-    fetchmode: int #0: fetch none, 1: fetch all, 2: fetch one, 3: fetch many, -1: blank interrupt (used internally)
+    fetchmode: int
 
 
 class Database:
@@ -190,13 +203,15 @@ class DataFile(Database):
     def add_constant(self, name: str, value: float, unit_id: int):
         query = Query("INSERT INTO Constant (UnitCompositeID, Value, Symbol) VALUES ((?), (?), (?)", [unit_id, value, name], 0)
         self.query(query)
+                   Query("SELECT last_insert_rowid()", [], 2)]
+        return self.query(queries)[0]
 
     def get_constant(self, name: str):
-        query = Query("SELECT ConstantID UnitCompositeID, Value FROM Constant WHERE Symbol = (?)", [name], 2)
+        query = Query("SELECT ConstantID, Value, UnitCompositeID FROM Constant WHERE Symbol = (?)", [name], 2)
         return self.query(query)[0]
 
     def get_constant_by_id(self, constant_id: int):
-        query = Query("SELECT UnitCompositeID, Value, Symbol FROM Constant WHERE ConstantID = (?)", [constant_id], 2)
+        query = Query("SELECT Symbol, Value, UnitCompositeID FROM Constant WHERE ConstantID = (?)", [constant_id], 2)
         return self.query(query)[0]
 
     #base SI units
