@@ -177,6 +177,13 @@ class Database:
 
             if wait:
                 self._query_thread.join() #wait for the thread to exit
+    
+    #context management
+    def __enter__(self):
+        return self
+    
+    def __exit__(self, *args):
+        self.close()
 
 
 class DataFile(Database):
