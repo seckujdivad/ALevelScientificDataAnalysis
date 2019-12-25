@@ -86,3 +86,11 @@ class TestDataFile(unittest.TestCase):
             primary_key = df.add_constant("test unit", 0.1, 0)
             self.assertEqual(df.get_constant_by_id(primary_key), ("test unit", 0.1, 0))
             df.goto_rollback()
+    
+    def test_list_si_units(self):
+        with self.connect_datafile() as df:
+            self.assertEqual(df.list_base_units(), [(1, 's'), (2, 'm'), (3, 'kg'), (4, 'A'), (5, 'K'), (6, 'mol'), (7, 'cd')])
+    
+    def test_get_si_unit(self):
+        with self.connect_datafile() as df:
+            self.assertEqual(df.get_base_unit(1), 's')
