@@ -208,7 +208,7 @@ class DataFile(Database):
         if result == []:
             return None
         else:
-            return result[0]
+            return result[0][0]
     
     def set_metadata(self, key: str, value: str):
         self.query([Query('DELETE FROM Metadata WHERE Key = (?)', [key], 0),
