@@ -116,3 +116,8 @@ class TestDataFile(unittest.TestCase):
         with self.connect_datafile() as df:
             df.set_metadata('test key', 'test value')
             self.assertEqual(df.get_metadata('test key'), 'test value')
+            df.goto_rollback()
+    
+    def test_list_data_sets(self):
+        with self.connect_datafile() as df:
+            self.assertEqual(df.list_data_sets(), [1, 2, 3])
