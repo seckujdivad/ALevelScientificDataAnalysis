@@ -124,7 +124,7 @@ class TestDataFile(unittest.TestCase):
     
     def test_get_data_set(self):
         with self.connect_datafile() as df:
-            self.assertEqual(df.get_data_set(1), ('l0', 4, 0.001, 0))
+            self.assertEqual(df.get_data_set(1), (4, 0.001, 0))
     
     def test_create_data_set(self):
         with self.connect_datafile() as df:
