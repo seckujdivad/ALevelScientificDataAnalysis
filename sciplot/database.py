@@ -285,3 +285,14 @@ WHERE Variable.Type = 0 AND DataSet.DataSetID = (?)'''
     def remove_data_set(self, data_set_id: int):
         self.query([Query('DELETE FROM DataSet WHERE DataSetID = (?)', [data_set_id], 0),
                     Query('DELETE FROM DataPoint WHERE DataSetID = (?)', [data_set_id], 0)])
+    
+    #data points
+    def get_data_points(self, data_set_id: int):
+        return self.query(Query('SELECT DataPointID, Value FROM DataPoint WHERE DataSetID = (?);', [data_set_id], 1))[0]
+    
+    def remove_data_point(self, data_point_id: int):
+        self.query(Query('DELETE FROM DataPoint WHERE DataPointID = (?)', [data_point_id], 0))
+    
+    def create_data_point(self, value: float, data_set_id: int):
+        return self.query([Query('INSERT INTO DataPoint (DataSetID, Value) VALUES ((?), (?));', [data_set_id, value], 0),
+                           Query('SELECT last_insert_rowid();', [], 2)])[0]
