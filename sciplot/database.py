@@ -282,7 +282,7 @@ class DataFile(Database):
     
     #data sets
     def list_data_sets(self):
-        return self.query(Query('SELECT DataSetID FROM DataSet', [], 1))[0]
+        return [tup[0] for tup in self.query(Query('SELECT DataSetID FROM DataSet', [], 1))[0]]
     
     def get_data_set(self, data_set_id: int):
         query = '''SELECT Variable.Symbol, DataSet.UnitCompositeID, DataSet.Uncertainty, DataSet.UncIsPerc FROM DataSet
