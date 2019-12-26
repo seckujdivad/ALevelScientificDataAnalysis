@@ -157,3 +157,23 @@ class TestDataFile(unittest.TestCase):
     def test_get_data_point(self):
         with self.connect_datafile() as df:
             self.assertEqual(df.get_data_point(1), (1, 1.217))
+    
+    def test_list_formulae(self):
+        with self.connect_datafile() as df:
+            self.assertEqual(df.list_formulae(), [1, 2, 3])
+    
+    def test_get_formula(self):
+        with self.connect_datafile() as df:
+            self.assertEqual(df.get_formula(1), '{l1}-{l0}')
+
+    def test_create_formula(self):
+        with self.connect_datafile() as df:
+            primary_key = df.create_formula('{g}^2')
+            self.assertEqual(df.get_formula(primary_key), '{g}^2')
+            df.goto_rollback()
+
+    def test_remove_formula(self):
+        with self.connect_datafile() as df:
+            df.remove_formula(1)
+            self.assertEqual(df.list_formulae(), [2, 3])
+            df.goto_rollback()
