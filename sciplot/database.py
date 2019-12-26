@@ -296,3 +296,6 @@ WHERE Variable.Type = 0 AND DataSet.DataSetID = (?)'''
     def create_data_point(self, value: float, data_set_id: int):
         return self.query([Query('INSERT INTO DataPoint (DataSetID, Value) VALUES ((?), (?));', [data_set_id, value], 0),
                            Query('SELECT last_insert_rowid();', [], 2)])[0]
+    
+    def get_data_point(self, data_point_id: int):
+        return self.query(Query('SELECT DataSetID, Value FROM DataPoint WHERE DataPointID = (?)', [data_point_id], 2))[0]
