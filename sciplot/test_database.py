@@ -131,3 +131,9 @@ class TestDataFile(unittest.TestCase):
             primary_key = df.create_data_set(0.01, False, 1)
             self.assertEqual(df.get_data_set(primary_key), (1, 0.01, 0))
             df.goto_rollback()
+    
+    def test_remove_data_set(self):
+        with self.connect_datafile() as df:
+            df.remove_data_set(1)
+            self.assertEqual(df.list_data_sets(), [2, 3])
+            df.goto_rollback()
