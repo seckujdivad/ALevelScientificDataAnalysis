@@ -299,3 +299,17 @@ WHERE Variable.Type = 0 AND DataSet.DataSetID = (?)'''
     
     def get_data_point(self, data_point_id: int):
         return self.query(Query('SELECT DataSetID, Value FROM DataPoint WHERE DataPointID = (?)', [data_point_id], 2))[0]
+    
+    #formulae
+    def list_formulae(self):
+        return self.query(Query('SELECT FormulaID FROM Formula', [], 1))[0]
+    
+    def get_formula(self, formula_id: int):
+        return self.query(Query('SELECT Expression FROM Formula WHERE FormulaID = (?)', [formula_id], 2))[0]
+    
+    def create_formula(self, expression: str):
+        self.query([Query('INSERT INTO Formula (Expression) VALUES ((?))', [expression], 0),
+                    Query('SELECT last_insert_rowid();', [], 2)])[0]
+    
+    def remove_formula(self, formula_id: int):
+        self.query(Query('DELETE FROM Formula WHERE FormulaID = (?)', [formula_id], 0))
