@@ -254,3 +254,23 @@ class DataFile(Database):
     
     def list_units(self):
         return [val[0] for val in self.query(Query('SELECT UnitCompositeID FROM UnitComposite;', [], 1))[0]] #unpack tuples
+    
+    #data sets
+    def list_data_sets(self):
+        return self.query(Query('SELECT DataSetID FROM DataSet', [], 1))[0]
+    
+    def get_data_set(self, primary_key: int):
+        query = '''SELECT Variable.Symbol, DataSet.UnitCompositeID, DataSet.Uncertainty, DataSet.UncIsPerc FROM DataSet
+INNER JOIN Variable ON Variable.ID = DataSet.DataSetID
+WHERE Variable.Type = 0 AND DataSet.DataSetID = (?)'''
+        return self.query(Query(query.replace('\n', ' '), [primary_key], 2))[0]
+    
+    def create_data_set(self, uncertainty: float, is_percentage: bool, unit_id: int):
+        if is_percentage:
+            isperc = 1
+        else:
+            isperc = 0
+
+        queries = [Query('INSERT INTO DataSet (UnitCompositeID, Uncertainty, UncIsPerc) VALUES ((?), (?), (?));', [unit_id, uncertainty, isperc], 0),
+                   Query('SELECT last_insert_rowid();', [], 2)]
+        return self.query(queries)[0]
