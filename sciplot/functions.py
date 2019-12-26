@@ -6,7 +6,7 @@ import typing
 
 #interface defining all functions
 class IMathematicalFunction:
-    def __init__(self, *args: typing.List[typing.Union[IMathematicalFunction, str]], autoparse: bool = True):
+    def __init__(self, *args: typing.List[typing.Union[object, str]], autoparse: bool = True):
         self._subfuncs = []
         
         if autoparse:
