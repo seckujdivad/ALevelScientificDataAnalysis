@@ -358,3 +358,15 @@ WHERE Variable.Type = 0 AND DataSet.DataSetID = (?)'''
         
         if remove_columns:
             self.query(Query('DELETE FROM TableColumn WHERE VariableID = (?)', [variable_id], 0))
+    
+    #tables
+    def list_tables(self):
+        return self.query(Query('SELECT * FROM Table', [], 1))[0]
+    
+    def remove_table(self, table_id: int):
+        self.query([Query('DELETE FROM Table WHERE TableID = (?)', [table_id], 0),
+                    Query('DELETE FROM TableColumn WHERE TableID = (?)', [table_id], 0)])
+    
+    def create_table(self, title: str):
+        return self.query([Query('INSERT INTO Table (Title) VALUES ((?))', [title], 0),
+                           Query('SELECT last_insert_rowid();', [], 2)])[0]
