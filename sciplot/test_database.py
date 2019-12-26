@@ -107,3 +107,12 @@ class TestDataFile(unittest.TestCase):
     def test_list_units(self):
         with self.connect_datafile() as df:
             self.assertEqual(df.list_units(), [1, 2, 3, 4, 5])
+    
+    def test_get_metadata(self):
+        with self.connect_datafile() as df:
+            self.assertEqual(df.get_metadata('name'), 'Young Modulus example dataset')
+    
+    def test_set_metadata(self):
+        with self.connect_datafile() as df:
+            df.set_metadata('test key', 'test value')
+            self.assertEqual(df.get_metadata('test key'), 'test value')
