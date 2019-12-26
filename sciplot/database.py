@@ -282,9 +282,11 @@ WHERE Variable.Type = 0 AND DataSet.DataSetID = (?)'''
                    Query('SELECT last_insert_rowid();', [], 2)]
         return self.query(queries)[0]
     
-    def remove_data_set(self, data_set_id: int):
+    def remove_data_set(self, data_set_id: int, remove_variable: bool = True):
         self.query([Query('DELETE FROM DataSet WHERE DataSetID = (?)', [data_set_id], 0),
                     Query('DELETE FROM DataPoint WHERE DataSetID = (?)', [data_set_id], 0)])
+        if remove_variable:
+            self.query(Query('DELETE FROM Variable WHERE Type = 0 AND ID = (?)', [data_set_id], 0))
     
     #data points
     def get_data_points(self, data_set_id: int):
@@ -311,5 +313,7 @@ WHERE Variable.Type = 0 AND DataSet.DataSetID = (?)'''
         self.query([Query('INSERT INTO Formula (Expression) VALUES ((?))', [expression], 0),
                     Query('SELECT last_insert_rowid();', [], 2)])[0]
     
-    def remove_formula(self, formula_id: int):
+    def remove_formula(self, formula_id: int, remove_variable: bool = True):
         self.query(Query('DELETE FROM Formula WHERE FormulaID = (?)', [formula_id], 0))
+        if remove_variable:
+            self.query(Query('DELETE FROM Variable WHERE Type = 1 AND ID = (?)', [formula_id], 0))
