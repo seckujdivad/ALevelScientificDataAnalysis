@@ -220,6 +220,9 @@ class DataFile(Database):
     def get_constant_by_id(self, constant_id: int):
         query = Query("SELECT Symbol, Value, UnitCompositeID FROM Constant WHERE ConstantID = (?)", [constant_id], 2)
         return self.query(query)[0]
+    
+    def remove_constant(self, constant_id: int):
+        self.query(Query('DELETE FROM Constant WHERE ConstantID = (?)', [constant_id], 0))
 
     #base SI units
     def list_base_units(self):
@@ -255,6 +258,10 @@ class DataFile(Database):
     def list_units(self):
         return [val[0] for val in self.query(Query('SELECT UnitCompositeID FROM UnitComposite;', [], 1))[0]] #unpack tuples
     
+    def remove_unit(self, unit_id: int):
+        self.query([Query('DELETE FROM UnitComposite WHERE UnitCompositeID = (?)', [unit_id], 0),
+                    Query('DELETE FROM UnitCompositeDetails WHERE UnitCompositeID = (?)', [unit_id], 0)])
+    
     #data sets
     def list_data_sets(self):
         return self.query(Query('SELECT DataSetID FROM DataSet', [], 1))[0]
@@ -274,3 +281,7 @@ WHERE Variable.Type = 0 AND DataSet.DataSetID = (?)'''
         queries = [Query('INSERT INTO DataSet (UnitCompositeID, Uncertainty, UncIsPerc) VALUES ((?), (?), (?));', [unit_id, uncertainty, isperc], 0),
                    Query('SELECT last_insert_rowid();', [], 2)]
         return self.query(queries)[0]
+    
+    def remove_data_set(self, data_set_id: int):
+        self.query([Query('DELETE FROM DataSet WHERE DataSetID = (?)', [data_set_id], 0),
+                    Query('DELETE FROM DataPoint WHERE DataSetID = (?)', [data_set_id], 0)])
