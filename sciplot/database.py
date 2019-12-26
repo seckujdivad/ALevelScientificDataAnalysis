@@ -301,7 +301,7 @@ WHERE Variable.Type = 0 AND DataSet.DataSetID = (?)'''
         return self.query(queries)[0]
     
     def remove_data_set(self, data_set_id: int):
-        self.remove_variable(self.query(Query('SELECT VariableID FROM Variable WHERE Type = 0 AND ID = (?)', [data_set_id], 2)[0]))
+        self.remove_variable(self.query(Query('SELECT VariableID FROM Variable WHERE Type = 0 AND ID = (?)', [data_set_id], 2))[0])
     
     #data points
     def get_data_points(self, data_set_id: int):
@@ -329,7 +329,7 @@ WHERE Variable.Type = 0 AND DataSet.DataSetID = (?)'''
                     Query('SELECT last_insert_rowid();', [], 2)])[0]
     
     def remove_formula(self, formula_id: int):
-        self.remove_variable(self.query(Query('SELECT VariableID FROM Variable WHERE Type = 1 AND ID = (?)', [formula_id], 2)[0]))
+        self.remove_variable(self.query(Query('SELECT VariableID FROM Variable WHERE Type = 1 AND ID = (?)', [formula_id], 2))[0])
     
     #variables
     def list_variables(self):
