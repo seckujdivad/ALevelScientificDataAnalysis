@@ -370,3 +370,18 @@ WHERE Variable.Type = 0 AND DataSet.DataSetID = (?)'''
     def create_table(self, title: str):
         return self.query([Query('INSERT INTO Table (Title) VALUES ((?))', [title], 0),
                            Query('SELECT last_insert_rowid();', [], 2)])[0]
+    
+    #table columns
+    def list_table_columns(self, table_id: int):
+        return self.query(Query('SELECT VariableID FROM TableColumn WHERE TableID = (?)', [table_id], 1))[0]
+    
+    def create_table_column(self, table_id: int, variable_id: int):
+        num_matches = len(self.query(Query('SELECT TableID FROM TableColumn WHERE TableID = (?) AND VariableID = (?)', [table_id, variable_id]))[0])
+        if num_matches > 0:
+            raise sqlite3.OperationalError('Duplicate TableID-VariableID pairs are not allowed')
+
+        return self.query([Query('INSERT INTO TableColumn (TableID, VariableID) VALUES ((?), (?));', [table_id, variable_id], 0),
+                           Query('SELECT last_insert_rowid();', [], 2)])[0]
+    
+    def remove_table_column(self, table_id: int, variable_id: int):
+        self.query(Query('DELETE FROM TableColumn WHERE TableID = (?) AND VariableID = (?)', [table_id, variable_id], 0))
