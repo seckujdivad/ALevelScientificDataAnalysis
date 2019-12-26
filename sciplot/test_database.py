@@ -83,7 +83,7 @@ class TestDataFile(unittest.TestCase):
     
     def test_add_constant(self):
         with self.connect_datafile() as df:
-            primary_key = df.add_constant("test unit", 0.1, 0)
+            primary_key = df.create_constant("test unit", 0.1, 0)
             self.assertEqual(df.get_constant_by_id(primary_key), ("test unit", 0.1, 0))
             df.goto_rollback()
     

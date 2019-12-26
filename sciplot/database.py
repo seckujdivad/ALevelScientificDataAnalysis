@@ -208,7 +208,7 @@ class DataFile(Database):
         result = self.query(query)
         return result[0]
 
-    def add_constant(self, name: str, value: float, unit_id: int):
+    def create_constant(self, name: str, value: float, unit_id: int):
         queries = [Query('INSERT INTO Constant (UnitCompositeID, Value, Symbol) VALUES ((?), (?), (?));', [unit_id, value, name], 0),
                    Query('SELECT last_insert_rowid();', [], 2)]
         return self.query(queries)[0][0]
