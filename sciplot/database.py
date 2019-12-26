@@ -92,6 +92,10 @@ class Database:
                     except sqlite3.OperationalError as e:
                         return_values.append((1, ("OperationalError", str(e))))
                         self._running = False
+                    
+                    except sqlite3.InterfaceError as e:
+                        return_values.append((1, ("InterfaceError", str(e))))
+                        self._running = False
                 
             if len(return_values) > 0:
                 self._response_values[counter] = return_values
@@ -152,6 +156,9 @@ class Database:
                             elif identifier == 1:
                                 if data[0] == "OperationalError":
                                     raise sqlite3.OperationalError(data[1])
+                                    
+                                elif data[0] == 'InterfaceError':
+                                    raise sqlite3.InterfaceError(data[1])
 
                         cont = False
                         self._response_collected_event.set()
