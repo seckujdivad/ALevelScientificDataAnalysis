@@ -325,17 +325,17 @@ WHERE DataSet.DataSetID = (?)'''
     
     #formulae
     def list_formulae(self):
-        return self.query(Query('SELECT FormulaID FROM Formula', [], 1))[0]
+        return [tup[0] for tup in self.query(Query('SELECT FormulaID FROM Formula', [], 1))[0]]
     
     def get_formula(self, formula_id: int):
-        return self.query(Query('SELECT Expression FROM Formula WHERE FormulaID = (?)', [formula_id], 2))[0]
+        return self.query(Query('SELECT Expression FROM Formula WHERE FormulaID = (?)', [formula_id], 2))[0][0]
     
     def create_formula(self, expression: str):
-        self.query([Query('INSERT INTO Formula (Expression) VALUES ((?))', [expression], 0),
-                    Query('SELECT last_insert_rowid();', [], 2)])[0]
+        return self.query([Query('INSERT INTO Formula (Expression) VALUES ((?))', [expression], 0),
+                           Query('SELECT last_insert_rowid();', [], 2)])[0][0]
     
     def remove_formula(self, formula_id: int):
-        self.remove_variable(self.query(Query('SELECT VariableID FROM Variable WHERE Type = 1 AND ID = (?)', [formula_id], 2))[0])
+        self.remove_variable(formula_id = formula_id, remove_plots = False, remove_columns = False)
     
     #variables
     def list_variables(self):
