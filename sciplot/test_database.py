@@ -137,3 +137,23 @@ class TestDataFile(unittest.TestCase):
             df.remove_data_set(1)
             self.assertEqual(df.list_data_sets(), [2, 3])
             df.goto_rollback()
+    
+    def test_get_data_points(self):
+        with self.connect_datafile() as df:
+            self.assertEqual(df.get_data_points(1), [(i, 1.217) for i in range(1, 26, 1)])
+    
+    def test_remove_data_point(self):
+        with self.connect_datafile() as df:
+            df.remove_data_point(1)
+            self.assertEqual(df.get_data_points(1), [(i, 1.217) for i in range(2, 26, 1)])
+            df.goto_rollback()
+    
+    def test_create_data_point(self):
+        with self.connect_datafile() as df:
+            primary_key = df.create_data_point(12.345, 1)
+            self.assertEqual(df.get_data_points(1), [(i, 1.217) for i in range(1, 26, 1)] + [(primary_key, 12.345)])
+            df.goto_rollback()
+    
+    def test_get_data_point(self):
+        with self.connect_datafile() as df:
+            self.assertEqual(df.get_data_point(1), (1, 1.217))
