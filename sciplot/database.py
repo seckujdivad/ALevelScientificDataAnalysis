@@ -227,8 +227,8 @@ class DataFile(Database):
         result = self.query(query)
         return result[0]
     
-    def get_base_unit(self, primary_key: int):
-        query = Query("SELECT Symbol FROM Unit WHERE UnitID = (?)", [primary_key], 2)
+    def get_base_unit(self, base_unit_id: int):
+        query = Query("SELECT Symbol FROM Unit WHERE UnitID = (?)", [base_unit_id], 2)
         return self.query(query)[0][0]
     
     #composite units
@@ -236,9 +236,9 @@ class DataFile(Database):
         query = Query("SELECT UnitCompositeID FROM UnitComposite WHERE Symbol = (?)", [symbol], 2)
         return self.get_unit_by_id(self.query(query)[0][0])
 
-    def get_unit_by_id(self, primary_key: int):
-        unit_details = self.query(Query("SELECT Unit.UnitID, UnitCompositeDetails.Power FROM UnitCompositeDetails INNER JOIN Unit ON Unit.UnitID = UnitCompositeDetails.UnitID WHERE UnitCompositeDetails.UnitCompositeID = (?)", [primary_key], 1))[0]
-        unit_symbol = self.query(Query('SELECT UnitComposite.Symbol FROM UnitComposite WHERE UnitComposite.UnitCompositeID = (?)', [primary_key], 2))[0][0]
+    def get_unit_by_id(self, unit_id: int):
+        unit_details = self.query(Query("SELECT Unit.UnitID, UnitCompositeDetails.Power FROM UnitCompositeDetails INNER JOIN Unit ON Unit.UnitID = UnitCompositeDetails.UnitID WHERE UnitCompositeDetails.UnitCompositeID = (?)", [unit_id], 1))[0]
+        unit_symbol = self.query(Query('SELECT UnitComposite.Symbol FROM UnitComposite WHERE UnitComposite.UnitCompositeID = (?)', [unit_id], 2))[0][0]
         return unit_symbol, unit_details
     
     def create_unit(self, symbol: str, base_units: typing.List[typing.Tuple[int, float]]):
@@ -259,11 +259,11 @@ class DataFile(Database):
     def list_data_sets(self):
         return self.query(Query('SELECT DataSetID FROM DataSet', [], 1))[0]
     
-    def get_data_set(self, primary_key: int):
+    def get_data_set(self, data_set_id: int):
         query = '''SELECT Variable.Symbol, DataSet.UnitCompositeID, DataSet.Uncertainty, DataSet.UncIsPerc FROM DataSet
 INNER JOIN Variable ON Variable.ID = DataSet.DataSetID
 WHERE Variable.Type = 0 AND DataSet.DataSetID = (?)'''
-        return self.query(Query(query.replace('\n', ' '), [primary_key], 2))[0]
+        return self.query(Query(query.replace('\n', ' '), [data_set_id], 2))[0]
     
     def create_data_set(self, uncertainty: float, is_percentage: bool, unit_id: int):
         if is_percentage:
