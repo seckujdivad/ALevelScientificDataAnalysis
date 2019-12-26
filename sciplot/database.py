@@ -201,6 +201,24 @@ class DataFile(Database):
     def goto_rollback(self):
         query = Query("ROLLBACK", [], 1)
         self.query(query)
+    
+    #metadata
+    def get_metadata(self, key: str):
+        result = self.query(Query('SELECT Value FROM Metadata WHERE Key = (?)', [key], 2))
+        if result == []:
+            return None
+        else:
+            return result[0]
+    
+    def set_metadata(self, key: str, value: str):
+        self.query([Query('DELETE FROM Metadata WHERE Key = (?)', [key], 0),
+                    Query('INSERT INTO Metadata VALUES ((?), (?))', [key, value], 0)])
+    
+    def list_metadata(self):
+        return self.query(Query('SELECT * FROM Metadata', [], 1))[0]
+    
+    def remove_metadata(self, key: str):
+        self.query(Query('DELETE FROM Metadata WHERE Key = (?)', [key], 0))
 
     #constants
     def list_constants(self):
