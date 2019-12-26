@@ -307,7 +307,7 @@ WHERE DataSet.DataSetID = (?)'''
         return self.query(queries)[0][0]
     
     def remove_data_set(self, data_set_id: int):
-        self.remove_variable(self.query(Query('SELECT VariableID FROM Variable WHERE Type = 0 AND ID = (?)', [data_set_id], 2))[0])
+        self.remove_variable(data_set_id = data_set_id, remove_plots = False, remove_columns = False)
     
     #data points
     def get_data_points(self, data_set_id: int):
@@ -348,8 +348,20 @@ WHERE DataSet.DataSetID = (?)'''
         return self.query([Query('INSERT INTO Variable (Symbol, Type, ID) VALUES ((?), (?), (?))', [symbol, type, type_id], 0),
                            Query('SELECT last_insert_rowid();', [], 2)])[0]
     
-    def remove_variable(self, variable_id: int, remove_plots: bool = True, remove_columns: bool = True, remove_source: bool = True):
-        variable_type, sub_id = self.query(Query('SELECT Type, ID FROM Variable WHERE VariableID = (?)', [variable_id], 2))[0]
+    def remove_variable(self, variable_id: int = -1, formula_id: int = -1, data_set_id: int = -1, remove_plots: bool = True, remove_columns: bool = True, remove_source: bool = True):
+        if variable_id != -1:
+            variable_type, sub_id = self.query(Query('SELECT Type, ID FROM Variable WHERE VariableID = (?)', [variable_id], 2))[0]
+        
+        elif data_set_id != -1:
+            variable_type = 0
+            sub_id = data_set_id
+
+        elif formula_id != -1:
+            variable_type = 1
+            sub_id = formula_id
+        
+        else:
+            raise ValueError('One of variable_id, formula_id or data_set_id mustn\'t be -1')
         
         if remove_source:
             if variable_type == 0:
@@ -359,6 +371,10 @@ WHERE DataSet.DataSetID = (?)'''
             else:
                 self.query(Query('DELETE FROM Formula WHERE FormulaID = (?)', [sub_id], 0))
         
+        if variable_id == -1:
+            if remove_plots or remove_columns:
+                variable_id =self.query(Query('SELECT VariableID FROM Variable WHERE ID = (?) AND Type = (?)', [sub_id, variable_type], 2))[0]
+
         if remove_plots:
             self.query(Query('DELETE FROM Plot WHERE VariableXID = (?) OR VariableYID = (?)', [variable_id, variable_id], 0))
         
