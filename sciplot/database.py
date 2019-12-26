@@ -300,11 +300,8 @@ WHERE Variable.Type = 0 AND DataSet.DataSetID = (?)'''
                    Query('SELECT last_insert_rowid();', [], 2)]
         return self.query(queries)[0]
     
-    def remove_data_set(self, data_set_id: int, remove_variable: bool = True):
-        self.query([Query('DELETE FROM DataSet WHERE DataSetID = (?)', [data_set_id], 0),
-                    Query('DELETE FROM DataPoint WHERE DataSetID = (?)', [data_set_id], 0)])
-        if remove_variable:
-            self.query(Query('DELETE FROM Variable WHERE Type = 0 AND ID = (?)', [data_set_id], 0))
+    def remove_data_set(self, data_set_id: int):
+        self.remove_variable(self.query(Query('SELECT VariableID FROM Variable WHERE Type = 0 AND ID = (?)', [data_set_id], 2)[0]))
     
     #data points
     def get_data_points(self, data_set_id: int):
@@ -331,14 +328,12 @@ WHERE Variable.Type = 0 AND DataSet.DataSetID = (?)'''
         self.query([Query('INSERT INTO Formula (Expression) VALUES ((?))', [expression], 0),
                     Query('SELECT last_insert_rowid();', [], 2)])[0]
     
-    def remove_formula(self, formula_id: int, remove_variable: bool = True):
-        self.query(Query('DELETE FROM Formula WHERE FormulaID = (?)', [formula_id], 0))
-        if remove_variable:
-            self.query(Query('DELETE FROM Variable WHERE Type = 1 AND ID = (?)', [formula_id], 0))
+    def remove_formula(self, formula_id: int):
+        self.remove_variable(self.query(Query('SELECT VariableID FROM Variable WHERE Type = 1 AND ID = (?)', [formula_id], 2)[0]))
     
     #variables
     def list_variables(self):
-        return self.query(Query('SELECT VariableID from Variable', [], 1))[0]
+        return self.query(Query('SELECT VariableID FROM Variable', [], 1))[0]
     
     def get_variable(self, variable_id: int):
         return self.query(Query('SELECT Symbol, Type, ID FROM Variable WHERE VariableID = (?)', [variable_id], 2))[0]
@@ -347,8 +342,19 @@ WHERE Variable.Type = 0 AND DataSet.DataSetID = (?)'''
         return self.query([Query('INSERT INTO Variable (Symbol, Type, ID) VALUES ((?), (?), (?))', [symbol, type, type_id], 0),
                            Query('SELECT last_insert_rowid();', [], 2)])[0]
     
-    def remove_variable(self, variable_id: int):
+    def remove_variable(self, variable_id: int, remove_plots: bool = True, remove_columns: bool = True, remove_source: bool = True):
         variable_type, sub_id = self.query(Query('SELECT Type, ID FROM Variable WHERE VariableID = (?)', [variable_id], 2))[0]
-
-        if variable_type == 0:
-            self.remove_data_set(sub_id, remove_variable = True)
+        
+        if remove_source:
+            if variable_type == 0:
+                self.query([Query('DELETE FROM DataSet WHERE DataSetID = (?)', [sub_id], 0),
+                            Query('DELETE FROM DataPoint WHERE DataSetID = (?)', [sub_id], 0)])
+            
+            else:
+                self.query(Query('DELETE FROM Formula WHERE FormulaID = (?)', [sub_id], 0))
+        
+        if remove_plots:
+            self.query(Query('DELETE FROM Plot WHERE VariableXID = (?) OR VariableYID = (?)', [variable_id, variable_id], 0))
+        
+        if remove_columns:
+            self.query(Query('DELETE FROM TableColumn WHERE VariableID = (?)', [variable_id], 0))
