@@ -317,3 +317,20 @@ WHERE Variable.Type = 0 AND DataSet.DataSetID = (?)'''
         self.query(Query('DELETE FROM Formula WHERE FormulaID = (?)', [formula_id], 0))
         if remove_variable:
             self.query(Query('DELETE FROM Variable WHERE Type = 1 AND ID = (?)', [formula_id], 0))
+    
+    #variables
+    def list_variables(self):
+        return self.query(Query('SELECT VariableID from Variable', [], 1))[0]
+    
+    def get_variable(self, variable_id: int):
+        return self.query(Query('SELECT Symbol, Type, ID FROM Variable WHERE VariableID = (?)', [variable_id], 2))[0]
+    
+    def create_variable(self, symbol: int, type: int, type_id: int): #0: data set, 1: formula
+        return self.query([Query('INSERT INTO Variable (Symbol, Type, ID) VALUES ((?), (?), (?))', [symbol, type, type_id], 0),
+                           Query('SELECT last_insert_rowid();', [], 2)])[0]
+    
+    def remove_variable(self, variable_id: int):
+        variable_type, sub_id = self.query(Query('SELECT Type, ID FROM Variable WHERE VariableID = (?)', [variable_id], 2))[0]
+
+        if variable_type == 0:
+            self.remove_data_set(sub_id, remove_variable = True)
