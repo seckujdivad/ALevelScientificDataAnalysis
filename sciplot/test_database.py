@@ -106,4 +106,4 @@ class TestDataFile(unittest.TestCase):
     
     def test_list_units(self):
         with self.connect_datafile() as df:
-            self.assertEqual(df.list_units(), [1, 2, 3])
+            self.assertEqual(df.list_units(), [1, 2, 3, 4, 5])
