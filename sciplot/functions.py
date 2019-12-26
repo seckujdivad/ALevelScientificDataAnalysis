@@ -1,11 +1,12 @@
 import abc
 import re
 import math
+import typing
 
 
 #interface defining all functions
 class IMathematicalFunction:
-    def __init__(self, *args, autoparse = True):
+    def __init__(self, *args: typing.List[typing.Union[IMathematicalFunction, str]], autoparse: bool = True):
         self._subfuncs = []
         
         if autoparse:
@@ -17,7 +18,7 @@ class IMathematicalFunction:
                     self._subfuncs.append(item)
 
     @abc.abstractclassmethod
-    def evaluate(self, datatable):
+    def evaluate(self, datatable: typing.Dict[str, float]):
         """
         Evaluate this function using the variables provided in datatable. Recursively evaluates the whole function tree.
         This should be overwritten by the inheriting class.
@@ -30,7 +31,7 @@ class IMathematicalFunction:
         """
         raise NotImplementedError()
 
-    def generate_from(self, string):
+    def generate_from(self, string: str):
         """
         Breaks down a string into a function that operates on two subfunctions (to be determined by that function). Effectively recursive.
 
@@ -132,160 +133,160 @@ class IMathematicalFunction:
 
 #top level parent function - other classes should interact with this
 class Function(IMathematicalFunction):
-    def __init__(self, string):
+    def __init__(self, string: str):
         super().__init__()
 
         self._subfuncs.append(self.generate_from(string))
 
-    def evaluate(self, datatable):
+    def evaluate(self, datatable: typing.Dict[str, float]):
         return self._subfuncs[0].evaluate(datatable)
 
 
 #sub functions
 class Float(IMathematicalFunction):
-    def __init__(self, item0):
+    def __init__(self, item0: str):
         super().__init__(autoparse = False)
 
         self._value = float(item0)
     
-    def evaluate(self, datatable):
+    def evaluate(self, datatable: typing.Dict[str, float]):
         return self._value
 
 
 class Variable(IMathematicalFunction):
-    def __init__(self, item0):
+    def __init__(self, item0: str):
         super().__init__(autoparse = False)
 
         self._name = item0
     
-    def evaluate(self, datatable):
+    def evaluate(self, datatable: typing.Dict[str, float]):
         return datatable[self._name]
 
 
 class Add(IMathematicalFunction):
-    def __init__(self, item0, item1):
+    def __init__(self, item0: str, item1: str):
         super().__init__(item0, item1)
     
-    def evaluate(self, datatable):
+    def evaluate(self, datatable: typing.Dict[str, float]):
         return sum([subfunc.evaluate(datatable) for subfunc in self._subfuncs])
 
 
 class Subtract(IMathematicalFunction):
-    def __init__(self, item0, item1):
+    def __init__(self, item0: str, item1: str):
         super().__init__(item0, item1)
     
-    def evaluate(self, datatable):
+    def evaluate(self, datatable: typing.Dict[str, float]):
         return self._subfuncs[0].evaluate(datatable) - self._subfuncs[1].evaluate(datatable)
 
 
 class Multiply(IMathematicalFunction):
-    def __init__(self, item0, item1):
+    def __init__(self, item0: str, item1: str):
         super().__init__(item0, item1)
     
-    def evaluate(self, datatable):
+    def evaluate(self, datatable: typing.Dict[str, float]):
         return self._subfuncs[0].evaluate(datatable) * self._subfuncs[1].evaluate(datatable)
 
 
 class Division(IMathematicalFunction):
-    def __init__(self, item0, item1):
+    def __init__(self, item0: str, item1: str):
         super().__init__(item0, item1)
     
-    def evaluate(self, datatable):
+    def evaluate(self, datatable: typing.Dict[str, float]):
         return self._subfuncs[0].evaluate(datatable) / self._subfuncs[1].evaluate(datatable)
 
 
 class Power(IMathematicalFunction):
-    def __init__(self, item0, item1):
+    def __init__(self, item0: str, item1: str):
         super().__init__(item0, item1)
     
-    def evaluate(self, datatable):
+    def evaluate(self, datatable: typing.Dict[str, float]):
         return pow(self._subfuncs[0].evaluate(datatable), self._subfuncs[1].evaluate(datatable))
 
 
 class Sin(IMathematicalFunction):
-    def __init__(self, item0, item1):
+    def __init__(self, item0: str, item1: str):
         super().__init__(item0, item1)
     
-    def evaluate(self, datatable):
+    def evaluate(self, datatable: typing.Dict[str, float]):
         return self._subfuncs[0].evaluate(datatable) * math.sin(self._subfuncs[1].evaluate(datatable))
 
 
 class Cos(IMathematicalFunction):
-    def __init__(self, item0, item1):
+    def __init__(self, item0: str, item1: str):
         super().__init__(item0, item1)
     
-    def evaluate(self, datatable):
+    def evaluate(self, datatable: typing.Dict[str, float]):
         return self._subfuncs[0].evaluate(datatable) * math.cos(self._subfuncs[1].evaluate(datatable))
 
 
 class Tan(IMathematicalFunction):
-    def __init__(self, item0, item1):
+    def __init__(self, item0: str, item1: str):
         super().__init__(item0, item1)
     
-    def evaluate(self, datatable):
+    def evaluate(self, datatable: typing.Dict[str, float]):
         return self._subfuncs[0].evaluate(datatable) * math.tan(self._subfuncs[1].evaluate(datatable))
 
 
 class ArcSin(IMathematicalFunction):
-    def __init__(self, item0, item1):
+    def __init__(self, item0: str, item1: str):
         super().__init__(item0, item1)
     
-    def evaluate(self, datatable):
+    def evaluate(self, datatable: typing.Dict[str, float]):
         return self._subfuncs[0].evaluate(datatable) * math.asin(self._subfuncs[1].evaluate(datatable))
 
 
 class ArcCos(IMathematicalFunction):
-    def __init__(self, item0, item1):
+    def __init__(self, item0: str, item1: str):
         super().__init__(item0, item1)
     
-    def evaluate(self, datatable):
+    def evaluate(self, datatable: typing.Dict[str, float]):
         return self._subfuncs[0].evaluate(datatable) * math.acos(self._subfuncs[1].evaluate(datatable))
 
 
 class ArcTan(IMathematicalFunction):
-    def __init__(self, item0, item1):
+    def __init__(self, item0: str, item1: str):
         super().__init__(item0, item1)
     
-    def evaluate(self, datatable):
+    def evaluate(self, datatable: typing.Dict[str, float]):
         return self._subfuncs[0].evaluate(datatable) * math.atan(self._subfuncs[1].evaluate(datatable))
 
 
 class Deg(IMathematicalFunction):
-    def __init__(self, item0, item1):
+    def __init__(self, item0: str, item1: str):
         super().__init__(item0, item1)
     
-    def evaluate(self, datatable):
+    def evaluate(self, datatable: typing.Dict[str, float]):
         return self._subfuncs[0].evaluate(datatable) * math.degrees(self._subfuncs[1].evaluate(datatable))
 
 
 class Rad(IMathematicalFunction):
-    def __init__(self, item0, item1):
+    def __init__(self, item0: str, item1: str):
         super().__init__(item0, item1)
     
-    def evaluate(self, datatable):
+    def evaluate(self, datatable: typing.Dict[str, float]):
         return self._subfuncs[0].evaluate(datatable) * math.radians(self._subfuncs[1].evaluate(datatable))
 
 
 class Absolute(IMathematicalFunction):
-    def __init__(self, item0, item1):
+    def __init__(self, item0: str, item1: str):
         super().__init__(item0, item1)
     
-    def evaluate(self, datatable):
+    def evaluate(self, datatable: typing.Dict[str, float]):
         return self._subfuncs[0].evaluate(datatable) * abs(self._subfuncs[1].evaluate(datatable))
 
 
 class NatLog(IMathematicalFunction):
-    def __init__(self, item0, item1):
+    def __init__(self, item0: str, item1: str):
         super().__init__(item0, item1)
     
-    def evaluate(self, datatable):
+    def evaluate(self, datatable: typing.Dict[str, float]):
         return self._subfuncs[0].evaluate(datatable) * math.log(self._subfuncs[1].evaluate(datatable))
 
 class BaseTenLog(IMathematicalFunction):
-    def __init__(self, item0, item1):
+    def __init__(self, item0: str, item1: str):
         super().__init__(item0, item1)
     
-    def evaluate(self, datatable):
+    def evaluate(self, datatable: typing.Dict[str, float]):
         return self._subfuncs[0].evaluate(datatable) * math.log10(self._subfuncs[1].evaluate(datatable))
 
 
