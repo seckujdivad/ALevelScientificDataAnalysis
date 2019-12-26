@@ -292,9 +292,8 @@ class DataFile(Database):
         return [tup[0] for tup in self.query(Query('SELECT DataSetID FROM DataSet', [], 1))[0]]
     
     def get_data_set(self, data_set_id: int):
-        query = '''SELECT Variable.Symbol, DataSet.UnitCompositeID, DataSet.Uncertainty, DataSet.UncIsPerc FROM DataSet
-INNER JOIN Variable ON Variable.ID = DataSet.DataSetID
-WHERE Variable.Type = 0 AND DataSet.DataSetID = (?)'''
+        query = '''SELECT DataSet.UnitCompositeID, DataSet.Uncertainty, DataSet.UncIsPerc FROM DataSet
+WHERE DataSet.DataSetID = (?)'''
         return self.query(Query(query.replace('\n', ' '), [data_set_id], 2))[0]
     
     def create_data_set(self, uncertainty: float, is_percentage: bool, unit_id: int):
@@ -305,7 +304,7 @@ WHERE Variable.Type = 0 AND DataSet.DataSetID = (?)'''
 
         queries = [Query('INSERT INTO DataSet (UnitCompositeID, Uncertainty, UncIsPerc) VALUES ((?), (?), (?));', [unit_id, uncertainty, isperc], 0),
                    Query('SELECT last_insert_rowid();', [], 2)]
-        return self.query(queries)[0]
+        return self.query(queries)[0][0]
     
     def remove_data_set(self, data_set_id: int):
         self.remove_variable(self.query(Query('SELECT VariableID FROM Variable WHERE Type = 0 AND ID = (?)', [data_set_id], 2))[0])
