@@ -121,3 +121,13 @@ class TestDataFile(unittest.TestCase):
     def test_list_data_sets(self):
         with self.connect_datafile() as df:
             self.assertEqual(df.list_data_sets(), [1, 2, 3])
+    
+    def test_get_data_set(self):
+        with self.connect_datafile() as df:
+            self.assertEqual(df.get_data_set(1), ('l0', 4, 0.001, 0))
+    
+    def test_create_data_set(self):
+        with self.connect_datafile() as df:
+            primary_key = df.create_data_set(0.01, False, 1)
+            self.assertEqual(df.get_data_set(primary_key), (1, 0.01, 0))
+            df.goto_rollback()
