@@ -389,7 +389,9 @@ class Multiply(IMathematicalFunction):
                     to_add = (unit_id, result[i][1] + power)
                     to_remove = i
 
-            if to_add is not None:
+            if to_add is None:
+                result.append((unit_id, power))
+            else:
                 result.pop(to_remove)
                 result.append(to_add)
         
@@ -416,7 +418,9 @@ class Division(IMathematicalFunction):
                     to_add = (unit_id, result[i][1] - power)
                     to_remove = i
 
-            if to_add is not None:
+            if to_add is None:
+                result.append((unit_id, 0 - power))
+            else:
                 result.pop(to_remove)
                 result.append(to_add)
         
@@ -570,7 +574,9 @@ class Absolute(IMathematicalFunction):
                     to_add = (unit_id, result[i][1] + power)
                     to_remove = i
 
-            if to_add is not None:
+            if to_add is None:
+                result.append((unit_id, power))
+            else:
                 result.pop(to_remove)
                 result.append(to_add)
         
