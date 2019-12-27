@@ -5,7 +5,7 @@ import functions #pylint: disable=import-error
 
 class TestFunction(unittest.TestCase):
     def asserter(self, string, value, message = '', args = {}):
-        return self.assertEqual(functions.Function(string).evaluate(args), value, message)
+        return self.assertEqual(functions.Function(string).evaluate(args).value, value, message)
 
     def test_addition(self):
         self.asserter('9+3', 9 + 3)
@@ -44,27 +44,33 @@ class TestFunction(unittest.TestCase):
         self.asserter('2cos0', 2)
     
     def test_variables(self):
-        self.asserter('2*{x}', 6, args = {'x': 3})
+        self.asserter('2*{x}', 6, args = self.convert_datatable({'x': 3}))
     
     def test_pre_eval_keeps_result(self):
         expr = '1 + (3 * 2 * {g}) + {k}'
-        constants = {'g': 9.81}
-        datatable = {'k': 50}
+        constants = self.convert_datatable({'g': 9.81})
+        datatable = self.convert_datatable({'k': 50})
         datatable.update(constants)
         default = functions.Function(expr)
         optimised = functions.Function(expr)
         optimised.pre_evaluate(constants)
-        self.assertEqual(default.evaluate(datatable), optimised.evaluate(datatable))
+        self.assertEqual(default.evaluate(datatable).value, optimised.evaluate(datatable).value)
     
     def test_pre_eval_reduces_complexity(self):
         expr = '1 + (3 * 2 * {g}) + {k}'
-        constants = {'g': 9.81}
-        datatable = {'k': 50}
+        constants = self.convert_datatable({'g': 9.81})
+        datatable = self.convert_datatable({'k': 50})
         datatable.update(constants)
         default = functions.Function(expr)
         optimised = functions.Function(expr)
         optimised.pre_evaluate(constants)
         self.assertLess(optimised.num_nodes(), default.num_nodes())
+    
+    def convert_datatable(self, datatable): #convert to new style
+        result = {}
+        for key in datatable:
+            result[key] = functions.Value(datatable[key])
+        return result
 
 
 if __name__ == '__main__':
