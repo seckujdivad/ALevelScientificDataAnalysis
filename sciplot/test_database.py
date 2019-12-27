@@ -225,3 +225,6 @@ class TestDataFile(unittest.TestCase):
             df.remove_plot(1)
             self.assertNotIn(1, df.list_plots())
             df.goto_rollback()
+
+if __name__ == '__main__':
+    unittest.main()
