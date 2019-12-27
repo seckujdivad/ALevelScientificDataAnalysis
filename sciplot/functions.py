@@ -189,7 +189,8 @@ class IMathematicalFunction:
                             if (match[0].start() <= other_match[0].start()) and (match[0].end() >= other_match[0].end()):
                                 to_remove = other_match
 
-                            elif (match[0].start() <= other_match[0].start()) or (match[0].end() >= other_match[0].end()):
+                            elif (((match[0].start() <= other_match[0].start()) and (match[0].end() <= other_match[0].end()) and (match[0].end() >= other_match[0].start()))
+                                 or ((match[0].end() >= other_match[0].end()) and (match[0].start() >= other_match[0].start()) and (match[0].start() <= other_match[0].end()))):
                                 match_len = match[0].end() - match[0].start()
                                 other_match_len = other_match[0].end() - other_match[0].start()
 
