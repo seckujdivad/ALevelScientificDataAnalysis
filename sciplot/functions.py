@@ -142,6 +142,14 @@ class IMathematicalFunction:
                 self._subfuncs[i] = self._subfuncs[i].pre_evaluate(constants)
 
             return self
+    
+    def num_nodes(self, include_branches = True): #to be overwritten by leaves
+        total = sum([subfunc.num_nodes(include_branches) for subfunc in self._subfuncs])
+
+        if include_branches:
+            return total + 1
+        else:
+            return total
 
 
 #root - other classes should interact with this
@@ -168,6 +176,9 @@ class Float(IMathematicalFunction):
     
     def is_static(self, constants: typing.Dict[str, float]):
         return True
+    
+    def num_nodes(self, include_branches = True):
+        return 1
 
 
 class Variable(IMathematicalFunction):
@@ -181,6 +192,9 @@ class Variable(IMathematicalFunction):
     
     def is_static(self, constants: typing.Dict[str, float]):
         return self._name in constants
+    
+    def num_nodes(self, include_branches = True):
+        return 1
 
 
 # branches
