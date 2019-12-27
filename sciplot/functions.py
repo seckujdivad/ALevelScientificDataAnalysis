@@ -175,7 +175,7 @@ class IMathematicalFunction:
                     matches.append([match, operator])
         
         if len(matches) == 0:
-            raise ValueError('No valid operators found in {}'.format(string))
+            raise ValueError('No valid operators found in "{}"'.format(string))
         
         else:
             #find operators that overlap and remove them first
@@ -188,6 +188,15 @@ class IMathematicalFunction:
                         if match != other_match:
                             if (match[0].start() <= other_match[0].start()) and (match[0].end() >= other_match[0].end()):
                                 to_remove = other_match
+
+                            elif (match[0].start() <= other_match[0].start()) or (match[0].end() >= other_match[0].end()):
+                                match_len = match[0].end() - match[0].start()
+                                other_match_len = other_match[0].end() - other_match[0].start()
+
+                                if match_len > other_match_len:
+                                    to_remove = other_match
+                                elif match_len == other_match_len:
+                                    raise ValueError('Two operators of equal length {} are competing for the same match in expression "{}" - "{}": ({}, {}), "{}": ({}, {}). This conflict can\'t be resolved without changing the expression or modifying the capture expressions at the bottom of the functions module to avoid triggering both conditions.'.format(match_len, string, match[1]['name'], match[0].start(), match[0].end(), other_match[1]['name'], other_match[0].start(), other_match[0].end()))
 
                 if to_remove is None:
                     has_overlap = False
