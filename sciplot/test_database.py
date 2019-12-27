@@ -160,7 +160,7 @@ class TestDataFile(unittest.TestCase):
     
     def test_list_formulae(self):
         with self.connect_datafile() as df:
-            self.assertEqual(df.list_formulae(), [1, 2, 3])
+            self.assertEqual(df.list_formulae(), [1, 2, 3, 4])
     
     def test_get_formula(self):
         with self.connect_datafile() as df:
@@ -175,7 +175,7 @@ class TestDataFile(unittest.TestCase):
     def test_remove_formula(self):
         with self.connect_datafile() as df:
             df.remove_formula(1)
-            self.assertEqual(df.list_formulae(), [2, 3])
+            self.assertNotIn(1, df.list_formulae())
             df.goto_rollback()
     
     def test_list_tables(self):
