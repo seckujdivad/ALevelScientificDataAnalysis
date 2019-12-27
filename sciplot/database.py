@@ -104,6 +104,7 @@ class Database:
                 self._response_collected_event.wait() #wait for the data to be claimed by a thread
         
         self._connection.close()
+        self._query_pipe.close()
         self._response_collected_event.clear() #release any other waiting threads
 
     def query(self, query: typing.Union[Query, typing.List[Query]]):
@@ -180,7 +181,10 @@ class Database:
         if self._running:
             self._running = False
 
-            self.query(Query("", [], -1)) #interrupt the thread so that it will process _running = False
+            try:
+                self.query(Query("", [], -1)) #interrupt the thread so that it will process _running = False
+            except BrokenPipeError:
+                pass #pipe has already been closed
 
             if wait:
                 self._query_thread.join() #wait for the thread to exit
