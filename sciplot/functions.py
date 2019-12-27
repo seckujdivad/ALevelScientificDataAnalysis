@@ -130,16 +130,16 @@ class IMathematicalFunction:
 
             return operator[1]['class'](*items)
     
-    def is_static(self): #to be overridden by leaves
-        return False not in [subfunc.is_static() for subfunc in self._subfuncs]
+    def is_static(self, constants: typing.Dict[str, float]): #to be overridden by leaves
+        return False not in [subfunc.is_static(constants) for subfunc in self._subfuncs]
     
-    def pre_evaluate(self):
-        if self.is_static():
-            return Float(str(self.evaluate({})))
+    def pre_evaluate(self, constants: typing.Dict[str, float]):
+        if self.is_static(constants):
+            return Float(str(self.evaluate(constants)))
         
         else:
             for i in range(len(self._subfuncs)):
-                self._subfuncs[i] = self._subfuncs[i].pre_evaluate()
+                self._subfuncs[i] = self._subfuncs[i].pre_evaluate(constants)
 
             return self
 
@@ -166,7 +166,7 @@ class Float(IMathematicalFunction):
     def evaluate(self, datatable: typing.Dict[str, float]):
         return self._value
     
-    def is_static(self):
+    def is_static(self, constants: typing.Dict[str, float]):
         return True
 
 
@@ -179,8 +179,8 @@ class Variable(IMathematicalFunction):
     def evaluate(self, datatable: typing.Dict[str, float]):
         return datatable[self._name]
     
-    def is_static(self):
-        return False
+    def is_static(self, constants: typing.Dict[str, float]):
+        return self._name in constants
 
 
 # branches
