@@ -151,7 +151,7 @@ class Database:
                                 result.append(data)
                                 
                             elif identifier == 1:
-                                raise data[0](data[1])
+                                raise data[0](data[1]) #exceptions triggered here have been handed down by the database thread
 
                         cont = False
                         self._response_collected_event.set()
