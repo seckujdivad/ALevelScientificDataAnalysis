@@ -132,6 +132,16 @@ class IMathematicalFunction:
     
     def is_static(self): #to be overridden by leaves
         return False not in [subfunc.is_static() for subfunc in self._subfuncs]
+    
+    def pre_evaluate(self):
+        if self.is_static():
+            return Float(str(self.evaluate({})))
+        
+        else:
+            for i in range(len(self._subfuncs)):
+                self._subfuncs[i] = self._subfuncs[i].pre_evaluate()
+
+            return self
 
 
 #root - other classes should interact with this
