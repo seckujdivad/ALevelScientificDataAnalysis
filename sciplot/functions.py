@@ -50,17 +50,59 @@ class IMathematicalFunction:
                 else:
                     self._subfuncs.append(self.generate_from(item))
 
-    @abc.abstractclassmethod
     def evaluate(self, datatable: t_datatable):
         """
         Evaluate this function using the variables provided in datatable. Recursively evaluates the whole function tree.
-        This should be overwritten by the inheriting class.
 
         Args:
-            datatable (dict): all the values to be substituted into variables (defined {variable})
+            datatable (dict of str: Value): all the values to be substituted into variables (defined {variable})
+        
+        Returns:
+            (Value): the result of the function
+        """
+        evaluated_subfuncs = [subfunc.evaluate(datatable) for subfunc in self._subfuncs]
+
+        value = self._evaluate_value(datatable, evaluated_subfuncs)
+        uncertainty, uncertainty_is_percentage = self._evaluate_uncertainty(datatable, evaluated_subfuncs)
+        units = self._evaluate_units(datatable, evaluated_subfuncs)
+        return Value(value, uncertainty, uncertainty_is_percentage, units)
+
+    @abc.abstractclassmethod
+    def _evaluate_value(self, datatable: t_datatable, evaluated_subfuncs: typing.List[Value]):
+        """
+        Calculate the resultant value of this function using the variables provided in datatable
+
+        Args:
+            datatable (dict of str: Value): all the values to be substituted into variables (defined {variable})
         
         Returns:
             (float): the result of the function
+        """
+        raise NotImplementedError()
+
+    @abc.abstractclassmethod
+    def _evaluate_uncertainty(self, datatable: t_datatable, evaluated_subfuncs: typing.List[Value]):
+        """
+        Calculates the uncertainty of the Value object to be returned by evaluate
+
+        Args:
+            datatable (dict of str: Value): values to be substituted into variables
+        
+        Returns:
+            (float, bool): the uncertainty and whether it is percentage
+        """
+        raise NotImplementedError()
+
+    @abc.abstractclassmethod
+    def _evaluate_units(self, datatable: t_datatable, evaluated_subfuncs: typing.List[Value]):
+        """
+        Calculates the resulting units of the Value object to be returned by evaluate
+
+        Args:
+            datatable (dict of str: Value): values to be substituted into variables
+        
+        Returns:
+            (list of (int, float)): the resultant units
         """
         raise NotImplementedError()
 
@@ -211,9 +253,6 @@ class IMathematicalFunction:
             return total + 1
         else:
             return total
-    
-    def evaluate_uncertainty(self, datatable: t_datatable):
-        datatable
 
 
 #root - other classes should interact with this
@@ -275,127 +314,269 @@ class Add(IMathematicalFunction):
     def __init__(self, item0: str, item1: str):
         super().__init__(item0, item1)
     
-    def evaluate(self, datatable: t_datatable):
-        return Value(sum([subfunc.evaluate(datatable).value for subfunc in self._subfuncs]))
+    def _evaluate_value(self, datatable: t_datatable, evaluated_subfuncs: typing.List[Value]):
+        return evaluated_subfuncs[0].value + evaluated_subfuncs[1].value
+    
+    def _evaluate_uncertainty(self, datatable: t_datatable, evaluated_subfuncs: typing.List[Value]):
+        return (evaluated_subfuncs[0].absolute_uncertainty + evaluated_subfuncs[1].absolute_uncertainty, False)
+    
+    def _evaluate_units(self, datatable: t_datatable, evaluated_subfuncs: typing.List[Value]):
+        if evaluated_subfuncs[0].units == evaluated_subfuncs[1].units:
+            return evaluated_subfuncs[0].units
+        else:
+            return []
 
 
 class Subtract(IMathematicalFunction):
     def __init__(self, item0: str, item1: str):
         super().__init__(item0, item1)
     
-    def evaluate(self, datatable: t_datatable):
-        return Value(self._subfuncs[0].evaluate(datatable).value - self._subfuncs[1].evaluate(datatable).value)
+    def _evaluate_value(self, datatable: t_datatable, evaluated_subfuncs: typing.List[Value]):
+        return evaluated_subfuncs[0].value - evaluated_subfuncs[1].value
+    
+    def _evaluate_uncertainty(self, datatable: t_datatable, evaluated_subfuncs: typing.List[Value]):
+        return (evaluated_subfuncs[0].absolute_uncertainty + evaluated_subfuncs[1].absolute_uncertainty, False)
+    
+    def _evaluate_units(self, datatable: t_datatable, evaluated_subfuncs: typing.List[Value]):
+        if evaluated_subfuncs[0].units == evaluated_subfuncs[1].units:
+            return evaluated_subfuncs[0].units
+        else:
+            return []
 
 
 class Multiply(IMathematicalFunction):
     def __init__(self, item0: str, item1: str):
         super().__init__(item0, item1)
     
-    def evaluate(self, datatable: t_datatable):
-        return Value(self._subfuncs[0].evaluate(datatable).value * self._subfuncs[1].evaluate(datatable).value)
+    def _evaluate_value(self, datatable: t_datatable, evaluated_subfuncs: typing.List[Value]):
+        return evaluated_subfuncs[0].value * evaluated_subfuncs[1].value
+    
+    def _evaluate_uncertainty(self, datatable: t_datatable, evaluated_subfuncs: typing.List[Value]):
+        return (evaluated_subfuncs[0].percentage_uncertainty + evaluated_subfuncs[1].percentage_uncertainty, True)
+    
+    def _evaluate_units(self, datatable: t_datatable, evaluated_subfuncs: typing.List[Value]):
+        result = evaluated_subfuncs[0].units.copy()
+        for unit_id, power in evaluated_subfuncs[1].units:
+            to_add = None
+            to_remove = -1
+            for i in range(len(result)):
+                if result[i][0] == unit_id:
+                    to_add = (unit_id, result[i][1] + power)
+                    to_remove = i
+
+            if to_add is not None:
+                result.pop(to_remove)
+                result.append(to_add)
+        
+        return result
 
 
 class Division(IMathematicalFunction):
     def __init__(self, item0: str, item1: str):
         super().__init__(item0, item1)
     
-    def evaluate(self, datatable: t_datatable):
-        return Value(self._subfuncs[0].evaluate(datatable).value / self._subfuncs[1].evaluate(datatable).value)
+    def _evaluate_value(self, datatable: t_datatable, evaluated_subfuncs: typing.List[Value]):
+        return evaluated_subfuncs[0].value / evaluated_subfuncs[1].value
+    
+    def _evaluate_uncertainty(self, datatable: t_datatable, evaluated_subfuncs: typing.List[Value]):
+        return (evaluated_subfuncs[0].percentage_uncertainty + evaluated_subfuncs[1].percentage_uncertainty, True)
+    
+    def _evaluate_units(self, datatable: t_datatable, evaluated_subfuncs: typing.List[Value]):
+        result = evaluated_subfuncs[0].units.copy()
+        for unit_id, power in evaluated_subfuncs[1].units:
+            to_add = None
+            to_remove = -1
+            for i in range(len(result)):
+                if result[i][0] == unit_id:
+                    to_add = (unit_id, result[i][1] - power)
+                    to_remove = i
+
+            if to_add is not None:
+                result.pop(to_remove)
+                result.append(to_add)
+        
+        return result
 
 
 class Power(IMathematicalFunction):
     def __init__(self, item0: str, item1: str):
         super().__init__(item0, item1)
     
-    def evaluate(self, datatable: t_datatable):
-        return Value(pow(self._subfuncs[0].evaluate(datatable).value, self._subfuncs[1].evaluate(datatable).value))
+    def _evaluate_value(self, datatable: t_datatable, evaluated_subfuncs: typing.List[Value]):
+        return pow(evaluated_subfuncs[0].value, evaluated_subfuncs[1].value)
+    
+    def _evaluate_uncertainty(self, datatable: t_datatable, evaluated_subfuncs: typing.List[Value]):
+        #ignore the uncertainty on the 'raise to' value as it is almost always 0
+        return (evaluated_subfuncs[0].percentage_uncertainty * evaluated_subfuncs[1].value, True)
+    
+    def _evaluate_units(self, datatable: t_datatable, evaluated_subfuncs: typing.List[Value]):
+        return [(unit_id, power * evaluated_subfuncs[1].value) for unit_id, power in evaluated_subfuncs[0].units]
 
 
 class Sin(IMathematicalFunction):
     def __init__(self, item0: str, item1: str):
         super().__init__(item0, item1)
     
-    def evaluate(self, datatable: t_datatable):
-        return Value(self._subfuncs[0].evaluate(datatable).value * math.sin(self._subfuncs[1].evaluate(datatable).value))
+    def _evaluate_value(self, datatable: t_datatable, evaluated_subfuncs: typing.List[Value]):
+        return evaluated_subfuncs[0].value * math.sin(evaluated_subfuncs[1].value)
+    
+    def _evaluate_uncertainty(self, datatable: t_datatable, evaluated_subfuncs: typing.List[Value]):
+        return (evaluated_subfuncs[0].percentage_uncertainty + evaluated_subfuncs[1].percentage_uncertainty, True)
+    
+    def _evaluate_units(self, datatable: t_datatable, evaluated_subfuncs: typing.List[Value]):
+        return evaluated_subfuncs[0].units
 
 
 class Cos(IMathematicalFunction):
     def __init__(self, item0: str, item1: str):
         super().__init__(item0, item1)
     
-    def evaluate(self, datatable: t_datatable):
-        return Value(self._subfuncs[0].evaluate(datatable).value * math.cos(self._subfuncs[1].evaluate(datatable).value))
+    def _evaluate_value(self, datatable: t_datatable, evaluated_subfuncs: typing.List[Value]):
+        return evaluated_subfuncs[0].value * math.cos(evaluated_subfuncs[1].value)
+    
+    def _evaluate_uncertainty(self, datatable: t_datatable, evaluated_subfuncs: typing.List[Value]):
+        return (evaluated_subfuncs[0].percentage_uncertainty + evaluated_subfuncs[1].percentage_uncertainty, True)
+    
+    def _evaluate_units(self, datatable: t_datatable, evaluated_subfuncs: typing.List[Value]):
+        return evaluated_subfuncs[0].units
 
 
 class Tan(IMathematicalFunction):
     def __init__(self, item0: str, item1: str):
         super().__init__(item0, item1)
     
-    def evaluate(self, datatable: t_datatable):
-        return Value(self._subfuncs[0].evaluate(datatable).value * math.tan(self._subfuncs[1].evaluate(datatable).value))
+    def _evaluate_value(self, datatable: t_datatable, evaluated_subfuncs: typing.List[Value]):
+        return evaluated_subfuncs[0].value * math.tan(evaluated_subfuncs[1].value)
+    
+    def _evaluate_uncertainty(self, datatable: t_datatable, evaluated_subfuncs: typing.List[Value]):
+        return (evaluated_subfuncs[0].percentage_uncertainty + evaluated_subfuncs[1].percentage_uncertainty, True)
+    
+    def _evaluate_units(self, datatable: t_datatable, evaluated_subfuncs: typing.List[Value]):
+        return evaluated_subfuncs[0].units
 
 
 class ArcSin(IMathematicalFunction):
     def __init__(self, item0: str, item1: str):
         super().__init__(item0, item1)
     
-    def evaluate(self, datatable: t_datatable):
-        return self._subfuncs[0].evaluate(datatable) * math.asin(self._subfuncs[1].evaluate(datatable))
+    def _evaluate_value(self, datatable: t_datatable, evaluated_subfuncs: typing.List[Value]):
+        return evaluated_subfuncs[0].value * math.asin(evaluated_subfuncs[1].value)
+    
+    def _evaluate_uncertainty(self, datatable: t_datatable, evaluated_subfuncs: typing.List[Value]):
+        return (evaluated_subfuncs[0].percentage_uncertainty + evaluated_subfuncs[1].percentage_uncertainty, True)
+    
+    def _evaluate_units(self, datatable: t_datatable, evaluated_subfuncs: typing.List[Value]):
+        return evaluated_subfuncs[0].units
 
 
 class ArcCos(IMathematicalFunction):
     def __init__(self, item0: str, item1: str):
         super().__init__(item0, item1)
     
-    def evaluate(self, datatable: t_datatable):
-        return Value(self._subfuncs[0].evaluate(datatable).value * math.acos(self._subfuncs[1].evaluate(datatable).value))
+    def _evaluate_value(self, datatable: t_datatable, evaluated_subfuncs: typing.List[Value]):
+        return evaluated_subfuncs[0].value * math.acos(evaluated_subfuncs[1].value)
+    
+    def _evaluate_uncertainty(self, datatable: t_datatable, evaluated_subfuncs: typing.List[Value]):
+        return (evaluated_subfuncs[0].percentage_uncertainty + evaluated_subfuncs[1].percentage_uncertainty, True)
+    
+    def _evaluate_units(self, datatable: t_datatable, evaluated_subfuncs: typing.List[Value]):
+        return evaluated_subfuncs[0].units
 
 
 class ArcTan(IMathematicalFunction):
     def __init__(self, item0: str, item1: str):
         super().__init__(item0, item1)
     
-    def evaluate(self, datatable: t_datatable):
-        return Value(self._subfuncs[0].evaluate(datatable).value * math.atan(self._subfuncs[1].evaluate(datatable).value))
+    def _evaluate_value(self, datatable: t_datatable, evaluated_subfuncs: typing.List[Value]):
+        return evaluated_subfuncs[0].value * math.atan(evaluated_subfuncs[1].value)
+    
+    def _evaluate_uncertainty(self, datatable: t_datatable, evaluated_subfuncs: typing.List[Value]):
+        return (evaluated_subfuncs[0].percentage_uncertainty + evaluated_subfuncs[1].percentage_uncertainty, True)
+    
+    def _evaluate_units(self, datatable: t_datatable, evaluated_subfuncs: typing.List[Value]):
+        return evaluated_subfuncs[0].units
 
 
 class Deg(IMathematicalFunction):
     def __init__(self, item0: str, item1: str):
         super().__init__(item0, item1)
     
-    def evaluate(self, datatable: t_datatable):
-        return self._subfuncs[0].evaluate(datatable) * math.degrees(self._subfuncs[1].evaluate(datatable))
+    def _evaluate_value(self, datatable: t_datatable, evaluated_subfuncs: typing.List[Value]):
+        return evaluated_subfuncs[0].value * math.degrees(evaluated_subfuncs[1].value)
+    
+    def _evaluate_uncertainty(self, datatable: t_datatable, evaluated_subfuncs: typing.List[Value]):
+        return (evaluated_subfuncs[0].percentage_uncertainty + evaluated_subfuncs[1].percentage_uncertainty, True)
+    
+    def _evaluate_units(self, datatable: t_datatable, evaluated_subfuncs: typing.List[Value]):
+        return evaluated_subfuncs[0].units
 
 
 class Rad(IMathematicalFunction):
     def __init__(self, item0: str, item1: str):
         super().__init__(item0, item1)
     
-    def evaluate(self, datatable: t_datatable):
-        return Value(self._subfuncs[0].evaluate(datatable).value * math.radians(self._subfuncs[1].evaluate(datatable).value))
+    def _evaluate_value(self, datatable: t_datatable, evaluated_subfuncs: typing.List[Value]):
+        return evaluated_subfuncs[0].value * math.radians(evaluated_subfuncs[1].value)
+    
+    def _evaluate_uncertainty(self, datatable: t_datatable, evaluated_subfuncs: typing.List[Value]):
+        return (evaluated_subfuncs[0].percentage_uncertainty + evaluated_subfuncs[1].percentage_uncertainty, True)
+    
+    def _evaluate_units(self, datatable: t_datatable, evaluated_subfuncs: typing.List[Value]):
+        return evaluated_subfuncs[0].units
 
 
 class Absolute(IMathematicalFunction):
     def __init__(self, item0: str, item1: str):
         super().__init__(item0, item1)
     
-    def evaluate(self, datatable: t_datatable):
-        return Value(self._subfuncs[0].evaluate(datatable).value * abs(self._subfuncs[1].evaluate(datatable).value))
+    def _evaluate_value(self, datatable: t_datatable, evaluated_subfuncs: typing.List[Value]):
+        return evaluated_subfuncs[0].value * abs(evaluated_subfuncs[1].value)
+    
+    def _evaluate_uncertainty(self, datatable: t_datatable, evaluated_subfuncs: typing.List[Value]):
+        return (evaluated_subfuncs[0].percentage_uncertainty + evaluated_subfuncs[1].percentage_uncertainty, True)
+    
+    def _evaluate_units(self, datatable: t_datatable, evaluated_subfuncs: typing.List[Value]):
+        result = evaluated_subfuncs[0].units.copy()
+        for unit_id, power in evaluated_subfuncs[1].units:
+            to_add = None
+            to_remove = -1
+            for i in range(len(result)):
+                if result[i][0] == unit_id:
+                    to_add = (unit_id, result[i][1] + power)
+                    to_remove = i
+
+            if to_add is not None:
+                result.pop(to_remove)
+                result.append(to_add)
+        
+        return result
 
 
 class NatLog(IMathematicalFunction):
     def __init__(self, item0: str, item1: str):
         super().__init__(item0, item1)
     
-    def evaluate(self, datatable: t_datatable):
-        return Value(self._subfuncs[0].evaluate(datatable).value * math.log(self._subfuncs[1].evaluate(datatable).value))
+    def _evaluate_value(self, datatable: t_datatable, evaluated_subfuncs: typing.List[Value]):
+        return evaluated_subfuncs[0].value * math.log(evaluated_subfuncs[1].value)
+    
+    def _evaluate_uncertainty(self, datatable: t_datatable, evaluated_subfuncs: typing.List[Value]):
+        return (evaluated_subfuncs[0].percentage_uncertainty + evaluated_subfuncs[1].percentage_uncertainty, True)
+    
+    def _evaluate_units(self, datatable: t_datatable, evaluated_subfuncs: typing.List[Value]):
+        return evaluated_subfuncs[0].units
 
 class BaseTenLog(IMathematicalFunction):
     def __init__(self, item0: str, item1: str):
         super().__init__(item0, item1)
     
-    def evaluate(self, datatable: t_datatable):
-        return Value(self._subfuncs[0].evaluate(datatable).value * math.log10(self._subfuncs[1].evaluate(datatable).value))
+    def _evaluate_value(self, datatable: t_datatable, evaluated_subfuncs: typing.List[Value]):
+        return evaluated_subfuncs[0].value * math.log10(evaluated_subfuncs[1].value)
+    
+    def _evaluate_uncertainty(self, datatable: t_datatable, evaluated_subfuncs: typing.List[Value]):
+        return (evaluated_subfuncs[0].percentage_uncertainty + evaluated_subfuncs[1].percentage_uncertainty, True)
+    
+    def _evaluate_units(self, datatable: t_datatable, evaluated_subfuncs: typing.List[Value]):
+        return evaluated_subfuncs[0].units
 
 
 #lookup for all operators: variable and float aren't registered as they end each branch so they are detected differently
