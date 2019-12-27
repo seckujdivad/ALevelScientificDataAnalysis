@@ -178,6 +178,22 @@ class IMathematicalFunction:
             raise ValueError('No valid operators found in {}'.format(string))
         
         else:
+            #find operators that overlap and remove them first
+            has_overlap = True
+            while has_overlap:
+                to_remove = None
+
+                for match in matches:
+                    for other_match in matches:
+                        if match != other_match:
+                            if (match[0].start() <= other_match[0].start()) and (match[0].end() >= other_match[0].end()):
+                                to_remove = other_match
+
+                if to_remove is None:
+                    has_overlap = False
+                else:
+                    matches.remove(to_remove)
+
             #find highest priority operator and process that first
             operator = matches[0]
             for match in matches:
