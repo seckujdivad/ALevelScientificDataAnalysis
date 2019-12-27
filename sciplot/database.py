@@ -411,3 +411,19 @@ WHERE DataSet.DataSetID = (?)'''
     
     def remove_table_column(self, table_id: int, variable_id: int):
         self.query(Query('DELETE FROM TableColumn WHERE TableID = (?) AND VariableID = (?)', [table_id, variable_id], 0))
+    
+    #plots
+    def list_plots(self):
+        return [tup[0] for tup in self.query(Query('SELECT PlotID FROM Plot', [], 1))[0]]
+
+    def create_plot(self, variable_x_id: int, variable_x_title: str, variable_y_id: int, variable_y_title: str, show_regression: bool = True):
+        if show_regression:
+            showregress = 1
+        else:
+            showregress = 0
+
+        return self.query([Query('INSERT INTO Plot (VariableXID, VariableYID, VariableXTitle, VariableYTitle, ShowRegression) VALUES ((?), (?), (?), (?), (?))', [variable_x_id, variable_y_id, variable_x_title, variable_y_title, showregress], 0),
+                           Query('SELECT last_insert_rowid()', [], 2)])[0][0]
+
+    def remove_plot(self, plot_id: int):
+        self.query(Query('DELETE FROM Plot WHERE PlotID = (?)', [plot_id], 0))
