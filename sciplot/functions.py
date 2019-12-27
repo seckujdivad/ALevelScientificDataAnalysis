@@ -4,8 +4,13 @@ import re
 import math
 import typing
 
-t_datapoint = float
-t_datatable = typing.Dict[str, t_datapoint] #type hint
+
+class Value:
+    def __init__(self, value):
+        self.value: float = float(value) #enforce type
+
+t_datatable = typing.Dict[str, Value] #type hint
+
 
 #interface defining all functions
 class IMathematicalFunction:
@@ -156,7 +161,7 @@ class IMathematicalFunction:
             (Float): This section of the tree is static and has been evaluated down to this Float object
         """
         if self.is_static(constants):
-            return Float(str(self.evaluate(constants)))
+            return Float(self.evaluate(constants))
         
         else:
             for i in range(len(self._subfuncs)):
@@ -199,10 +204,15 @@ class Function(IMathematicalFunction):
 #sub functions
 # leaves
 class Float(IMathematicalFunction):
-    def __init__(self, item0: str, uncertainty: float = 0):
+    def __init__(self, item0: str, uncertainty: typing.Union[float, str, Value] = 0):
         super().__init__(autoparse = False)
 
-        self._value: t_datapoint = float(item0)
+        if type(item0) == str:
+            item0 = float(item0)
+        elif isinstance(item0, Value):
+            item0 = item0.value
+
+        self._value: Value = Value(item0)
 
         self._uncertainty = uncertainty
     
@@ -238,7 +248,7 @@ class Add(IMathematicalFunction):
         super().__init__(item0, item1)
     
     def evaluate(self, datatable: t_datatable):
-        return sum([subfunc.evaluate(datatable) for subfunc in self._subfuncs])
+        return Value(sum([subfunc.evaluate(datatable).value for subfunc in self._subfuncs]))
 
 
 class Subtract(IMathematicalFunction):
@@ -246,7 +256,7 @@ class Subtract(IMathematicalFunction):
         super().__init__(item0, item1)
     
     def evaluate(self, datatable: t_datatable):
-        return self._subfuncs[0].evaluate(datatable) - self._subfuncs[1].evaluate(datatable)
+        return Value(self._subfuncs[0].evaluate(datatable).value - self._subfuncs[1].evaluate(datatable).value)
 
 
 class Multiply(IMathematicalFunction):
@@ -254,7 +264,7 @@ class Multiply(IMathematicalFunction):
         super().__init__(item0, item1)
     
     def evaluate(self, datatable: t_datatable):
-        return self._subfuncs[0].evaluate(datatable) * self._subfuncs[1].evaluate(datatable)
+        return Value(self._subfuncs[0].evaluate(datatable).value * self._subfuncs[1].evaluate(datatable).value)
 
 
 class Division(IMathematicalFunction):
@@ -262,7 +272,7 @@ class Division(IMathematicalFunction):
         super().__init__(item0, item1)
     
     def evaluate(self, datatable: t_datatable):
-        return self._subfuncs[0].evaluate(datatable) / self._subfuncs[1].evaluate(datatable)
+        return Value(self._subfuncs[0].evaluate(datatable).value / self._subfuncs[1].evaluate(datatable).value)
 
 
 class Power(IMathematicalFunction):
@@ -270,7 +280,7 @@ class Power(IMathematicalFunction):
         super().__init__(item0, item1)
     
     def evaluate(self, datatable: t_datatable):
-        return pow(self._subfuncs[0].evaluate(datatable), self._subfuncs[1].evaluate(datatable))
+        return Value(pow(self._subfuncs[0].evaluate(datatable).value, self._subfuncs[1].evaluate(datatable).value))
 
 
 class Sin(IMathematicalFunction):
@@ -278,7 +288,7 @@ class Sin(IMathematicalFunction):
         super().__init__(item0, item1)
     
     def evaluate(self, datatable: t_datatable):
-        return self._subfuncs[0].evaluate(datatable) * math.sin(self._subfuncs[1].evaluate(datatable))
+        return Value(self._subfuncs[0].evaluate(datatable).value * math.sin(self._subfuncs[1].evaluate(datatable).value))
 
 
 class Cos(IMathematicalFunction):
@@ -286,7 +296,7 @@ class Cos(IMathematicalFunction):
         super().__init__(item0, item1)
     
     def evaluate(self, datatable: t_datatable):
-        return self._subfuncs[0].evaluate(datatable) * math.cos(self._subfuncs[1].evaluate(datatable))
+        return Value(self._subfuncs[0].evaluate(datatable).value * math.cos(self._subfuncs[1].evaluate(datatable).value))
 
 
 class Tan(IMathematicalFunction):
@@ -294,7 +304,7 @@ class Tan(IMathematicalFunction):
         super().__init__(item0, item1)
     
     def evaluate(self, datatable: t_datatable):
-        return self._subfuncs[0].evaluate(datatable) * math.tan(self._subfuncs[1].evaluate(datatable))
+        return Value(self._subfuncs[0].evaluate(datatable).value * math.tan(self._subfuncs[1].evaluate(datatable).value))
 
 
 class ArcSin(IMathematicalFunction):
@@ -310,7 +320,7 @@ class ArcCos(IMathematicalFunction):
         super().__init__(item0, item1)
     
     def evaluate(self, datatable: t_datatable):
-        return self._subfuncs[0].evaluate(datatable) * math.acos(self._subfuncs[1].evaluate(datatable))
+        return Value(self._subfuncs[0].evaluate(datatable).value * math.acos(self._subfuncs[1].evaluate(datatable).value))
 
 
 class ArcTan(IMathematicalFunction):
@@ -318,7 +328,7 @@ class ArcTan(IMathematicalFunction):
         super().__init__(item0, item1)
     
     def evaluate(self, datatable: t_datatable):
-        return self._subfuncs[0].evaluate(datatable) * math.atan(self._subfuncs[1].evaluate(datatable))
+        return Value(self._subfuncs[0].evaluate(datatable).value * math.atan(self._subfuncs[1].evaluate(datatable).value))
 
 
 class Deg(IMathematicalFunction):
@@ -334,7 +344,7 @@ class Rad(IMathematicalFunction):
         super().__init__(item0, item1)
     
     def evaluate(self, datatable: t_datatable):
-        return self._subfuncs[0].evaluate(datatable) * math.radians(self._subfuncs[1].evaluate(datatable))
+        return Value(self._subfuncs[0].evaluate(datatable).value * math.radians(self._subfuncs[1].evaluate(datatable).value))
 
 
 class Absolute(IMathematicalFunction):
@@ -342,7 +352,7 @@ class Absolute(IMathematicalFunction):
         super().__init__(item0, item1)
     
     def evaluate(self, datatable: t_datatable):
-        return self._subfuncs[0].evaluate(datatable) * abs(self._subfuncs[1].evaluate(datatable))
+        return Value(self._subfuncs[0].evaluate(datatable).value * abs(self._subfuncs[1].evaluate(datatable).value))
 
 
 class NatLog(IMathematicalFunction):
@@ -350,14 +360,14 @@ class NatLog(IMathematicalFunction):
         super().__init__(item0, item1)
     
     def evaluate(self, datatable: t_datatable):
-        return self._subfuncs[0].evaluate(datatable) * math.log(self._subfuncs[1].evaluate(datatable))
+        return Value(self._subfuncs[0].evaluate(datatable).value * math.log(self._subfuncs[1].evaluate(datatable).value))
 
 class BaseTenLog(IMathematicalFunction):
     def __init__(self, item0: str, item1: str):
         super().__init__(item0, item1)
     
     def evaluate(self, datatable: t_datatable):
-        return self._subfuncs[0].evaluate(datatable) * math.log10(self._subfuncs[1].evaluate(datatable))
+        return Value(self._subfuncs[0].evaluate(datatable).value * math.log10(self._subfuncs[1].evaluate(datatable).value))
 
 
 #lookup for all operators: variable and float aren't registered as they end each branch so they are detected differently
