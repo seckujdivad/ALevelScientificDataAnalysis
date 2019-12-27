@@ -207,12 +207,14 @@ class Float(IMathematicalFunction):
     def __init__(self, item0: str, uncertainty: typing.Union[float, str, Value] = 0):
         super().__init__(autoparse = False)
 
-        if type(item0) == str:
-            item0 = float(item0)
-        elif isinstance(item0, Value):
-            item0 = item0.value
+        self._value: Value = None
 
-        self._value: Value = Value(item0)
+        if type(item0) in [str, float]:
+            self._value = Value(item0)
+        elif isinstance(item0, Value):
+            self._value = item0
+        else:
+            raise TypeError('item0 must be of type float, str or Value, not {} (contents {})'.format(type(item0), item0))
 
         self._uncertainty = uncertainty
     
