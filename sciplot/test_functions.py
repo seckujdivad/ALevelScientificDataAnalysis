@@ -1,4 +1,5 @@
 import unittest
+import math
 
 import functions #pylint: disable=import-error
 
@@ -42,6 +43,9 @@ class TestFunction(unittest.TestCase):
         self.asserter('sin0', 0)
         self.asserter('cos0', 1)
         self.asserter('2cos0', 2)
+        self.asserter('abs(-1)', 1)
+        self.asserter('log(100)', 2)
+        self.asserter('ln({})'.format(math.e), 1)
     
     def test_variables(self):
         self.asserter('2*{x}', 6, args = self.convert_datatable({'x': 3}))
