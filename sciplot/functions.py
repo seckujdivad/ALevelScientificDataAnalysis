@@ -64,7 +64,16 @@ class IMathematicalFunction:
 
         value = self._evaluate_value(datatable, evaluated_subfuncs)
         uncertainty, uncertainty_is_percentage = self._evaluate_uncertainty(datatable, evaluated_subfuncs)
+
         units = self._evaluate_units(datatable, evaluated_subfuncs)
+        to_remove = []
+        for i in range(len(units)):
+            if units[i][1] == 0:
+                to_remove.append(i)
+        to_remove.reverse()
+        for i in to_remove:
+            units.pop(i)
+        
         return Value(value, uncertainty, uncertainty_is_percentage, units)
 
     @abc.abstractclassmethod
