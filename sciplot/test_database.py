@@ -209,3 +209,19 @@ class TestDataFile(unittest.TestCase):
             df.remove_table_column(1, 1)
             self.assertNotIn((1, '00.000'), df.list_table_columns(1))
             df.goto_rollback()
+    
+    def test_list_plots(self):
+        with self.connect_datafile() as df:
+            self.assertEqual(df.list_plots(), [1])
+    
+    def test_create_plot(self):
+        with self.connect_datafile() as df:
+            primary_key = df.create_plot(1, 'test', 2, 'test 2', True)
+            self.assertIn(primary_key, df.list_plots())
+            df.goto_rollback()
+
+    def test_remove_plot(self):
+        with self.connect_datafile() as df:
+            df.remove_plot(1)
+            self.assertNotIn(1, df.list_plots())
+            df.goto_rollback()
