@@ -46,7 +46,7 @@ class TestFunction(unittest.TestCase):
     def test_variables(self):
         self.asserter('2*{x}', 6, args = {'x': 3})
     
-    def test_pre_eval(self):
+    def test_pre_eval_keeps_result(self):
         expr = '1 + (3 * 2 * {g}) + {k}'
         constants = {'g': 9.81}
         datatable = {'k': 50}
@@ -55,6 +55,16 @@ class TestFunction(unittest.TestCase):
         optimised = functions.Function(expr)
         optimised.pre_evaluate(constants)
         self.assertEqual(default.evaluate(datatable), optimised.evaluate(datatable))
+    
+    def test_pre_eval_reduces_complexity(self):
+        expr = '1 + (3 * 2 * {g}) + {k}'
+        constants = {'g': 9.81}
+        datatable = {'k': 50}
+        datatable.update(constants)
+        default = functions.Function(expr)
+        optimised = functions.Function(expr)
+        optimised.pre_evaluate(constants)
+        self.assertLess(optimised.num_nodes(), default.num_nodes())
 
 
 if __name__ == '__main__':
