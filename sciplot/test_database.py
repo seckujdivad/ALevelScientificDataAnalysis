@@ -177,3 +177,19 @@ class TestDataFile(unittest.TestCase):
             df.remove_formula(1)
             self.assertEqual(df.list_formulae(), [2, 3])
             df.goto_rollback()
+    
+    def test_list_tables(self):
+        with self.connect_datafile() as df:
+            self.assertEqual(df.list_tables(), [(1, 'Force-extension')])
+
+    def test_create_table(self):
+        with self.connect_datafile() as df:
+            primary_key = df.create_table('Test table')
+            self.assertIn((primary_key, 'Test table'), df.list_tables())
+            df.goto_rollback()
+
+    def test_remove_table(self):
+        with self.connect_datafile() as df:
+            df.remove_table(1)
+            self.assertNotIn((1, 'Force-extension'), df.list_tables())
+            df.goto_rollback()
