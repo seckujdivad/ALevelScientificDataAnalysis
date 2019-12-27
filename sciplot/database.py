@@ -88,13 +88,9 @@ class Database:
 
                             elif query.fetchmode == 3:
                                 return_values.append((0, cursor.fetchmany()))
-
-                    except sqlite3.OperationalError as e:
-                        return_values.append((1, ("OperationalError", str(e))))
-                        self._running = False
                     
-                    except sqlite3.InterfaceError as e:
-                        return_values.append((1, ("InterfaceError", str(e))))
+                    except Exception as e:
+                        return_values.append((1, (type(e), str(e))))
                         self._running = False
                 
             if len(return_values) > 0:
@@ -155,11 +151,7 @@ class Database:
                                 result.append(data)
                                 
                             elif identifier == 1:
-                                if data[0] == "OperationalError":
-                                    raise sqlite3.OperationalError(data[1])
-                                    
-                                elif data[0] == 'InterfaceError':
-                                    raise sqlite3.InterfaceError(data[1])
+                                raise data[0](data[1])
 
                         cont = False
                         self._response_collected_event.set()
