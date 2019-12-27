@@ -129,9 +129,12 @@ class IMathematicalFunction:
                     items.append(item) #further evaluation needed
 
             return operator[1]['class'](*items)
+    
+    def is_static(self): #to be overridden by leaves
+        return False not in [subfunc.is_static() for subfunc in self._subfuncs]
 
 
-#top level parent function - other classes should interact with this
+#root - other classes should interact with this
 class Function(IMathematicalFunction):
     def __init__(self, string: str):
         super().__init__()
@@ -143,6 +146,7 @@ class Function(IMathematicalFunction):
 
 
 #sub functions
+# leaves
 class Float(IMathematicalFunction):
     def __init__(self, item0: str):
         super().__init__(autoparse = False)
@@ -151,6 +155,9 @@ class Float(IMathematicalFunction):
     
     def evaluate(self, datatable: typing.Dict[str, float]):
         return self._value
+    
+    def is_static(self):
+        return True
 
 
 class Variable(IMathematicalFunction):
@@ -161,8 +168,12 @@ class Variable(IMathematicalFunction):
     
     def evaluate(self, datatable: typing.Dict[str, float]):
         return datatable[self._name]
+    
+    def is_static(self):
+        return False
 
 
+# branches
 class Add(IMathematicalFunction):
     def __init__(self, item0: str, item1: str):
         super().__init__(item0, item1)
