@@ -6,8 +6,34 @@ import typing
 
 
 class Value:
-    def __init__(self, value):
+    def __init__(self, value, uncertainty: float = 0, uncertainty_is_percentage: bool = True, units: typing.List[typing.Tuple[int, float]] = []):
         self.value: float = float(value) #enforce type
+        self._uncertainty: float = uncertainty
+        self._uncertainty_is_percentage: bool = uncertainty_is_percentage
+        self.units = units
+    
+    def _get_unc_abs(self):
+        if self._uncertainty_is_percentage:
+            return self._uncertainty * self.value
+        else:
+            return self._uncertainty
+    
+    def _set_unc_abs(self, value):
+        self._uncertainty = value
+        self._uncertainty_is_percentage = False
+    
+    def _get_unc_perc(self):
+        if self._uncertainty_is_percentage:
+            return self._uncertainty
+        else:
+            return self._uncertainty / self.value
+    
+    def _set_unc_perc(self, value):
+        self._uncertainty = value
+        self._uncertainty_is_percentage = True
+    
+    absolute_uncertainty = property(_get_unc_abs, _set_unc_abs)
+    percentage_uncertainty = property(_get_unc_perc, _set_unc_perc)
 
 t_datatable = typing.Dict[str, Value] #type hint
 
