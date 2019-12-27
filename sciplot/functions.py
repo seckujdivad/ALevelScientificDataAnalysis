@@ -131,9 +131,28 @@ class IMathematicalFunction:
             return operator[1]['class'](*items)
     
     def is_static(self, constants: typing.Dict[str, float]): #to be overridden by leaves
+        """
+        Returns whether or not this branch of the tree is static (depends on the datatable)
+
+        Args:
+            constants (dict str: float): the variables in the datatable that are constant
+        
+        Returns:
+            (bool): whether or not this branch of the tree is static
+        """
         return False not in [subfunc.is_static(constants) for subfunc in self._subfuncs]
     
     def pre_evaluate(self, constants: typing.Dict[str, float]):
+        """
+        Pre-evaluate sections of the tree that are static as determined by is_static
+
+        Args:
+            constants (dict str: float): the variables in the datatable that are constant
+        
+        Returns:
+            (self): This section of the tree is dynamic
+            (Float): This section of the tree is static and has been evaluated down to this Float object
+        """
         if self.is_static(constants):
             return Float(str(self.evaluate(constants)))
         
@@ -144,6 +163,15 @@ class IMathematicalFunction:
             return self
     
     def num_nodes(self, include_branches = True): #to be overwritten by leaves
+        """
+        Calculates the complexity of tree based on the number of nodes
+
+        Args:
+            include_branches (bool: True): specifies whether or not a branch should add to the count
+        
+        Returns:
+            (int): complexity of this branch
+        """
         total = sum([subfunc.num_nodes(include_branches) for subfunc in self._subfuncs])
 
         if include_branches:
