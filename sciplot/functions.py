@@ -11,11 +11,10 @@ class IMathematicalFunction:
         
         if autoparse:
             for item in args: #check sub functions - if they have already been parsed into objects, leave them. if they are still strings, parse into objects
-                if not isinstance(item, IMathematicalFunction):
-                    self._subfuncs.append(self.generate_from(item))
-                
-                else:
+                if isinstance(item, IMathematicalFunction):
                     self._subfuncs.append(item)
+                else:
+                    self._subfuncs.append(self.generate_from(item))
 
     @abc.abstractclassmethod
     def evaluate(self, datatable: typing.Dict[str, float]):
