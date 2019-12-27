@@ -183,7 +183,7 @@ class Database:
 
             try:
                 self.query(Query("", [], -1)) #interrupt the thread so that it will process _running = False
-            except BrokenPipeError:
+            except:
                 pass #pipe has already been closed
 
             if wait:
