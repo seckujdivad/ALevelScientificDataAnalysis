@@ -383,15 +383,15 @@ WHERE DataSet.DataSetID = (?)'''
     
     #tables
     def list_tables(self):
-        return self.query(Query('SELECT * FROM Table', [], 1))[0]
+        return self.query(Query('SELECT * FROM `Table`;', [], 1))[0]
     
     def remove_table(self, table_id: int):
-        self.query([Query('DELETE FROM Table WHERE TableID = (?)', [table_id], 0),
+        self.query([Query('DELETE FROM `Table` WHERE TableID = (?)', [table_id], 0),
                     Query('DELETE FROM TableColumn WHERE TableID = (?)', [table_id], 0)])
     
     def create_table(self, title: str):
-        return self.query([Query('INSERT INTO Table (Title) VALUES ((?))', [title], 0),
-                           Query('SELECT last_insert_rowid();', [], 2)])[0]
+        return self.query([Query('INSERT INTO `Table` (Title) VALUES ((?))', [title], 0),
+                           Query('SELECT last_insert_rowid();', [], 2)])[0][0]
     
     #table columns
     def list_table_columns(self, table_id: int):
