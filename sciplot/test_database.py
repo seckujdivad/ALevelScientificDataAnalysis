@@ -193,3 +193,19 @@ class TestDataFile(unittest.TestCase):
             df.remove_table(1)
             self.assertNotIn((1, 'Force-extension'), df.list_tables())
             df.goto_rollback()
+    
+    def test_list_table_columns(self):
+        with self.connect_datafile() as df:
+            self.assertEqual(df.list_table_columns(1), [(1, '00.000'), (7, '000.0')])
+    
+    def test_create_table_column(self):
+        with self.connect_datafile() as df:
+            df.create_table_column(1, 2, '0.0')
+            self.assertIn((2, '0.0'), df.list_table_columns(1))
+            df.goto_rollback()
+    
+    def test_remove_table_column(self):
+        with self.connect_datafile() as df:
+            df.remove_table_column(1, 1)
+            self.assertNotIn((1, '00.000'), df.list_table_columns(1))
+            df.goto_rollback()
