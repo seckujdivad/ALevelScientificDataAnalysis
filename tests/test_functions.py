@@ -203,11 +203,19 @@ class TestFunction(unittest.TestCase):
 
 
 class TestVariable(unittest.TestCase):
+    def format_value(self, formatstring, value):
+        return functions.Value(value).format(formatstring)
+
     def test_perctoabs(self):
         self.assertEqual(functions.Value(100, 0.1, True).absolute_uncertainty, 10)
     
     def test_abstoperc(self):
         self.assertEqual(functions.Value(100, 15, False).percentage_uncertainty, 0.15)
+    
+    def test_format_sigfig(self):
+        self.assertEqual(self.format_value('00#', 0.0002579), ('0.00026', None))
+        self.assertEqual(self.format_value('00#', 1234), ('1200', None))
+        self.assertEqual(self.format_value('000#', 0.0002579), ('0.000258', None))
 
 
 if __name__ == '__main__':
