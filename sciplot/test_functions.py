@@ -186,6 +186,10 @@ class TestFunction(unittest.TestCase):
         except ValueError: #appropriate exception was thrown
             pass
 
+    def test_dependencies(self):
+        self.assertEqual(functions.Function('{m}-{c}').evaluate_dependencies(), ['m', 'c'])
+        self.assertEqual(functions.Function('({g}*{m})-{c}').evaluate_dependencies(), ['g', 'm', 'c'])
+
     generic_datatable = {'g': functions.Value(9.81, 0.01, False, [(1, 1), (2, 1), (3, -2)]),
                          'volume': functions.Value(532, 0.1, True, [(2, 3)]),
                          'mass': functions.Value(25, 1, False, [(1, 1)])}
