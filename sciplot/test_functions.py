@@ -150,6 +150,41 @@ class TestFunction(unittest.TestCase):
         self.assertEqual(functions.Function('abs{g}').evaluate(self.generic_datatable).units, self.generic_datatable['g'].units)
         self.assertEqual(functions.Function('ln{g}').evaluate(self.generic_datatable).units, [])
         self.assertEqual(functions.Function('log{g}').evaluate(self.generic_datatable).units, [])
+    
+    def test_unopened_brackets(self):
+        try:
+            functions.Function('1)').evaluate({})
+            raise Exception('An exception wasn\'t thrown when it should\'ve been')
+        except ValueError: #appropriate exception was thrown
+            pass
+
+    def test_unclosed_brackets(self):
+        try:
+            functions.Function('(1').evaluate({})
+            raise Exception('An exception wasn\'t thrown when it should\'ve been')
+        except ValueError: #appropriate exception was thrown
+            pass
+
+    def test_unopened_variable(self):
+        try:
+            functions.Function('1}').evaluate({})
+            raise Exception('An exception wasn\'t thrown when it should\'ve been')
+        except ValueError: #appropriate exception was thrown
+            pass
+
+    def test_unclosed_variable(self):
+        try:
+            functions.Function('{1').evaluate({})
+            raise Exception('An exception wasn\'t thrown when it should\'ve been')
+        except ValueError: #appropriate exception was thrown
+            pass
+
+    def test_not_enough_values(self):
+        try:
+            functions.Function('+').evaluate({})
+            raise Exception('An exception wasn\'t thrown when it should\'ve been')
+        except ValueError: #appropriate exception was thrown
+            pass
 
     generic_datatable = {'g': functions.Value(9.81, 0.01, False, [(1, 1), (2, 1), (3, -2)]),
                          'volume': functions.Value(532, 0.1, True, [(2, 3)]),
