@@ -227,10 +227,12 @@ class IMathematicalFunction:
             raw_items = [_strip_brackets(item) for item in raw_items]
 
             #insert a default value for the operator if the value is missing (e.g. sin2 -> 1sin(2))
-            if 'default values' in operator[1]:
-                for i in range(len(raw_items)):
-                    if raw_items[i] == '' and len(operator[1]['default values']) > i:
-                        raw_items[i] = operator[1]['default values'][i]
+            for i in range(len(raw_items)):
+                if raw_items[i] == '':
+                    if 'default values' in operator[1]:
+                        if len(operator[1]['default values']) > i:
+                            if operator[1]['default values'][i] is not None:
+                                raw_items[i] = operator[1]['default values'][i]
 
             #check for variable or float
             items = []
