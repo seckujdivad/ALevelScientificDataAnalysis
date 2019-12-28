@@ -174,6 +174,9 @@ class IMathematicalFunction:
         
         if bracket_level != 0:
             raise ValueError('In expression "{}": {} bracket(s) were not closed'.format(string, bracket_level))
+            
+        if is_variable:
+            raise ValueError('In expression "{}": a variable was not closed with } before the end of the expression'.format(string))
         
         #find locations of operators in the string
         matches = []
