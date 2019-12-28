@@ -130,7 +130,9 @@ class IMathematicalFunction:
         string = _remove_all_spaces(string)
 
         #look for valid places for operators to be
-        valid_indexes = []
+        search_regions = []
+        current_segment = ''
+        start_index = 0
 
         bracket_level = 0
         is_variable = False
@@ -158,21 +160,25 @@ class IMathematicalFunction:
                     raise ValueError()
             
             if bracket_level == 0 and not is_variable: #operators at this character could be parsable
-                valid_indexes.append(i)
+                if current_segment == '':
+                    start_index = i
+                current_segment += string[i]
+
+            elif current_segment != '': #end of valid segment, add the completed segment to search_regions
+                search_regions.append((start_index, current_segment))
+                current_segment = ''
+        
+        if current_segment != '': #if there is a leftover search segment add it to search segments
+            search_regions.append((start_index, current_segment))
+            current_segment = ''
         
         #find locations of operators in the string
         matches = []
         for operator in operator_register:
-            for match in operator['expression'].finditer(string):
-                start, end = match.start(), match.end()
-
-                is_valid = True
-                for i in range(start, end, 1):
-                    if i not in valid_indexes:
-                        is_valid = False
-                
-                if is_valid:
-                    matches.append([match, operator])
+            for start_index, segment in search_regions:
+                for match in operator['expression'].finditer(segment):
+                    start, end = start_index + match.start(), start_index + match.end()
+                    matches.append([{'start': start, 'end': end}, operator])
         
         if len(matches) == 0:
             raise ValueError('No valid operators found in "{}"'.format(string))
@@ -186,18 +192,18 @@ class IMathematicalFunction:
                 for match in matches:
                     for other_match in matches:
                         if match != other_match:
-                            if (match[0].start() <= other_match[0].start()) and (match[0].end() >= other_match[0].end()):
+                            if (match[0]['start'] <= other_match[0]['start']) and (match[0]['end'] >= other_match[0]['end']):
                                 to_remove = other_match
 
-                            elif (((match[0].start() <= other_match[0].start()) and (match[0].end() <= other_match[0].end()) and (match[0].end() >= other_match[0].start()))
-                                 or ((match[0].end() >= other_match[0].end()) and (match[0].start() >= other_match[0].start()) and (match[0].start() <= other_match[0].end()))):
-                                match_len = match[0].end() - match[0].start()
-                                other_match_len = other_match[0].end() - other_match[0].start()
+                            elif (((match[0]['start'] <= other_match[0]['start']) and (match[0]['end'] <= other_match[0]['end']) and (match[0]['end'] >= other_match[0]['start']))
+                                 or ((match[0]['end'] >= other_match[0]['end']) and (match[0]['start'] >= other_match[0]['start']) and (match[0]['start'] <= other_match[0]['end']))):
+                                match_len = match[0]['end'] - match[0]['start']
+                                other_match_len = other_match[0]['end'] - other_match[0]['start']
 
                                 if match_len > other_match_len:
                                     to_remove = other_match
                                 elif match_len == other_match_len:
-                                    raise ValueError('Two operators of equal length {} are competing for the same match in expression "{}" - "{}": ({}, {}), "{}": ({}, {}). This conflict can\'t be resolved without changing the expression or modifying the capture expressions at the bottom of the functions module to avoid triggering both conditions.'.format(match_len, string, match[1]['name'], match[0].start(), match[0].end(), other_match[1]['name'], other_match[0].start(), other_match[0].end()))
+                                    raise ValueError('Two operators of equal length {} are competing for the same match in expression "{}" - "{}": ({}, {}), "{}": ({}, {}). This conflict can\'t be resolved without changing the expression or modifying the capture expressions at the bottom of the functions module to avoid triggering both conditions.'.format(match_len, string, match[1]['name'], match[0]['start'], match[0]['end'], other_match[1]['name'], other_match[0]['start'], other_match[0]['end']))
 
                 if to_remove is None:
                     has_overlap = False
@@ -211,7 +217,7 @@ class IMathematicalFunction:
                     operator = match
 
             #remove the operator and split the strings either side
-            raw_items = [string[:operator[0].start()], string[operator[0].end():]]
+            raw_items = [string[:operator[0]['start']], string[operator[0]['end']:]]
             raw_items = [_strip_brackets(item) for item in raw_items]
 
             #insert a default value for the operator if the value is missing (e.g. sin2 -> 1sin(2))
