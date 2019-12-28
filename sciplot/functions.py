@@ -11,7 +11,56 @@ class Value:
         self._uncertainty: float = uncertainty
         self._uncertainty_is_percentage: bool = uncertainty_is_percentage
         self.units = units
-    
+
+    def format(self, formatstring, value = None):
+        """
+        Format this value (or another) using the formatstring
+
+        Format strings:
+            ends with #: number of zeroes is number of significant figures (00#: 12345 -> 12000)
+            else:
+                00.00: 1.256 -> 01.26, 1 -> 01.00, -1.2 -> -01.20, 512.53 -> 12.53
+                *00.0: 1.256 -> 01.3, 1 -> 01.0, -1.2 -> -01.2, 512.53 -> 512.5
+                *.*:   won't change the string
+            
+
+            Appending e will give it as an exponent (5x10^3) where the multiplier (5) has the format string applied to it
+
+        Args:
+            formatstring (str): string to format with
+            value (float) = None: value to use instead of self.value (if not None)
+        
+        Returns:
+            (multiplier: str, exponent: str or None): value post-formatting. Exponent will be None if exponent form wasn't specified by the format string
+        """
+        if value is None:
+            value = self.value
+
+        if formatstring.endswith('e'): #exponent mode (standard form)
+            formatstring = formatstring[:-1]
+
+            exponent = math.floor(math.log10(value))
+            multiplier = value / pow(10, exponent)
+
+            return (self.format(formatstring, multiplier), str(exponent))
+
+        else: #decimalised mode
+            result_value = None
+            if formatstring.endswith('#'):
+                significant_figures = len(formatstring) - 1
+
+                exponent = significant_figures - 1 - math.floor(math.log10(value))
+
+                result_value = value * pow(10, exponent)
+                result_value = round(result_value)
+                result_value /= pow(10, exponent)
+
+            if result_value.is_integer():
+                result_value = int(result_value)
+
+            return (str(result_value), None)
+
+    #properties
     def _get_unc_abs(self):
         if self._uncertainty_is_percentage:
             return self._uncertainty * self.value
