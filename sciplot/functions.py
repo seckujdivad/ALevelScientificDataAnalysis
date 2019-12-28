@@ -229,10 +229,15 @@ class IMathematicalFunction:
             #insert a default value for the operator if the value is missing (e.g. sin2 -> 1sin(2))
             for i in range(len(raw_items)):
                 if raw_items[i] == '':
+                    has_default = False
                     if 'default values' in operator[1]:
                         if len(operator[1]['default values']) > i:
                             if operator[1]['default values'][i] is not None:
                                 raw_items[i] = operator[1]['default values'][i]
+                                has_default = True
+                    
+                    if not has_default:
+                        raise ValueError('In expression "{}": operand {} was not supplied for operator "{}" and a default value couldn\'t be found'.format(string, i, operator[1]['name']))
 
             #check for variable or float
             items = []
