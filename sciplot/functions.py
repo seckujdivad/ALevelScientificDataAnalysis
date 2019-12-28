@@ -93,6 +93,7 @@ class IMathematicalFunction:
     def _evaluate_uncertainty(self, datatable: t_datatable, evaluated_subfuncs: typing.List[Value]):
         """
         Calculates the uncertainty of the Value object to be returned by evaluate
+        The uncertainty is calculated using approximations of functions that are taught to Physics students at A-Level, not by calculating the range of outputs
 
         Args:
             datatable (dict of str: Value): values to be substituted into variables
