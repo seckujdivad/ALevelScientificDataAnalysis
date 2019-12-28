@@ -1,5 +1,9 @@
 import unittest
 import math
+import sys
+
+sys.path.append('..')
+sys.path.append('sciplot')
 
 import functions #pylint: disable=import-error
 

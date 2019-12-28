@@ -1,73 +1,72 @@
 import unittest
+import sys
+import os
+
+sys.path.append('..')
+sys.path.append('sciplot')
 
 import database #pylint: disable=import-error
 
 
 class TestDatabase(unittest.TestCase):
+    def create_db(self):
+        return database.Database(os.path.join(sys.path[0], 'datasets', 'database.db'))
+
     def test_query(self):
-        db = database.Database('../resources/test datasets/database.db')
-        q = database.Query("SELECT * FROM TestTable", [], 0)
-        db.query(q)
-        db.close()
+        with self.create_db() as db:
+            q = database.Query("SELECT * FROM TestTable", [], 0)
+            db.query(q)
     
     def test_query_value_insertion(self):
-        db = database.Database('../resources/test datasets/database.db')
-        q = database.Query("SELECT * FROM TestTable WHERE TestTableID = (?)", [1], 0)
-        db.query(q)
-        db.close()
+        with self.create_db() as db:
+            q = database.Query("SELECT * FROM TestTable WHERE TestTableID = (?)", [1], 0)
+            db.query(q)
 
     def test_return_many(self):
-        db = database.Database('../resources/test datasets/database.db')
-        q = database.Query("SELECT * FROM TestTable WHERE Value = 1", [], 1)
-        result = db.query(q)
-        self.assertEqual(result, [[(1, 1, "Hello"), (2, 1, "World")]])
-        db.close()
+        with self.create_db() as db:
+            q = database.Query("SELECT * FROM TestTable WHERE Value = 1", [], 1)
+            result = db.query(q)
+            self.assertEqual(result, [[(1, 1, "Hello"), (2, 1, "World")]])
     
     def test_return_one(self):
-        db = database.Database('../resources/test datasets/database.db')
-        q = database.Query("SELECT * FROM TestTable WHERE TestTableID = 1", [], 2)
-        result = db.query(q)
-        self.assertEqual(result, [(1, 1, "Hello")])
-        db.close()
+        with self.create_db() as db:
+            q = database.Query("SELECT * FROM TestTable WHERE TestTableID = 1", [], 2)
+            result = db.query(q)
+            self.assertEqual(result, [(1, 1, "Hello")])
     
     def test_write(self):
-        db = database.Database('../resources/test datasets/database.db')
-        q0 = database.Query('BEGIN;', [], 0)
-        q1 = database.Query('INSERT INTO TestTable ("Value", "String") VALUES (55, "Hello World!");', [], 0)
-        q2 = database.Query('SELECT "Value", "String" FROM TestTable WHERE "Value" = 55;', [], 1)
-        q3 = database.Query('ROLLBACK;', [], 0)
-        result = db.query([q0, q1, q2, q3])
-        self.assertEqual(result, [[(55, "Hello World!")]])
-        db.close()
+        with self.create_db() as db:
+            q0 = database.Query('BEGIN;', [], 0)
+            q1 = database.Query('INSERT INTO TestTable ("Value", "String") VALUES (55, "Hello World!");', [], 0)
+            q2 = database.Query('SELECT "Value", "String" FROM TestTable WHERE "Value" = 55;', [], 1)
+            q3 = database.Query('ROLLBACK;', [], 0)
+            result = db.query([q0, q1, q2, q3])
+            self.assertEqual(result, [[(55, "Hello World!")]])
     
     def test_multiline(self):
-        db = database.Database('../resources/test datasets/database.db')
-        query = database.Query('''BEGIN;
-        INSERT INTO TestTable ("Value", "String") VALUES (55, "Hello World!");
-        SELECT "Value", "String" FROM TestTable WHERE "Value" = 55;
-        ROLLBACK;''', [], 1)
-        self.assertEqual(db.query(query), [[], [], [(55, "Hello World!")], []])
-        db.close()
+        with self.create_db() as db:
+            query = database.Query('''BEGIN;
+            INSERT INTO TestTable ("Value", "String") VALUES (55, "Hello World!");
+            SELECT "Value", "String" FROM TestTable WHERE "Value" = 55;
+            ROLLBACK;''', [], 1)
+            self.assertEqual(db.query(query), [[], [], [(55, "Hello World!")], []])
     
     def test_bad_query(self):
-        db = database.Database('../resources/test datasets/database.db')
-        query = database.Query('SELECT BadColumn FROM InvalidTableName', [], 1)
-        try:
-            db.query(query)
+        with self.create_db() as db:
+            query = database.Query('SELECT BadColumn FROM InvalidTableName', [], 1)
+            try:
+                db.query(query)
 
-            #this shouldn't pass
-            raise Exception('The appropriate exception was not thrown')
-        
-        except database.sqlite3.OperationalError:
-            pass #appropriate error raised, test passed
-
-        finally:
-            db.close()
+                #this shouldn't pass
+                raise Exception('The appropriate exception was not thrown')
+            
+            except database.sqlite3.OperationalError:
+                pass #appropriate error raised, test passed
 
 
 class TestDataFile(unittest.TestCase):
     def connect_datafile(self):
-        return database.DataFile('../resources/test datasets/datafile.db')
+        return database.DataFile(os.path.join(sys.path[0], 'datasets', 'datafile.db'))
 
     def test_list_constants(self):
         with self.connect_datafile() as df:
