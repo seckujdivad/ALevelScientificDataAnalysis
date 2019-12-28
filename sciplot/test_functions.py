@@ -195,5 +195,13 @@ class TestFunction(unittest.TestCase):
                          'mass': functions.Value(25, 1, False, [(1, 1)])}
 
 
+class TestVariable(unittest.TestCase):
+    def test_perctoabs(self):
+        self.assertEqual(functions.Value(100, 0.1, True).absolute_uncertainty, 10)
+    
+    def test_abstoperc(self):
+        self.assertEqual(functions.Value(100, 15, False).percentage_uncertainty, 0.15)
+
+
 if __name__ == '__main__':
     unittest.main()
