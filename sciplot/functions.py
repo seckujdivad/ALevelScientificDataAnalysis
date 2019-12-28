@@ -308,6 +308,21 @@ class IMathematicalFunction:
             return total + 1
         else:
             return total
+    
+    def evaluate_dependencies(self): #to be overwritten by leaves
+        """
+        Finds the variables that this function is dependent on (the variables that must be included in the datatable)
+
+        Returns:
+            (list of str): the names of the variables this function is dependent on
+        """
+        dependencies = [subfunc.evaluate_dependencies() for subfunc in self._subfuncs]
+        result = []
+        for dependency_list in dependencies:
+            for name in dependency_list:
+                if name not in result:
+                    result.append(name)
+        return result
 
 
 #root - other classes should interact with this
@@ -346,6 +361,9 @@ class Float(IMathematicalFunction):
     
     def num_nodes(self, include_branches = True):
         return 1
+    
+    def evaluate_dependencies(self):
+        return []
 
 
 class Variable(IMathematicalFunction):
@@ -362,6 +380,9 @@ class Variable(IMathematicalFunction):
     
     def num_nodes(self, include_branches = True):
         return 1
+    
+    def evaluate_dependencies(self):
+        return [self._name]
 
 
 # branches
