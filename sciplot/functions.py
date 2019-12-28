@@ -143,21 +143,8 @@ class IMathematicalFunction:
                 else:
                     is_variable = True
             
-            if string[i] == '}':
-                if is_variable:
-                    is_variable = False
-                else:
-                    raise ValueError('{}: can\'t use } when not closing a variable name'.format(i))
-            
             if string[i] == '(':
                 bracket_level += 1
-            
-            if string[i] == ')':
-                if bracket_level > 0:
-                    bracket_level -= 1
-                
-                else:
-                    raise ValueError('In expression "{}" at {}: can\'t close an unopened bracket pair'.format(string, i))
             
             if bracket_level == 0 and not is_variable: #operators at this character could be parsable
                 if current_segment == '':
@@ -167,6 +154,20 @@ class IMathematicalFunction:
             elif current_segment != '': #end of valid segment, add the completed segment to search_regions
                 search_regions.append((start_index, current_segment))
                 current_segment = ''
+            
+            if string[i] == '}':
+                if is_variable:
+                    is_variable = False
+                else:
+                    raise ValueError('{}: can\'t use } when not closing a variable name'.format(i))
+            
+            if string[i] == ')':
+                if bracket_level > 0:
+                    bracket_level -= 1
+                
+                else:
+                    raise ValueError('In expression "{}" at {}: can\'t close an unopened bracket pair'.format(string, i))
+            
         
         if current_segment != '': #if there is a leftover search segment add it to search segments
             search_regions.append((start_index, current_segment))
