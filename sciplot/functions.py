@@ -757,7 +757,7 @@ operator_register = [
 #utility functions
 def _strip_brackets(string):
     while string.startswith('(') and string.endswith(')'):
-        string = string[1:len(string) - 1]
+        string = string[1:-1]
     
     return string
 
