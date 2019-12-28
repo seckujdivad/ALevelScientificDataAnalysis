@@ -147,7 +147,7 @@ class IMathematicalFunction:
                 if is_variable:
                     is_variable = False
                 else:
-                    raise ValueError('{}: can\'t use } when not closing a varible name'.format(i))
+                    raise ValueError('{}: can\'t use } when not closing a variable name'.format(i))
             
             if string[i] == '(':
                 bracket_level += 1
@@ -157,7 +157,7 @@ class IMathematicalFunction:
                     bracket_level -= 1
                 
                 else:
-                    raise ValueError()
+                    raise ValueError('In expression "{}" at {}: can\'t close an unopened bracket pair'.format(string, i))
             
             if bracket_level == 0 and not is_variable: #operators at this character could be parsable
                 if current_segment == '':
@@ -171,6 +171,9 @@ class IMathematicalFunction:
         if current_segment != '': #if there is a leftover search segment add it to search segments
             search_regions.append((start_index, current_segment))
             current_segment = ''
+        
+        if bracket_level != 0:
+            raise ValueError('In expression "{}": {} bracket(s) were not closed'.format(string, bracket_level))
         
         #find locations of operators in the string
         matches = []
