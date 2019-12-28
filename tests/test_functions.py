@@ -1,11 +1,14 @@
 import unittest
 import math
 import sys
+import os
 
-sys.path.append('..')
-sys.path.append('sciplot')
+up1 = os.path.abspath('../sciplot')
+sys.path.insert(0, up1)
 
 import functions #pylint: disable=import-error
+
+sys.path.pop(0)
 
 
 class TestFunction(unittest.TestCase):
