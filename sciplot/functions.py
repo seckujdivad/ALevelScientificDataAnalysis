@@ -252,7 +252,7 @@ class IMathematicalFunction:
                 if is_float:
                         items.append(Float(item))
                 
-                elif item.startswith('{') and item.endswith('}'): #check for variable
+                elif item.startswith('{') and item.endswith('}') and '}' not in item[1:-1]: #check for variable
                     items.append(Variable(item[1:len(item) - 1]))
                 
                 else:
