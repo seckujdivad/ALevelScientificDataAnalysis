@@ -22,6 +22,7 @@ class Value:
                 00.00: 1.256 -> 01.26, 1 -> 01.00, -1.2 -> -01.20, 512.53 -> 12.53
                 *00.0: 1.256 -> 01.3, 1 -> 01.0, -1.2 -> -01.2, 512.53 -> 512.5
                 *.*:   won't change the string
+                *:     won't change the string
             
 
             Appending e will give it as an exponent (5x10^3) where the multiplier (5) has the format string applied to it
@@ -45,7 +46,7 @@ class Value:
             return (self.format(formatstring, multiplier), str(exponent))
 
         else: #decimalised mode
-            result_value = None
+            return_string = None
             if formatstring.endswith('#'):
                 significant_figures = len(formatstring) - 1
 
@@ -55,10 +56,29 @@ class Value:
                 result_value = round(result_value)
                 result_value /= pow(10, exponent)
 
-            if result_value.is_integer():
-                result_value = int(result_value)
+                if result_value.is_integer():
+                    result_value = int(result_value)
+                
+                return_string = str(result_value)
+                
+            
+            else:
+                pattern = re.compile('\**\.\**') #pylint disable=anomalous-backslash-in-string
+                matched = pattern.findall(formatstring)
+                if matched == [formatstring]:
+                    result_value = str
 
-            return (str(result_value), None)
+            
+
+            return (return_string, None)
+    
+    def format_scientific(self):
+        """
+        Returns self.value in scientific form (standard form, uncertainty to 1 sig fig, multiplier to same number of decimal places as uncertainty)
+
+        Returns:
+            (str, str, str): multiplier, exponent, absolute uncertainty
+        """
 
     #properties
     def _get_unc_abs(self):

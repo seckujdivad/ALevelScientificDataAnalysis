@@ -216,6 +216,7 @@ class TestVariable(unittest.TestCase):
         self.assertEqual(self.format_value('00#', 0.0002579), ('0.00026', None))
         self.assertEqual(self.format_value('00#', 1234), ('1200', None))
         self.assertEqual(self.format_value('000#', 0.0002579), ('0.000258', None))
+        self.assertEqual(self.format_value('000#', 0.1), ('0.100', None))
 
 
 if __name__ == '__main__':
