@@ -60,7 +60,20 @@ class Value:
                     result_value = int(result_value)
                 
                 return_string = str(result_value)
+
+                required_length = len(formatstring) - 1
+                return_string_sigfig = 0
+                for char in return_string:
+                    if (char != '.') and ((char != '0') or (return_string_sigfig > 0)):
+                        return_string_sigfig += 1
                 
+                if return_string_sigfig < required_length:
+                    chars_to_add = required_length - return_string_sigfig
+
+                    if '.' not in return_string:
+                        return_string += '.'
+
+                    return_string += '0' * chars_to_add
             
             else:
                 pattern = re.compile('\**\.\**') #pylint disable=anomalous-backslash-in-string
