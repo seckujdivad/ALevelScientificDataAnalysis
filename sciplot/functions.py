@@ -47,7 +47,10 @@ class Value:
 
         else: #decimalised mode
             return_string = None
-            if formatstring.endswith('#'):
+            if formatstring == '*' or formatstring == '*.*':
+                return_string = str(value)
+            
+            elif formatstring.endswith('#'):
                 significant_figures = len(formatstring) - 1
 
                 exponent = significant_figures - 1 - math.floor(math.log10(value))
@@ -76,12 +79,54 @@ class Value:
                     return_string += '0' * chars_to_add
             
             else:
-                pattern = re.compile('\**\.\**') #pylint disable=anomalous-backslash-in-string
-                matched = pattern.findall(formatstring)
-                if matched == [formatstring]:
-                    result_value = str
+                return_string = str(value)
 
-            
+                #split format string around decimal place
+                if formatstring.find('.') == -1:
+                    pre_decimal = formatstring
+                    post_decimal = ''
+                else:
+                    pre_decimal = formatstring[:formatstring.find('.')]
+                    post_decimal = formatstring[formatstring.find('.') + 1:]
+
+                #interpret format string
+                pre_capped = not pre_decimal.startswith('*')
+                pre_size = len(pre_decimal)
+                if pre_capped:
+                    pre_size -= 1
+
+                post_capped = not post_decimal.endswith('*')
+                post_size = len(post_decimal)
+                if post_capped:
+                    post_size -= 1
+                
+                #split value to format around decimal place
+                return_pivot = return_string.find('.')
+                if return_pivot == -1:
+                    pre_return = return_string
+                    post_return = ''
+                else:
+                    pre_return = return_string[:return_pivot]
+                    post_return = return_string[return_pivot + 1:]
+                
+                if pre_size > len(pre_return):
+                    pre_return = ('0' * (pre_size - len(pre_return))) + pre_return
+                elif (pre_size < len(pre_return)) and pre_capped:
+                    pre_return = pre_return[0 - len(pre_return) + pre_size:]
+                
+                if post_decimal == '':
+                    post_return = ''
+                elif post_size > len(post_return):
+                    post_return += '0' * (post_size - len(post_return))
+                elif (post_size < len(post_return)) and post_capped:
+                    post_return = str(int(round(int(post_return) / pow(10, len(post_return) - post_size - 1), 0)))
+                
+                if post_return == '':
+                    return_string = pre_return
+                elif pre_return == '':
+                    return_string = '0.{}'.format(post_return)
+                else:
+                    return_string = '{}.{}'.format(pre_return, post_return)
 
             return (return_string, None)
     
