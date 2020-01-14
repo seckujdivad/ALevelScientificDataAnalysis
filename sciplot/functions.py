@@ -92,12 +92,12 @@ class Value:
                 #interpret format string
                 pre_capped = not pre_decimal.startswith('*')
                 pre_size = len(pre_decimal)
-                if pre_capped:
+                if not pre_capped:
                     pre_size -= 1
 
                 post_capped = not post_decimal.endswith('*')
                 post_size = len(post_decimal)
-                if post_capped:
+                if not post_capped:
                     post_size -= 1
                 
                 #split value to format around decimal place
@@ -119,7 +119,7 @@ class Value:
                 elif post_size > len(post_return):
                     post_return += '0' * (post_size - len(post_return))
                 elif (post_size < len(post_return)) and post_capped:
-                    post_return = str(int(round(int(post_return) / pow(10, len(post_return) - post_size - 1), 0)))
+                    post_return = str(int(round(int(post_return) / pow(10, len(post_return) - post_size), 0)))
                 
                 if post_return == '':
                     return_string = pre_return
