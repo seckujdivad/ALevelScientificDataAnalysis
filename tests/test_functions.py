@@ -220,6 +220,18 @@ class TestVariable(unittest.TestCase):
         self.assertEqual(self.format_value('000#', 0.05), ('0.0500', None))
         self.assertEqual(self.format_value('000#', 1), ('1.00', None))
         self.assertEqual(self.format_value('000#', 20), ('20.0', None))
+    
+    def test_format_decimal_places(self):
+        self.assertEqual(self.format_value('*.*', 10.52), ('10.52', None))
+        self.assertEqual(self.format_value('*', 10.52), ('10.52', None))
+        self.assertEqual(self.format_value('*.0', 10.52), ('10.5', None))
+        self.assertEqual(self.format_value('*.00', 10.52), ('10.52', None))
+        self.assertEqual(self.format_value('*.000', 10.52), ('10.520', None))
+        self.assertEqual(self.format_value('00.0', 17.52), ('17.5', None))
+        self.assertEqual(self.format_value('0.0', 17.52), ('7.5', None))
+        self.assertEqual(self.format_value('000.0', 17.52), ('017.5', None))
+        self.assertEqual(self.format_value('*0.0*', 17.52), ('17.52', None))
+        self.assertEqual(self.format_value('0.*', 17.52), ('7.52', None))
 
 
 if __name__ == '__main__':
