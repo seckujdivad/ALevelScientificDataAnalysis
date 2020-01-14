@@ -41,9 +41,17 @@ class Value:
             formatstring = formatstring[:-1]
 
             exponent = math.floor(math.log10(value))
+
+            pivot = formatstring.find('.')
+            if pivot != -1:
+                exponent -= pivot
+                exponent += 1
+                if formatstring.startswith('*'):
+                    exponent -= 1
+
             multiplier = value / pow(10, exponent)
 
-            return (self.format(formatstring, multiplier), str(exponent))
+            return (self.format(formatstring, multiplier)[0], str(exponent))
 
         else: #decimalised mode
             return_string = None
