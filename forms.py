@@ -33,7 +33,7 @@ class DataFrame(SubFrame):
         for i in range(1):
             self._gbs_main.AddGrowableCol(i)
         
-        for j in range(1):
+        for j in range(2):
             self._gbs_main.AddGrowableRow(j)
 
         #create elements
@@ -55,8 +55,6 @@ class DataFrame(SubFrame):
         self._gbs_main.Add(self._btn_new_column, wx.GBPosition(1, 1), wx.GBSpan(1, 1), wx.ALL | wx.EXPAND)
         
         #finalise layout
-        self._gbs_main.AddGrowableRow(1)
-
         self.SetSizer(self._gbs_main)
         self.Layout()
         self._gbs_main.Fit(self)
