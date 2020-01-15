@@ -150,6 +150,14 @@ class Value:
         Returns:
             (str, str, str): multiplier, exponent, absolute uncertainty
         """
+        multiplier, exponent = self.format('0.0e')
+        exponent = int(exponent)
+        uncertainty = self.format('0#', self.absolute_uncertainty / pow(10, exponent))[0]
+
+        multiplier, exponent = self.format('0.{}e'.format('0' * (exponent - 1)))
+
+        return multiplier, exponent, uncertainty
+    
     def upwards_round(self, num: float):
         if self._round_use_internal:
             return round(num)
