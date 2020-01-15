@@ -205,6 +205,9 @@ class TestFunction(unittest.TestCase):
 class TestVariable(unittest.TestCase):
     def format_value(self, formatstring, value):
         return functions.Value(value).format(formatstring)
+    
+    def format_scientific(self, value, uncertainty):
+        return functions.Value(value, uncertainty, uncertainty_is_percentage = False).format_scientific()
 
     def test_perctoabs(self):
         self.assertEqual(functions.Value(100, 0.1, True).absolute_uncertainty, 10)
@@ -239,6 +242,12 @@ class TestVariable(unittest.TestCase):
         self.assertEqual(self.format_value('0.00e', 253), ('2.53', '2'))
         self.assertEqual(self.format_value('00.0e', 253), ('25.3', '1'))
         self.assertEqual(self.format_value('0.0e', 0.19), ('1.9', '-1'))
+    
+    def test_scientific(self):
+        self.assertEqual(self.format_scientific(324, 10), ('3.2', '2', '0.1'))
+        self.assertEqual(self.format_scientific(325, 10), ('3.3', '2', '0.1'))
+        self.assertEqual(self.format_scientific(52, 10), ('5', '1', '1'))
+        self.assertEqual(self.format_scientific(0.00324, 0.005), ('3', '-3', '5'))
 
 
 if __name__ == '__main__':
