@@ -6,15 +6,20 @@ import typing
 
 
 class Value:
-    def __init__(self, value, uncertainty: float = 0, uncertainty_is_percentage: bool = True, units: typing.List[typing.Tuple[int, float]] = []):
+    def __init__(self, value, uncertainty: float = 0, uncertainty_is_percentage: bool = True, units: typing.List[typing.Tuple[int, float]] = [], round_use_internal: bool = False):
+        """
+        NB: Python uses Banker's rounding. This class rounds upwards to resolve equidistant cases as this is the expected behaviour by A-Level physics students. This functionality can be overridden by setting round_use_internal to True.
+        """
         self.value: float = float(value) #enforce type
         self._uncertainty: float = uncertainty
         self._uncertainty_is_percentage: bool = uncertainty_is_percentage
         self.units = units
+        self._round_use_internal: bool = round_use_internal
 
     def format(self, formatstring, value = None):
         """
         Format this value (or another) using the formatstring
+        
 
         Format strings:
             ends with #: number of zeroes is number of significant figures (00#: 12345 -> 12000)
@@ -64,7 +69,7 @@ class Value:
                 exponent = significant_figures - 1 - math.floor(math.log10(value))
 
                 result_value = value * pow(10, exponent)
-                result_value = round(result_value)
+                result_value = self.upwards_round(result_value)
                 result_value /= pow(10, exponent)
 
                 if result_value.is_integer():
@@ -127,7 +132,7 @@ class Value:
                 elif post_size > len(post_return):
                     post_return += '0' * (post_size - len(post_return))
                 elif (post_size < len(post_return)) and post_capped:
-                    post_return = str(int(round(int(post_return) / pow(10, len(post_return) - post_size), 0)))
+                    post_return = str(int(self.upwards_round(int(post_return) / pow(10, len(post_return) - post_size))))
                 
                 if post_return == '':
                     return_string = pre_return
@@ -145,6 +150,11 @@ class Value:
         Returns:
             (str, str, str): multiplier, exponent, absolute uncertainty
         """
+    def upwards_round(self, num: float):
+        if self._round_use_internal:
+            return round(num)
+        else:
+            return int(num + 0.5)
 
     #properties
     def _get_unc_abs(self):
@@ -170,7 +180,7 @@ class Value:
     absolute_uncertainty = property(_get_unc_abs, _set_unc_abs)
     percentage_uncertainty = property(_get_unc_perc, _set_unc_perc)
 
-t_datatable = typing.Dict[str, Value] #type hint
+t_datatable = typing.Dict[str, Value] #composite type hint
 
 
 #interface defining all functions
