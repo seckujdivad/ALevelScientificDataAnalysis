@@ -2,6 +2,7 @@ import wx
 import wx.lib.agw.ribbon as ribbon
 import typing
 import functools
+import ctypes
 
 import forms
 
@@ -16,6 +17,11 @@ class RootFrame(wx.Frame):
 
         self.SetSize(800, 600)
         self.SetMinSize(wx.Size(500, 400))
+
+        #set icon
+        icon = wx.Icon()
+        icon.CopyFromBitmap(wx.Bitmap("resources/icon.ico", wx.BITMAP_TYPE_ANY))
+        self.SetIcon(icon)
 
         #make sizer (organises the elements in the frame)
         self._gbs_main = wx.GridBagSizer(0, 0)
@@ -89,6 +95,8 @@ class RootFrame(wx.Frame):
 class App(wx.App):
     def __init__(self):
         super().__init__()
+
+        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("davidjuckes.sciplot")
 
         self.frame_root = RootFrame(None, self)
         self.frame_root.Show(True)
