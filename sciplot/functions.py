@@ -6,10 +6,12 @@ import typing
 
 
 class Value:
-    def __init__(self, value, uncertainty: float = 0, uncertainty_is_percentage: bool = True, units: typing.List[typing.Tuple[int, float]] = [], round_use_internal: bool = False):
-        """
-        NB: Python uses Banker's rounding. This class rounds upwards to resolve equidistant cases as this is the expected behaviour by A-Level physics students. This functionality can be overridden by setting round_use_internal to True.
-        """
+    """
+    Class that holds values with their uncertainties and units. Also provides utilities for converting between percentage and absolute uncertainties as well as some formatting methods.
+
+    NB: Python uses Banker's rounding. This class rounds upwards to resolve equidistant cases as this is the expected behaviour by A-Level physics students. This functionality can be overridden by setting round_use_internal to True.
+    """
+    def __init__(self, value: typing.Union[float, int, str, bytes, bytearray], uncertainty: float = 0, uncertainty_is_percentage: bool = True, units: typing.List[typing.Tuple[int, float]] = [], round_use_internal: bool = False):
         self.value: float = float(value) #enforce type
         self._uncertainty: float = uncertainty
         self._uncertainty_is_percentage: bool = uncertainty_is_percentage
