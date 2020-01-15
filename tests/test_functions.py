@@ -220,6 +220,7 @@ class TestVariable(unittest.TestCase):
         self.assertEqual(self.format_value('000#', 0.05), ('0.0500', None))
         self.assertEqual(self.format_value('000#', 1), ('1.00', None))
         self.assertEqual(self.format_value('000#', 20), ('20.0', None))
+        self.assertEqual(self.format_value('0#', 25), ('30', None))
     
     def test_format_decimal_places(self):
         self.assertEqual(self.format_value('*.*', 10.52), ('10.52', None))
