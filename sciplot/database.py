@@ -190,6 +190,12 @@ class Database:
 
 
 class DataFile(Database):
+    """
+    A thread-safe database object with methods specific to databases following the internal file structure
+
+    Args:
+        path (str): path to datafile
+    """
     def __init__(self, path: str):
         super().__init__(path)
 
