@@ -44,11 +44,19 @@ class RootFrame(wx.Frame):
         self._mb_main = wx.MenuBar()
         self._mb_cats = {}
         self._mb_subitems = {}
+        self._mb_cats_internalonly = {}
         for name in ['File']:
             self._mb_cats[name] = wx.Menu()
             self._mb_main.Append(self._mb_cats[name], name)
             self._mb_subitems[name] = []
+            self._mb_cats_internalonly[name] = True
         self.SetMenuBar(self._mb_main)
+
+        #add internal menu bar items
+        for cat, title, func in [('File', 'Open', self._choose_db)]:
+            menu_item = self._mb_cats[cat].Append(wx.ID_ANY, title)
+            self.Bind(wx.EVT_MENU, func, menu_item)
+            self._mb_subitems[cat].append(menu_item)
 
         #make toolbar
         self._tlbr_panelswitch = wx.ToolBar(self, wx.ID_ANY)
@@ -76,6 +84,10 @@ class RootFrame(wx.Frame):
             menu_items = new_frame.get_menu_items()
             for name, items in menu_items:
                 for title, func in items:
+                    if self._mb_cats_internalonly[name]:
+                        self._mb_cats[name].AppendSeparator()
+                        self._mb_cats_internalonly[name] = False
+
                     menu_item = self._mb_cats[name].Append(wx.ID_ANY, title)
                     self.Bind(wx.EVT_MENU, func, menu_item)
                     self._mb_subitems[name].append(menu_item)
@@ -109,6 +121,9 @@ class RootFrame(wx.Frame):
     
     def toolbar_form_clicked(self, name, event):
         self.set_form(name)
+        event.Skip()
+    
+    def _choose_db(self, event):
         event.Skip()
 
 
