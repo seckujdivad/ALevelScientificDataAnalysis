@@ -1,5 +1,6 @@
 import wx
 import wx.lib.agw.ribbon as ribbon
+
 import typing
 import functools
 import ctypes
@@ -39,6 +40,16 @@ class RootFrame(wx.Frame):
         self._sb_main = self.CreateStatusBar(1, wx.STB_SIZEGRIP, wx.ID_ANY)
         self._sb_main.PushStatusText("")
 
+        #make menu bar
+        self._mb_main = wx.MenuBar()
+        self._mb_cats = {}
+        self._mb_subitems = {}
+        for name in ['File']:
+            self._mb_cats[name] = wx.Menu()
+            self._mb_main.Append(self._mb_cats[name], name)
+            self._mb_subitems[name] = []
+        self.SetMenuBar(self._mb_main)
+
         #make toolbar
         self._tlbr_panelswitch = wx.ToolBar(self, wx.ID_ANY)
         self._tlbr_panelswitch_tools: typing.Dict[str, wx.ToolBarToolBase] = {}
@@ -60,10 +71,19 @@ class RootFrame(wx.Frame):
             self._bk_sub.ShowNewPage(new_frame)
 
             new_frame.toolbar_index = i
-            i += 1
+
+            #register menu items
+            menu_items = new_frame.get_menu_items()
+            for name, items in menu_items:
+                for title, func in items:
+                    menu_item = self._mb_cats[name].Append(wx.ID_ANY, title)
+                    self.Bind(wx.EVT_MENU, func, menu_item)
+                    self._mb_subitems[name].append(menu_item)
 
             if isinstance(new_frame, forms.manifest[0]):
                 self.set_form(new_frame.identifier)
+            
+            i += 1
 
         #controls have been added, make toolbar static
         self._tlbr_panelswitch.Realize()

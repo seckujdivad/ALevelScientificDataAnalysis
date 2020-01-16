@@ -14,6 +14,21 @@ class SubFrame(wx.Panel):
         self.styling_name = '<blank>'
         self.styling_icon = wx.Bitmap('resources/toolbar/blank.bmp')
         self.toolbar_index = -1
+    
+    def get_menu_items(self):
+        """
+        Get custom menu items to display on menubar
+
+        Returns:
+            list of
+                tuple of
+                    str: name of menu column
+                    list of
+                        tuple of
+                            str: title of menu item
+                            func: method to call when menu item is clicked
+        """
+        return []
 
 
 class DataFrame(SubFrame):
