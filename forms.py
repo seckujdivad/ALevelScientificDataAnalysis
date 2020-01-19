@@ -94,9 +94,6 @@ class DataFrame(SubFrame):
     
     def refresh_table(self):
         self._recreate_dvl_data()
-        """for column in self._dvl_columns:
-            self._dvl_data.DeleteColumn(column)
-        self._dvl_data.DeleteAllItems()"""
 
         data_table = []
         
@@ -111,13 +108,8 @@ class DataFrame(SubFrame):
 
             for j in range(len(data_table)):
                 data_table_formatted[i].append(data_table[j][i][0])
-        print(data_table_formatted)
-        print(len(data_table_formatted))
-
-        i = 0
+                
         for row in data_table_formatted:
-            print(row, i)
-            i += 1
             self._dvl_data.AppendItem(row)
     
     def _recreate_dvl_data(self):
