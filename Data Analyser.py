@@ -4,8 +4,10 @@ import wx.lib.agw.ribbon as ribbon
 import typing
 import functools
 import ctypes
+import sys
 
 import forms
+import sciplot.database
 
 
 class RootFrame(wx.Frame):
@@ -18,6 +20,10 @@ class RootFrame(wx.Frame):
 
         self.SetSize(800, 600)
         self.SetMinSize(wx.Size(500, 400))
+
+        self.subframe_share = {
+            'file': None
+        }
 
         #set icon
         icon = wx.Icon()
@@ -124,6 +130,27 @@ class RootFrame(wx.Frame):
         event.Skip()
     
     def _choose_db(self, event):
+        if self.subframe_share['file'] is not None:
+            commit_changes = wx.MessageBox("Commit changes to open file?", "Action required", wx.ICON_QUESTION | wx.OK | wx.CANCEL)
+
+            if commit_changes == wx.OK:
+                self.subframe_share['file'].commit()
+                self.subframe_share['file'].close()
+                self.subframe_share['file'] = None
+
+        else:
+            commit_changes = wx.OK
+
+        if commit_changes != wx.CANCEL:
+            with wx.FileDialog(self, "Open DataFile", wildcard = "DataFile (*.db)|*.db", defaultDir = sys.path[0], style = wx.FD_OPEN | wx.FD_FILE_MUST_EXIST) as file_dialog:
+                if file_dialog.ShowModal() == wx.ID_CANCEL:
+                    pass
+
+                else:
+                    path = file_dialog.GetPath()
+                    
+                    self.subframe_share['file'] = sciplot.database.DataFile(path)
+
         event.Skip()
 
 

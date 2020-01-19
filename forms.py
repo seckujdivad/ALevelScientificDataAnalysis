@@ -14,6 +14,8 @@ class SubFrame(wx.Panel):
         self.styling_name = '<blank>'
         self.styling_icon = wx.Bitmap('resources/toolbar/blank.bmp')
         self.toolbar_index = -1
+
+        self.subframe_share = self.root_frame.subframe_share
     
     def get_menu_items(self):
         """
