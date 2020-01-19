@@ -155,8 +155,8 @@ class Value:
         multiplier, exponent = self.format('0.0e')
         exponent = int(exponent)
         uncertainty = self.format('0#', self.absolute_uncertainty / pow(10, exponent))[0]
-
-        multiplier, exponent = self.format('0.{}e'.format('0' * (exponent - 1)))
+        
+        multiplier, exponent = self.format('0.{}e'.format('0' * int(0 - math.log10(self.percentage_uncertainty))))
 
         return multiplier, exponent, uncertainty
     
