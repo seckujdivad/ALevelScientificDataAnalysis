@@ -242,12 +242,22 @@ class TestVariable(unittest.TestCase):
         self.assertEqual(self.format_value('0.00e', 253), ('2.53', '2'))
         self.assertEqual(self.format_value('00.0e', 253), ('25.3', '1'))
         self.assertEqual(self.format_value('0.0e', 0.19), ('1.9', '-1'))
+
+        self.assertEqual(self.format_value('0e', 1.217), ('1', '0'))
+        self.assertEqual(self.format_value('0.0e', 1.217), ('1.2', '0'))
+        self.assertEqual(self.format_value('0.00e', 1.217), ('1.22', '0'))
+        self.assertEqual(self.format_value('0.000e', 1.217), ('1.217', '0'))
     
     def test_scientific(self):
         self.assertEqual(self.format_scientific(324, 10), ('3.2', '2', '0.1'))
         self.assertEqual(self.format_scientific(325, 10), ('3.3', '2', '0.1'))
         self.assertEqual(self.format_scientific(52, 10), ('5', '1', '1'))
-        self.assertEqual(self.format_scientific(0.00324, 0.005), ('3', '-3', '5'))
+        self.assertEqual(self.format_scientific(0.00324, 0.0005), ('3', '-3', '0.5'))
+        self.assertEqual(self.format_scientific(0.00324, 0.00005), ('3.2', '-3', '0.05'))
+        self.assertEqual(self.format_scientific(1.217, 1), ('1', '0', '1'))
+        self.assertEqual(self.format_scientific(1.217, 0.1), ('1.2', '0', '0.1'))
+        self.assertEqual(self.format_scientific(1.217, 0.01), ('1.22', '0', '0.01'))
+        self.assertEqual(self.format_scientific(1.217, 0.001), ('1.217', '0', '0.001'))
 
 
 if __name__ == '__main__':
