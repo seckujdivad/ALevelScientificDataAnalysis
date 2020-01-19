@@ -3,6 +3,7 @@ import wx.dataview
 import typing
 
 import sciplot.database
+import sciplot.functions
 
 
 class SubFrame(wx.Panel):
@@ -96,21 +97,26 @@ class DataFrame(SubFrame):
         self._recreate_dvl_data()
 
         data_table = []
+        value_formatters = []
         
-        for data_set_title, data_set_id in self.subframe_share['file'].query(sciplot.database.Query("""SELECT Variable.Symbol, Variable.ID FROM Variable INNER JOIN DataSet ON DataSet.DataSetID = Variable.ID WHERE Variable.Type = 0;""", [], 1))[0]:
+        for data_set_title, data_set_id, unc, uncisperc in self.subframe_share['file'].query(sciplot.database.Query("""SELECT Variable.Symbol, Variable.ID, DataSet.Uncertainty, DataSet.UncIsPerc FROM Variable INNER JOIN DataSet ON DataSet.DataSetID = Variable.ID WHERE Variable.Type = 0;""", [], 1))[0]:
             self._dvl_columns.append(self._dvl_data.AppendTextColumn(data_set_title))
 
             data_table.append(self.subframe_share['file'].query(sciplot.database.Query("""SELECT DataPoint.Value FROM DataPoint WHERE DataSetID = (?);""", [data_set_id], 1))[0])
+            value_formatters.append(sciplot.functions.Value(0, unc, bool(uncisperc)))
 
         data_table_formatted = []
         for i in range(len(data_table[0])):
             data_table_formatted.append([])
 
             for j in range(len(data_table)):
-                data_table_formatted[i].append(data_table[j][i][0])
                 
+                value_formatters[j].value = data_table[j][i][0]
+                data_table_formatted[i].append('{} x 10^{} + {}'.format(*value_formatters[j].format_scientific()))
+
         for row in data_table_formatted:
             self._dvl_data.AppendItem(row)
+            print(row)
     
     def _recreate_dvl_data(self):
         """
