@@ -2,6 +2,8 @@ import wx
 import wx.dataview
 import typing
 
+import sciplot.database
+
 
 class SubFrame(wx.Panel):
     def __init__(self, parent, root_frame):
@@ -31,6 +33,11 @@ class SubFrame(wx.Panel):
                             func: method to call when menu item is clicked
         """
         return []
+    
+    def hook_file_opened(self):
+        """
+        Method called by root frame when a file is opened. Should be overwritten by inheriting class
+        """
 
 
 class DataFrame(SubFrame):
@@ -54,12 +61,10 @@ class DataFrame(SubFrame):
             self._gbs_main.AddGrowableRow(j)
 
         #create elements
-        self._dvl_data = wx.dataview.DataViewListCtrl(self, wx.ID_ANY)
+        
         self._dvl_columns = []
-        self._dvl_columns.append(self._dvl_data.AppendTextColumn("Column 1"))
-        self._dvl_columns.append(self._dvl_data.AppendTextColumn("Column 2"))
-        #self._dvl_data.AppendItem([1, 2])
-        self._gbs_main.Add(self._dvl_data, wx.GBPosition(0, 0), wx.GBSpan(2, 1), wx.ALL | wx.EXPAND)
+        self._dvl_data = None
+        self._recreate_dvl_data()
 
         self._entry_new_column = wx.TextCtrl(self, wx.ID_ANY)
         self._entry_new_column.SetMaxSize(wx.DefaultSize)
@@ -82,6 +87,52 @@ class DataFrame(SubFrame):
     
     def _create_new_column(self, title):
         self._dvl_columns.append(self._dvl_data.AppendTextColumn(title))
+    
+    #root frame hooks
+    def hook_file_opened(self):
+        self.refresh_table()
+    
+    def refresh_table(self):
+        self._recreate_dvl_data()
+        """for column in self._dvl_columns:
+            self._dvl_data.DeleteColumn(column)
+        self._dvl_data.DeleteAllItems()"""
+
+        data_table = []
+        
+        for data_set_title, data_set_id in self.subframe_share['file'].query(sciplot.database.Query("""SELECT Variable.Symbol, Variable.ID FROM Variable INNER JOIN DataSet ON DataSet.DataSetID = Variable.ID WHERE Variable.Type = 0;""", [], 1))[0]:
+            self._dvl_columns.append(self._dvl_data.AppendTextColumn(data_set_title))
+
+            data_table.append(self.subframe_share['file'].query(sciplot.database.Query("""SELECT DataPoint.Value FROM DataPoint WHERE DataSetID = (?);""", [data_set_id], 1))[0])
+
+        data_table_formatted = []
+        for i in range(len(data_table[0])):
+            data_table_formatted.append([])
+
+            for j in range(len(data_table)):
+                data_table_formatted[i].append(data_table[j][i][0])
+        print(data_table_formatted)
+        print(len(data_table_formatted))
+
+        i = 0
+        for row in data_table_formatted:
+            print(row, i)
+            i += 1
+            self._dvl_data.AppendItem(row)
+    
+    def _recreate_dvl_data(self):
+        """
+        DataViewListCtrls aren't dynamic and won't allow new columns to be added once data has been added (even if the table is empty).
+        I have got around this by destroying it and recreating it whenever a new column needs to be added,
+        If I see a way around this I will remove this method.
+        """
+        if self._dvl_data is not None:
+            self._dvl_data.Destroy()
+            self._dvl_columns = []
+        
+        self._dvl_data = wx.dataview.DataViewListCtrl(self, wx.ID_ANY)
+        self._gbs_main.Add(self._dvl_data, wx.GBPosition(0, 0), wx.GBSpan(2, 1), wx.ALL | wx.EXPAND)
+        self.Layout()
 
 
 class GraphFrame(SubFrame):

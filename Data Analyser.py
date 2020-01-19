@@ -151,6 +151,9 @@ class RootFrame(wx.Frame):
                     
                     self.subframe_share['file'] = sciplot.database.DataFile(path)
 
+                    for frame in self._subframes:
+                        self._subframes[frame].hook_file_opened()
+
         event.Skip()
 
 
