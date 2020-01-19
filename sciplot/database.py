@@ -162,10 +162,13 @@ class Database:
 
         else:
             return self.query([query]) #don't duplicate functionality, just make another call with a corrected data format
+        
+    def commit(self, wait: bool = True):
+        self.query(Query('COMMIT;', [], int(wait)))
     
     def close(self, wait: bool = True):
         """
-        Closes the database and stops all running threads. Doesn't commit the database; this must be done through self.query
+        Closes the database and stops all running threads. Doesn't commit the database; this must be done through self.query or self.commit
 
         Args:
             wait (bool: True): wait for the thread to exit before returning
