@@ -112,7 +112,6 @@ class DataFrame(SubFrame):
 
         for row in data_table_formatted:
             self._dvl_data.AppendItem(row)
-            print(row)
     
     def _recreate_dvl_data(self):
         """
@@ -149,11 +148,26 @@ class VariablesFrame(SubFrame):
         
         #create elements
         self._lb_variables = wx.ListBox(self, wx.ID_ANY)
+        self._lb_variables.Bind(wx.EVT_LISTBOX, self.symbol_selected, self._lb_variables)
         self._gbs_main.Add(self._lb_variables, wx.GBPosition(0, 0), wx.GBSpan(1, 1), wx.ALL | wx.EXPAND)
 
-        self._prop_variables = wx.propgrid.PropertyGrid(self, wx.ID_ANY)
-        self._prop_variables.SetColumnCount(2)
-        self._gbs_main.Add(self._prop_variables, wx.GBPosition(0, 1), wx.GBSpan(1, 1), wx.ALL | wx.EXPAND)
+        self._variable_data = []
+
+        self._bk_props = wx.Simplebook(self, wx.ID_ANY)
+
+        self._prop_dataset = wx.propgrid.PropertyGrid(self._bk_props, wx.ID_ANY)
+        self._prop_formula = wx.propgrid.PropertyGrid(self._bk_props, wx.ID_ANY)
+
+        self._prop_dataset.SetColumnCount(2)
+
+        self._prop_formula.SetColumnCount(2)
+        self._prop_formula.Append(wx.propgrid.StringProperty('Symbol', 'symbol', 'initial'))
+        self._prop_formula.Append(wx.propgrid.StringProperty('Formula', 'formula', '0'))
+
+        self._bk_props.ShowNewPage(self._prop_dataset)
+        self._bk_props.ShowNewPage(self._prop_formula)
+        
+        self._gbs_main.Add(self._bk_props, wx.GBPosition(0, 1), wx.GBSpan(1, 1), wx.ALL | wx.EXPAND)
 
         #finalise layout
         for i in range(2):
@@ -166,24 +180,43 @@ class VariablesFrame(SubFrame):
         self.Layout()
         self._gbs_main.Fit(self)
     
+    def selected_formula(self):
+        self._bk_props.SetSelection(1)
+    
+    def selected_dataset(self):
+        self._bk_props.SetSelection(0)
+    
+    def symbol_selected(self, event):
+        variable = self._variable_data[self._lb_variables.GetSelection()]
+
+        if variable[1] == 0:
+            self.selected_dataset()
+        else:
+            self.selected_formula()
+
+        event.Skip()
+    
     #root frame hooks
     def hook_file_opened(self):
-        self._prop_variables.Freeze()
-        self._prop_variables.Clear()
+        self._prop_dataset.Freeze()
+        self._prop_dataset.Clear()
 
-        self._prop_variables.Append(wx.propgrid.StringProperty('Symbol', 'symbol', 'initial'))
-        self._prop_variables.Append(wx.propgrid.FloatProperty('Uncertainty', 'unc', 0))
-        self._prop_variables.Append(wx.propgrid.BoolProperty('Uncertainty is percentage?', 'uncisperc', False))
+        self._prop_dataset.Append(wx.propgrid.StringProperty('Symbol', 'symbol', 'initial'))
+
+        self._prop_dataset.Append(wx.propgrid.FloatProperty('Uncertainty', 'unc', 0))
+        self._prop_dataset.Append(wx.propgrid.BoolProperty('Uncertainty is percentage?', 'uncisperc', False))
         
-        units_prop = self._prop_variables.Append(wx.propgrid.StringProperty('Units'))
+        units_prop = self._prop_dataset.Append(wx.propgrid.StringProperty('Units'))
 
         for unit_name in self.subframe_share['file'].query(sciplot.database.Query('SELECT Symbol FROM Unit;', [], 1))[0]:
-            self._prop_variables.AppendIn(units_prop, wx.propgrid.FloatProperty(unit_name[0], 'units.' + unit_name[0], 0))
+            self._prop_dataset.AppendIn(units_prop, wx.propgrid.FloatProperty(unit_name[0], 'units.' + unit_name[0], 0))
+        
+        self._prop_dataset.Thaw()
 
-        self._prop_variables.Thaw()
-
-        for symbol in self.subframe_share['file'].query(sciplot.database.Query('SELECT Symbol FROM Variable;', [], 1))[0]:
-            self._lb_variables.Append(symbol[0])
+        self._variable_data.clear()
+        for data in self.subframe_share['file'].query(sciplot.database.Query('SELECT Symbol, Type, ID FROM Variable;', [], 1))[0]:
+            self._lb_variables.Append(data[0])
+            self._variable_data.append(data)
 
 
 class GraphFrame(SubFrame):
