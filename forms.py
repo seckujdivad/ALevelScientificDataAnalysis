@@ -1,5 +1,6 @@
 import wx
 import wx.dataview
+import wx.propgrid
 import typing
 
 import sciplot.database
@@ -62,7 +63,6 @@ class DataFrame(SubFrame):
             self._gbs_main.AddGrowableRow(j)
 
         #create elements
-        
         self._dvl_columns = []
         self._dvl_data = None
         self._recreate_dvl_data()
@@ -88,10 +88,6 @@ class DataFrame(SubFrame):
     
     def _create_new_column(self, title):
         self._dvl_columns.append(self._dvl_data.AppendTextColumn(title))
-    
-    #root frame hooks
-    def hook_file_opened(self):
-        self.refresh_table()
     
     def refresh_table(self):
         self._recreate_dvl_data()
@@ -131,6 +127,61 @@ class DataFrame(SubFrame):
         self._dvl_data = wx.dataview.DataViewListCtrl(self, wx.ID_ANY)
         self._gbs_main.Add(self._dvl_data, wx.GBPosition(0, 0), wx.GBSpan(2, 1), wx.ALL | wx.EXPAND)
         self.Layout()
+    
+    #root frame hooks
+    def hook_file_opened(self):
+        self.refresh_table()
+
+
+class VariablesFrame(SubFrame):
+    def __init__(self, parent, root_frame):
+        super().__init__(parent, root_frame)
+
+        #toolbar
+        self.identifier = 'variables'
+        self.styling_name = 'Variables'
+        self.styling_icon = wx.Bitmap('resources/toolbar/variables.bmp')
+
+        #set up sizer
+        self._gbs_main = wx.GridBagSizer(0, 0)
+        self._gbs_main.SetFlexibleDirection(wx.BOTH)
+        self._gbs_main.SetNonFlexibleGrowMode(wx.FLEX_GROWMODE_SPECIFIED)
+        
+        #create elements
+        self._lb_variables = wx.ListBox(self, wx.ID_ANY)
+        self._gbs_main.Add(self._lb_variables, wx.GBPosition(0, 0), wx.GBSpan(1, 1), wx.ALL | wx.EXPAND)
+
+        self._prop_variables = wx.propgrid.PropertyGrid(self, wx.ID_ANY)
+
+        self._prop_variables.Freeze()
+        self._prop_variables.SetColumnCount(2)
+
+        self._prop_variables.Append(wx.propgrid.StringProperty('Symbol', 'symbol', 'initial'))
+        self._prop_variables.Append(wx.propgrid.FloatProperty('Uncertainty', 'unc', 0))
+        self._prop_variables.Append(wx.propgrid.BoolProperty('Uncertainty is percentage?', 'uncisperc', False))
+        
+        units_prop = self._prop_variables.Append(wx.propgrid.StringProperty('Units'))
+        self._prop_variables.AppendIn(units_prop, wx.propgrid.FloatProperty('m', 'units.m', 0))
+        
+        self._prop_variables.ResetColumnSizes()
+
+        self._prop_variables.Thaw()
+
+        self._gbs_main.Add(self._prop_variables, wx.GBPosition(0, 1), wx.GBSpan(1, 1), wx.ALL | wx.EXPAND)
+
+        #finalise layout
+        for i in range(2):
+            self._gbs_main.AddGrowableCol(i)
+        
+        for j in range(1):
+            self._gbs_main.AddGrowableRow(j)
+
+        self.SetSizer(self._gbs_main)
+        self.Layout()
+        self._gbs_main.Fit(self)
+    
+    def hook_file_opened(self):
+        pass
 
 
 class GraphFrame(SubFrame):
@@ -161,4 +212,4 @@ class ConstantsFrame(SubFrame):
     pass
 
 
-manifest: typing.List[SubFrame] = [DataFrame, GraphFrame, FormulaeFrame]# TablesFrame, , ConstantsFrame]
+manifest: typing.List[SubFrame] = [DataFrame, VariablesFrame, GraphFrame, FormulaeFrame]# TablesFrame, , ConstantsFrame]

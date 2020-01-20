@@ -155,6 +155,11 @@ class RootFrame(wx.Frame):
                         self._subframes[frame].hook_file_opened()
 
         event.Skip()
+    
+    def on_window_close(self):
+        if self.subframe_share['file'] is not None:
+            self.subframe_share['file'].commit()
+            self.subframe_share['file'].close()
 
 
 class App(wx.App):
@@ -167,6 +172,8 @@ class App(wx.App):
         self.frame_root.Show(True)
 
         self.MainLoop()
+
+        self.frame_root.on_window_close()
 
 
 if __name__ == '__main__':
