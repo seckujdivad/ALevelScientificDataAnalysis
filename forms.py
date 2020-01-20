@@ -161,7 +161,7 @@ class VariablesFrame(SubFrame):
         self._prop_dataset.SetColumnCount(2)
 
         self._prop_formula.SetColumnCount(2)
-        self._prop_formula.Append(wx.propgrid.StringProperty('Symbol', 'symbol', 'initial'))
+        self._prop_formula.Append(wx.propgrid.StringProperty('Symbol', 'symbol', 'name'))
         self._prop_formula.Append(wx.propgrid.StringProperty('Formula', 'formula', '0'))
 
         self._bk_props.ShowNewPage(self._prop_dataset)
@@ -201,7 +201,7 @@ class VariablesFrame(SubFrame):
         self._prop_dataset.Freeze()
         self._prop_dataset.Clear()
 
-        self._prop_dataset.Append(wx.propgrid.StringProperty('Symbol', 'symbol', 'initial'))
+        self._prop_dataset.Append(wx.propgrid.StringProperty('Symbol', 'symbol', 'name'))
 
         self._prop_dataset.Append(wx.propgrid.FloatProperty('Uncertainty', 'unc', 0))
         self._prop_dataset.Append(wx.propgrid.BoolProperty('Uncertainty is percentage?', 'uncisperc', False))
