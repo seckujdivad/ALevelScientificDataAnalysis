@@ -152,21 +152,7 @@ class VariablesFrame(SubFrame):
         self._gbs_main.Add(self._lb_variables, wx.GBPosition(0, 0), wx.GBSpan(1, 1), wx.ALL | wx.EXPAND)
 
         self._prop_variables = wx.propgrid.PropertyGrid(self, wx.ID_ANY)
-
-        self._prop_variables.Freeze()
         self._prop_variables.SetColumnCount(2)
-
-        self._prop_variables.Append(wx.propgrid.StringProperty('Symbol', 'symbol', 'initial'))
-        self._prop_variables.Append(wx.propgrid.FloatProperty('Uncertainty', 'unc', 0))
-        self._prop_variables.Append(wx.propgrid.BoolProperty('Uncertainty is percentage?', 'uncisperc', False))
-        
-        units_prop = self._prop_variables.Append(wx.propgrid.StringProperty('Units'))
-        self._prop_variables.AppendIn(units_prop, wx.propgrid.FloatProperty('m', 'units.m', 0))
-        
-        self._prop_variables.ResetColumnSizes()
-
-        self._prop_variables.Thaw()
-
         self._gbs_main.Add(self._prop_variables, wx.GBPosition(0, 1), wx.GBSpan(1, 1), wx.ALL | wx.EXPAND)
 
         #finalise layout
@@ -180,8 +166,24 @@ class VariablesFrame(SubFrame):
         self.Layout()
         self._gbs_main.Fit(self)
     
+    #root frame hooks
     def hook_file_opened(self):
-        pass
+        self._prop_variables.Freeze()
+        self._prop_variables.Clear()
+
+        self._prop_variables.Append(wx.propgrid.StringProperty('Symbol', 'symbol', 'initial'))
+        self._prop_variables.Append(wx.propgrid.FloatProperty('Uncertainty', 'unc', 0))
+        self._prop_variables.Append(wx.propgrid.BoolProperty('Uncertainty is percentage?', 'uncisperc', False))
+        
+        units_prop = self._prop_variables.Append(wx.propgrid.StringProperty('Units'))
+
+        for unit_name in self.subframe_share['file'].query(sciplot.database.Query('SELECT Symbol FROM Unit;', [], 1))[0]:
+            self._prop_variables.AppendIn(units_prop, wx.propgrid.FloatProperty(unit_name[0], 'units.' + unit_name[0], 0))
+
+        self._prop_variables.Thaw()
+
+        for symbol in self.subframe_share['file'].query(sciplot.database.Query('SELECT Symbol FROM Variable;', [], 1))[0]:
+            self._lb_variables.Append(symbol[0])
 
 
 class GraphFrame(SubFrame):
