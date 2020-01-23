@@ -188,13 +188,35 @@ class VariablesFrame(SubFrame):
         print(expr)
         
         data = self._prop_formula.GetPropertyValues(inc_attributes = False)
-        data['formula'] = expr
         data['symbol'] = var_symbol
+        data['formula'] = expr
         self._prop_formula.SetPropertyValues(data, autofill = False)
         self._prop_formula.Refresh()
     
     def selected_dataset(self, var_id, var_symbol):
         self._bk_props.SetSelection(0)
+
+        #get data
+        uncertainty, uncisperc, unit_id = self.subframe_share['file'].query(sciplot.database.Query('SELECT DataSet.Uncertainty, DataSet.UncIsPerc, DataSet.UnitCompositeID FROM DataSet INNER JOIN Variable ON Variable.ID = DataSet.DataSetID AND Variable.Type = 0 WHERE DataSet.DataSetID = (?);', [var_id], 2))[0]
+        
+        data = self._prop_dataset.GetPropertyValues(inc_attributes = False)
+        data['symbol'] = var_symbol
+        data['unc'] = uncertainty
+        data['uncisperc'] = bool(uncisperc)
+
+        unit_powers_raw = self.subframe_share['file'].query(sciplot.database.Query('SELECT Unit.Symbol, UnitCompositeDetails.Power FROM Unit INNER JOIN UnitCompositeDetails ON Unit.UnitID = UnitCompositeDetails.UnitID WHERE UnitCompositeDetails.UnitCompositeID = (?);', [unit_id], 1))[0]
+
+        unit_powers = {key: value for key, value in unit_powers_raw}
+
+        for name in data:
+            if name.startswith('units.'):
+                if name[6:] in unit_powers:
+                    data[name] = unit_powers[name[6:]]
+                else:
+                    data[name] = 0
+
+        self._prop_dataset.SetPropertyValues(data, autofill = False)
+        self._prop_dataset.Refresh()
     
     def symbol_selected(self, event):
         variable = self._variable_data[self._lb_variables.GetSelection()]
@@ -216,10 +238,10 @@ class VariablesFrame(SubFrame):
         self._prop_dataset.Append(wx.propgrid.FloatProperty('Uncertainty', 'unc', 0))
         self._prop_dataset.Append(wx.propgrid.BoolProperty('Uncertainty is percentage?', 'uncisperc', False))
         
-        units_prop = self._prop_dataset.Append(wx.propgrid.StringProperty('Units'))
+        units_prop = self._prop_dataset.Append(wx.propgrid.StringProperty('Units', 'units'))
 
         for unit_name in self.subframe_share['file'].query(sciplot.database.Query('SELECT Symbol FROM Unit;', [], 1))[0]:
-            self._prop_dataset.AppendIn(units_prop, wx.propgrid.FloatProperty(unit_name[0], 'units.' + unit_name[0], 0))
+            self._prop_dataset.AppendIn(units_prop, wx.propgrid.FloatProperty(unit_name[0], unit_name[0], 0))
         
         self._prop_dataset.Thaw()
 
