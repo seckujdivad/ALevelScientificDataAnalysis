@@ -106,7 +106,6 @@ class DataFrame(SubFrame):
             data_table_formatted.append([])
 
             for j in range(len(data_table)):
-                
                 value_formatters[j].value = data_table[j][i][0]
                 data_table_formatted[i].append('{} x 10^{} + {}'.format(*value_formatters[j].format_scientific()))
 
@@ -185,7 +184,6 @@ class VariablesFrame(SubFrame):
 
         #get data
         expr = self.subframe_share['file'].query(sciplot.database.Query('SELECT Formula.Expression FROM Formula INNER JOIN Variable ON Variable.ID = Formula.FormulaID WHERE Variable.Type = 1 AND Formula.FormulaID = (?);', [var_id], 2))[0][0]
-        print(expr)
         
         #load, modify and replace property sheet
         data = self._prop_formula.GetPropertyValues(inc_attributes = False)
