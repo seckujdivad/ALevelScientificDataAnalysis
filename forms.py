@@ -187,6 +187,7 @@ class VariablesFrame(SubFrame):
         expr = self.subframe_share['file'].query(sciplot.database.Query('SELECT Formula.Expression FROM Formula INNER JOIN Variable ON Variable.ID = Formula.FormulaID WHERE Variable.Type = 1 AND Formula.FormulaID = (?);', [var_id], 2))[0][0]
         print(expr)
         
+        #load, modify and replace property sheet
         data = self._prop_formula.GetPropertyValues(inc_attributes = False)
         data['symbol'] = var_symbol
         data['formula'] = expr
@@ -199,6 +200,7 @@ class VariablesFrame(SubFrame):
         #get data
         uncertainty, uncisperc, unit_id = self.subframe_share['file'].query(sciplot.database.Query('SELECT DataSet.Uncertainty, DataSet.UncIsPerc, DataSet.UnitCompositeID FROM DataSet INNER JOIN Variable ON Variable.ID = DataSet.DataSetID AND Variable.Type = 0 WHERE DataSet.DataSetID = (?);', [var_id], 2))[0]
         
+        #load data from property sheet and modify
         data = self._prop_dataset.GetPropertyValues(inc_attributes = False)
         data['symbol'] = var_symbol
         data['unc'] = uncertainty
@@ -206,7 +208,7 @@ class VariablesFrame(SubFrame):
 
         unit_powers_raw = self.subframe_share['file'].query(sciplot.database.Query('SELECT Unit.Symbol, UnitCompositeDetails.Power FROM Unit INNER JOIN UnitCompositeDetails ON Unit.UnitID = UnitCompositeDetails.UnitID WHERE UnitCompositeDetails.UnitCompositeID = (?);', [unit_id], 1))[0]
 
-        unit_powers = {key: value for key, value in unit_powers_raw}
+        unit_powers = {key: value for key, value in unit_powers_raw} #change from tuple pairs to dictionary
 
         for name in data:
             if name.startswith('units.'):
@@ -215,6 +217,7 @@ class VariablesFrame(SubFrame):
                 else:
                     data[name] = 0
 
+        #write modified property sheet back into propetry widget
         self._prop_dataset.SetPropertyValues(data, autofill = False)
         self._prop_dataset.Refresh()
     
@@ -250,6 +253,7 @@ class VariablesFrame(SubFrame):
             self._lb_variables.Append(data[0])
             self._variable_data.append(data)
         
+        #centre splitter in property pages so that the labels can be read
         self._bk_props.SetSelection(1)
         self._prop_formula.CenterSplitter()
         self._bk_props.SetSelection(0)
