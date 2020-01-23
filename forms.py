@@ -180,19 +180,29 @@ class VariablesFrame(SubFrame):
         self.Layout()
         self._gbs_main.Fit(self)
     
-    def selected_formula(self):
+    def selected_formula(self, var_id, var_symbol):
         self._bk_props.SetSelection(1)
+
+        #get data
+        expr = self.subframe_share['file'].query(sciplot.database.Query('SELECT Formula.Expression FROM Formula INNER JOIN Variable ON Variable.ID = Formula.FormulaID WHERE Variable.Type = 1 AND Formula.FormulaID = (?);', [var_id], 2))[0][0]
+        print(expr)
+        
+        data = self._prop_formula.GetPropertyValues(inc_attributes = False)
+        data['formula'] = expr
+        data['symbol'] = var_symbol
+        self._prop_formula.SetPropertyValues(data, autofill = False)
+        self._prop_formula.Refresh()
     
-    def selected_dataset(self):
+    def selected_dataset(self, var_id, var_symbol):
         self._bk_props.SetSelection(0)
     
     def symbol_selected(self, event):
         variable = self._variable_data[self._lb_variables.GetSelection()]
 
         if variable[1] == 0:
-            self.selected_dataset()
+            self.selected_dataset(variable[2], variable[0])
         else:
-            self.selected_formula()
+            self.selected_formula(variable[2], variable[0])
 
         event.Skip()
     
