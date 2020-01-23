@@ -227,6 +227,11 @@ class VariablesFrame(SubFrame):
         for data in self.subframe_share['file'].query(sciplot.database.Query('SELECT Symbol, Type, ID FROM Variable;', [], 1))[0]:
             self._lb_variables.Append(data[0])
             self._variable_data.append(data)
+        
+        self._bk_props.SetSelection(1)
+        self._prop_formula.CenterSplitter()
+        self._bk_props.SetSelection(0)
+        self._prop_dataset.CenterSplitter()
 
 
 class GraphFrame(SubFrame):
