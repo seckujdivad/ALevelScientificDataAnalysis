@@ -151,6 +151,7 @@ class VariablesFrame(SubFrame):
         self._gbs_main.Add(self._lb_variables, wx.GBPosition(0, 0), wx.GBSpan(1, 1), wx.ALL | wx.EXPAND)
 
         self._variable_data = []
+        self._variable_current = None
 
         self._bk_props = wx.Simplebook(self, wx.ID_ANY)
 
@@ -220,7 +221,24 @@ class VariablesFrame(SubFrame):
         self._prop_dataset.Refresh()
     
     def symbol_selected(self, event):
-        variable = self._variable_data[self._lb_variables.GetSelection()]
+        #store previous modifications
+        if self._variable_current is not None:
+            old_variable = self._variable_data[self._variable_current]
+
+            if old_variable[1] == 0:
+                data = self._prop_dataset.GetPropertyValues(inc_attributes = False)
+
+                self.subframe_share['file'].query(sciplot.database.Query("UPDATE Variable SET Symbol = (?) WHERE ID = (?) AND Type = 0;", [data['symbol'], old_variable[2]], 0))
+                self.subframe_share['file'].query(sciplot.database.Query("UPDATE DataSet SET Uncertainty = (?), UncIsPerc = (?) WHERE DataSetID = (?);", [data['unc'], data['uncisperc'], old_variable[2]], 0))
+
+            else:
+                data = self._prop_formula.GetPropertyValues(inc_attributes = False)
+
+                self.subframe_share['file'].query(sciplot.database.Query("UPDATE Variable SET Symbol = (?) WHERE ID = (?) AND Type = 1;", [data['symbol'], old_variable[2]], 0))
+                self.subframe_share['file'].query(sciplot.database.Query("UPDATE Formula SET Expression = (?) WHERE FormulaID = (?);", [data['formula'], old_variable[2]], 0))
+        
+        self._variable_current = self._lb_variables.GetSelection()
+        variable = self._variable_data[self._variable_current]
 
         if variable[1] == 0:
             self.selected_dataset(variable[2], variable[0])
