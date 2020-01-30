@@ -52,18 +52,33 @@ class Database:
 
         self._response_collected_event = threading.Event()
 
+        #successful db connection control
+        self._creation_event = threading.Event()
+        self._creation_event.clear()
+        self._creation_exception = None
+
         #closing state control
         self._running = True
 
         #database thread
         self._query_thread = threading.Thread(target = self._queryd, args = [path, pipe], name = 'SQLite3 Database Query Thread', daemon = True)
-        self._query_thread.start()        
+        self._query_thread.start()
+
+        #throw any database creation exceptions
+        self._creation_event.wait()
+        if self._creation_exception is not None:
+            raise type(self._creation_exception)(str(self._creation_exception))
     
     def _queryd(self, path: str, pipe: multiprocessing.connection.PipeConnection):
         """
         Thread that processes queries and handles interactions with the database. Automatically started on object creation
         """
-        self._connection: sqlite3.Connection = sqlite3.connect(path)
+        try:
+            self._connection: sqlite3.Connection = sqlite3.connect(path)
+        except Exception as e:
+            self._creation_exception = e
+        finally:
+            self._creation_event.set()
 
         while self._running:
             self._query_pipe_ready.wait()
