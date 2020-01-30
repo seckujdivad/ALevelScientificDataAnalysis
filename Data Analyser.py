@@ -59,7 +59,7 @@ class RootFrame(wx.Frame):
         self.SetMenuBar(self._mb_main)
 
         #add internal menu bar items
-        for cat, title, func in [('File', 'Open', self._choose_db)]:
+        for cat, title, func in [('File', 'Open', self._choose_db), ('File', 'Save', self._commit_db)]:
             menu_item = self._mb_cats[cat].Append(wx.ID_ANY, title)
             self.Bind(wx.EVT_MENU, func, menu_item)
             self._mb_subitems[cat].append(menu_item)
@@ -155,6 +155,13 @@ class RootFrame(wx.Frame):
                         self._subframes[frame].hook_file_opened()
 
         event.Skip()
+    
+    def _commit_db(self, event):
+        if self.subframe_share['file'] is None:
+            wx.MessageBox("Can't save open file when there is no file open", "No file open", wx.ICON_ERROR | wx.OK)
+        
+        else:
+            self.subframe_share['file'].commit()
     
     def on_window_close(self):
         if self.subframe_share['file'] is not None:
