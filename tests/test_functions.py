@@ -3,10 +3,10 @@ import math
 import sys
 import os
 
-up1 = os.path.abspath('../sciplot')
+up1 = os.path.abspath('../')
 sys.path.insert(0, up1)
 
-import functions #pylint: disable=import-error
+import sciplot.functions as functions #pylint: disable=import-error
 
 sys.path.pop(0)
 
