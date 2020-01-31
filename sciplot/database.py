@@ -179,7 +179,8 @@ class Database:
             return self.query([query]) #don't duplicate functionality, just make another call with a corrected data format
         
     def commit(self, wait: bool = True):
-        self.query(Query('COMMIT; BEGIN;', [], int(wait)))
+        self.query([Query('COMMIT;', [], int(wait)),
+                    Query('BEGIN;', [], int(wait))])
     
     def close(self, wait: bool = True):
         """
