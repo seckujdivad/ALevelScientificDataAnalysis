@@ -315,21 +315,17 @@ class DataFile(Database):
     def get_unit_id_by_table(self, unit_table: typing.List[typing.Tuple[int, float]]):
         unitcomposite_ids = [tup[0] for tup in self.query(Query("SELECT UnitCompositeID FROM UnitComposite;", [], 1))[0]]
 
-        match_found = False
+        matches = []
         i = 0
-        while i < len(unitcomposite_ids) and not match_found:
+        while i < len(unitcomposite_ids):
             scan_units = self.query(Query("SELECT UnitCompositeDetails.UnitID, UnitCompositeDetails.Power FROM UnitComposite INNER JOIN UnitCompositeDetails ON UnitCompositeDetails.UnitCompositeID = UnitComposite.UnitCompositeID WHERE UnitComposite.UnitCompositeID = (?);", [unitcomposite_ids[i]], 1))[0]
             
             if set(scan_units) == set(unit_table):
-                match_found = True
+                matches.append(unitcomposite_ids[i])
 
             i += 1
 
-        if match_found:
-            return unitcomposite_ids[i - 1]
-        
-        else:
-            return -1
+        return matches
     
     def rename_unit(self, primary_key: int, symbol: str):
         self.query(Query("UPDATE UnitComposite SET Symbol = (?) WHERE UnitCompositeID = (?);", [symbol, primary_key], 0))
