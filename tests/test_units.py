@@ -36,6 +36,14 @@ class TestUnits(unittest.TestCase):
             self.assertEqual(primary_key, units.get_composite_id(db, unit_table))
 
             db.goto_rollback()
+    
+    def test_getunit(self):
+        with self.create_db() as db:
+            self.assertEqual(units.get_unit(db, 6), "mol")
+    
+    def test_getunitid(self):
+        with self.create_db() as db:
+            self.assertEqual(units.get_unit_id(db, "mol"), 6)
 
 
 if __name__ == '__main__':
