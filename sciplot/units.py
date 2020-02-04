@@ -48,5 +48,11 @@ def update_composite(database: sciplot.database.DataFile, primary_key: int, unit
 def get_composite(database: sciplot.database.DataFile, primary_key: int):
     symbol = database.query(sciplot.database.Query("SELECT Symbol FROM UnitComposite WHERE UnitCompositeID = (?);", [primary_key], 2))[0][0]
     units = database.query(sciplot.database.Query("SELECT UnitID, Power FROM UnitCompositeDetails WHERE UnitCompositeID = (?);", [primary_key], 1))[0]
-    
+
     return (symbol, units)
+
+def get_unit(database: sciplot.database.DataFile, primary_key: int):
+    return database.query(sciplot.database.Query("SELECT Symbol FROM Unit WHERE UnitID = (?);", [primary_key], 2))[0][0]
+
+def get_unit_id(database: sciplot.database.DataFile, symbol: str):
+    return database.query(sciplot.database.Query("SELECT UnitID FROM Unit WHERE Symbol = (?);", [symbol], 2))[0][0]
