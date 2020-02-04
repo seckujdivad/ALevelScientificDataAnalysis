@@ -226,6 +226,18 @@ class TestDataFile(unittest.TestCase):
             df.remove_plot(1)
             self.assertNotIn(1, df.list_plots())
             df.goto_rollback()
+    
+    def test_getunitid_partial_match(self):
+        with self.connect_datafile() as db:
+            self.assertEqual(db.get_unit_id([(1, 1)]), -1)
+    
+    def test_getunitid_empty(self):
+        with self.connect_datafile() as db:
+            self.assertEqual(db.get_unit_id([]), -1)
+    
+    def test_getunitid_exact_match(self):
+        with self.connect_datafile() as db:
+            self.assertEqual(db.get_unit_id([(1, -2), (2, 1), (3, 1)]), 1)
 
 if __name__ == '__main__':
     unittest.main()

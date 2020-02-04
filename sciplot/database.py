@@ -308,6 +308,34 @@ class DataFile(Database):
         self.query([Query('DELETE FROM UnitComposite WHERE UnitCompositeID = (?)', [unit_id], 0),
                     Query('DELETE FROM UnitCompositeDetails WHERE UnitCompositeID = (?)', [unit_id], 0)])
     
+    def get_unit_id(self, unit_table: typing.List[typing.Tuple[int, float]]):
+        unitcomposite_ids = [tup[0] for tup in self.query(Query("SELECT UnitCompositeID FROM UnitComposite;", [], 1))[0]]
+
+        match_found = False
+        i = 0
+        while i < len(unitcomposite_ids) and not match_found:
+            scan_units = self.query(Query("SELECT UnitCompositeDetails.UnitID, UnitCompositeDetails.Power FROM UnitComposite INNER JOIN UnitCompositeDetails ON UnitCompositeDetails.UnitCompositeID = UnitComposite.UnitCompositeID WHERE UnitComposite.UnitCompositeID = (?);", [unitcomposite_ids[i]], 1))[0]
+            
+            if set(scan_units) == set(unit_table):
+                match_found = True
+
+            i += 1
+
+        if match_found:
+            return unitcomposite_ids[i - 1]
+        
+        else:
+            return -1
+    
+    def rename_unit(self, primary_key: int, symbol: str):
+        self.query(Query("UPDATE UnitComposite SET Symbol = (?) WHERE UnitCompositeID = (?);", [symbol, primary_key], 0))
+    
+    def update_unit(self, primary_key: int, unit_table: typing.List[typing.Tuple[int, float]]):
+        queries = [Query("DELETE FROM UnitCompositeDetails WHERE UnitCompositeID = (?)", [primary_key], 0)]
+        for unit_id, power in unit_table:
+            queries.append(Query("INSERT INTO UnitCompositeDetails (`UnitCompositeID`, `UnitID`, `Power`) VALUES ((?), (?), (?))", [primary_key, unit_id, power], 0))
+        self.query(queries)
+    
     #data sets
     def list_data_sets(self):
         return [tup[0] for tup in self.query(Query('SELECT DataSetID FROM DataSet', [], 1))[0]]
