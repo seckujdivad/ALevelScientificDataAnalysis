@@ -122,6 +122,7 @@ class RootFrame(wx.Frame):
 
             self._bk_sub.SetSelection(self._subframes[form].toolbar_index)
             self._sb_main.PopStatusText()
+            self._subframes[form].hook_frame_selected()
             self._sb_main.PushStatusText(self._subframes[form].styling_name)
             self._current_frame = form
     

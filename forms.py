@@ -40,6 +40,11 @@ class SubFrame(wx.Panel):
         """
         Method called by root frame when a file is opened. Should be overwritten by inheriting class
         """
+    
+    def hook_frame_selected(self):
+        """
+        Method called by root frame when this frame is selected. Should be overwritten by inheriting class
+        """
 
 
 class DataFrame(SubFrame):
@@ -247,6 +252,12 @@ class VariablesFrame(SubFrame):
 
         event.Skip()
     
+    def _centre_dividers(self): #centre splitter in property pages so that the labels can be read
+        self._bk_props.SetSelection(1)
+        self._prop_formula.CenterSplitter()
+        self._bk_props.SetSelection(0)
+        self._prop_dataset.CenterSplitter()
+    
     #root frame hooks
     def hook_file_opened(self):
         self._prop_dataset.Freeze()
@@ -269,11 +280,10 @@ class VariablesFrame(SubFrame):
             self._lb_variables.Append(data[0])
             self._variable_data.append(data)
         
-        #centre splitter in property pages so that the labels can be read
-        self._bk_props.SetSelection(1)
-        self._prop_formula.CenterSplitter()
-        self._bk_props.SetSelection(0)
-        self._prop_dataset.CenterSplitter()
+        self._centre_dividers()
+    
+    def hook_frame_selected(self):
+        self._centre_dividers()
 
 
 class GraphFrame(SubFrame):
