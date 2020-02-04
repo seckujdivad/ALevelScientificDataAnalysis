@@ -229,22 +229,22 @@ class TestDataFile(unittest.TestCase):
     
     def test_getunitid_partial_match(self):
         with self.connect_datafile() as db:
-            self.assertEqual(db.get_unit_id_by_table([(1, 1)]), -1)
+            self.assertEqual(db.get_unit_id_by_table([(1, 1)]), [])
     
     def test_getunitid_empty(self):
         with self.connect_datafile() as db:
-            self.assertEqual(db.get_unit_id_by_table([]), -1)
+            self.assertEqual(db.get_unit_id_by_table([]), [])
     
     def test_getunitid_exact_match(self):
         with self.connect_datafile() as db:
-            self.assertEqual(db.get_unit_id_by_table([(1, -2), (2, 1), (3, 1)]), 1)
+            self.assertEqual(db.get_unit_id_by_table([(1, -2), (2, 1), (3, 1)]), [1])
     
     def test_renameunit(self):
         with self.connect_datafile() as db:
             db.create_rollback()
             db.rename_unit(1, "renamed")
 
-            self.assertEqual(db.get_unit_id_by_symbol("renamed"), 1)
+            self.assertEqual(db.get_unit_id_by_symbol("renamed"), [1])
 
             db.goto_rollback()
     
