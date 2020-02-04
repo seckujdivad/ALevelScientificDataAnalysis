@@ -11,27 +11,23 @@ import sciplot.database as database #pylint: disable=import-error
 sys.path.pop(0)
 
 
-class TestGetCompositeID(unittest.TestCase):
+class TestUnits(unittest.TestCase):
     def create_db(self):
         return database.DataFile(os.path.join(sys.path[0], 'datasets', 'datafile.db'))
 
-    def test_partial_match(self):
+    def test_getcompositeid_partial_match(self):
         with self.create_db() as db:
             self.assertEqual(units.get_composite_id(db, [(1, 1)]), -1)
     
-    def test_empty(self):
+    def test_getcompositeid_empty(self):
         with self.create_db() as db:
             self.assertEqual(units.get_composite_id(db, []), -1)
     
-    def test_exact_match(self):
+    def test_getcompositeid_exact_match(self):
         with self.create_db() as db:
             self.assertEqual(units.get_composite_id(db, [(1, -2), (2, 1), (3, 1)]), 1)
-
-class TestCreateComposite(unittest.TestCase):
-    def create_db(self):
-        return database.DataFile(os.path.join(sys.path[0], 'datasets', 'datafile.db'))
     
-    def test_create(self):
+    def test_createcomposite_create(self):
         with self.create_db() as db:
             db.create_rollback()
 
