@@ -105,8 +105,12 @@ class Database:
                                 return_values.append((0, cursor.fetchmany()))
                     
                     except Exception as e:
-                        return_values.append((1, (type(e), str(e))))
-                        self._running = False
+                        if query.fetchmode == 0:
+                            raise type(e)(str(e))
+                        
+                        else:
+                            return_values.append((1, (type(e), str(e))))
+                            self._running = False
                 
             if len(return_values) > 0:
                 self._response_values[counter] = return_values
@@ -283,7 +287,7 @@ class DataFile(Database):
     #composite units
     def get_unit_id_by_symbol(self, symbol: str):
         query = Query("SELECT UnitCompositeID FROM UnitComposite WHERE Symbol = (?)", [symbol], 2)
-        return self.query(query)[0][0]
+        return [tup[0] for tup in self.query(query)]
 
     def get_unit_by_id(self, unit_id: int):
         unit_details = self.query(Query("SELECT Unit.UnitID, UnitCompositeDetails.Power FROM UnitCompositeDetails INNER JOIN Unit ON Unit.UnitID = UnitCompositeDetails.UnitID WHERE UnitCompositeDetails.UnitCompositeID = (?)", [unit_id], 1))[0]
