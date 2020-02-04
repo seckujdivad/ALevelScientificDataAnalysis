@@ -229,15 +229,33 @@ class TestDataFile(unittest.TestCase):
     
     def test_getunitid_partial_match(self):
         with self.connect_datafile() as db:
-            self.assertEqual(db.get_unit_id([(1, 1)]), -1)
+            self.assertEqual(db.get_unit_id_by_table([(1, 1)]), -1)
     
     def test_getunitid_empty(self):
         with self.connect_datafile() as db:
-            self.assertEqual(db.get_unit_id([]), -1)
+            self.assertEqual(db.get_unit_id_by_table([]), -1)
     
     def test_getunitid_exact_match(self):
         with self.connect_datafile() as db:
-            self.assertEqual(db.get_unit_id([(1, -2), (2, 1), (3, 1)]), 1)
+            self.assertEqual(db.get_unit_id_by_table([(1, -2), (2, 1), (3, 1)]), 1)
+    
+    def test_renameunit(self):
+        with self.connect_datafile() as db:
+            db.create_rollback()
+            db.rename_unit(1, "renamed")
+
+            self.assertEqual(db.get_unit_id_by_symbol("renamed"), 1)
+
+            db.goto_rollback()
+    
+    def test_updateunit(self):
+        with self.connect_datafile() as db:
+            db.create_rollback()
+
+            db.update_unit(1, [(1, -1), (3, 2)])
+            self.assertEqual(set(db.get_unit_by_id(1)[1]), set([(1, -1), (3, 2)]))
+
+            db.goto_rollback()
 
 if __name__ == '__main__':
     unittest.main()

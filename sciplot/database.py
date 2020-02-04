@@ -281,9 +281,9 @@ class DataFile(Database):
         return self.query(query)[0][0]
     
     #composite units
-    def get_unit(self, symbol: str):
+    def get_unit_id_by_symbol(self, symbol: str):
         query = Query("SELECT UnitCompositeID FROM UnitComposite WHERE Symbol = (?)", [symbol], 2)
-        return self.get_unit_by_id(self.query(query)[0][0])
+        return self.query(query)[0][0]
 
     def get_unit_by_id(self, unit_id: int):
         unit_details = self.query(Query("SELECT Unit.UnitID, UnitCompositeDetails.Power FROM UnitCompositeDetails INNER JOIN Unit ON Unit.UnitID = UnitCompositeDetails.UnitID WHERE UnitCompositeDetails.UnitCompositeID = (?)", [unit_id], 1))[0]
@@ -308,7 +308,7 @@ class DataFile(Database):
         self.query([Query('DELETE FROM UnitComposite WHERE UnitCompositeID = (?)', [unit_id], 0),
                     Query('DELETE FROM UnitCompositeDetails WHERE UnitCompositeID = (?)', [unit_id], 0)])
     
-    def get_unit_id(self, unit_table: typing.List[typing.Tuple[int, float]]):
+    def get_unit_id_by_table(self, unit_table: typing.List[typing.Tuple[int, float]]):
         unitcomposite_ids = [tup[0] for tup in self.query(Query("SELECT UnitCompositeID FROM UnitComposite;", [], 1))[0]]
 
         match_found = False
