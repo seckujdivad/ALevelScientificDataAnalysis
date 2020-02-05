@@ -27,8 +27,10 @@ class DataFrame(forms.SubFrame):
         self._recreate_dvl_data()
 
         self._tables = []
+        self._columns = []
 
         self._lb_tables = wx.ListBox(self, wx.ID_ANY)
+        self._lb_tables.Bind(wx.EVT_LISTBOX, self._table_selected)
         self._gbs_main.Add(self._lb_tables, wx.GBPosition(0, 1), wx.GBSpan(1, 3), wx.ALL | wx.EXPAND)
 
         self._entry_newtable = wx.TextCtrl(self, wx.ID_ANY)
@@ -104,9 +106,12 @@ class DataFrame(forms.SubFrame):
     
     def refresh_column_list(self):
         self._ckl_columns.Clear()
-        variables = [tup[0] for tup in self.subframe_share['file'].query(sciplot.database.Query("SELECT Symbol FROM Variable", [], 1))[0]]
-        for variable in variables:
-            self._ckl_columns.Append(variable)
+        self._columns.clear()
+
+        variables = self.subframe_share['file'].query(sciplot.database.Query("SELECT Symbol, VariableID FROM Variable", [], 1))[0]
+        for variable_str, variable_id in variables:
+            self._ckl_columns.Append(variable_str)
+            self._columns.append((variable_id, variable_str))
     
     def refresh_table_list(self):
         self._tables.clear()
@@ -137,9 +142,44 @@ class DataFrame(forms.SubFrame):
     def _column_selection_change(self, event):
         selection_index = self._lb_tables.GetSelection()
         if selection_index != -1:
-            print(selection_index)
-            selected_columns = list(self._ckl_columns.GetCheckedItems())
-            print(selected_columns)
+            table_id = self._tables[selection_index][0]
+            selected_columns_indexes = [self._columns[i][0] for i in list(self._ckl_columns.GetCheckedItems())]
+            database_columns_indexes = [tup[0] for tup in self.subframe_share['file'].query(sciplot.database.Query("SELECT VariableID FROM TableColumn WHERE TableID = (?);", [table_id], 1))[0]]
+
+            to_add = []
+            to_remove = []
+
+            for i in selected_columns_indexes:
+                if i not in database_columns_indexes:
+                    to_add.append(i)
+            
+            for i in database_columns_indexes:
+                if i not in selected_columns_indexes:
+                    to_remove.append(i)
+            
+            queries = []
+            for variable_id in to_add:
+                queries.append(sciplot.database.Query("INSERT INTO TableColumn (TableID, VariableID) VALUES ((?), (?));", [table_id, variable_id], 0))
+            
+            for variable_id in to_remove:
+                queries.append(sciplot.database.Query("DELETE FROM TableColumn WHERE VariableID = (?);", [variable_id], 0))
+            
+            self.subframe_share['file'].query(queries)
+
+        event.Skip()
+    
+    def _table_selected(self, event):
+        selection_index = self._lb_tables.GetSelection()
+        if selection_index != -1:
+            table_id = self._tables[selection_index][0]
+            columns_indexes = [tup[0] for tup in self.subframe_share['file'].query(sciplot.database.Query("SELECT VariableID FROM TableColumn WHERE TableID = (?);", [table_id], 1))[0]]
+            new_checked_items = []
+            column_ids = [tup[0] for tup in self._columns]
+
+            for variable_id in columns_indexes:
+                new_checked_items.append(column_ids.index(variable_id))
+
+            self._ckl_columns.SetCheckedItems(new_checked_items)
 
         event.Skip()
     
