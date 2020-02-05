@@ -209,6 +209,11 @@ class TestFunction(unittest.TestCase):
         func_table['r'] = functions.Function('{c}')
         self.assertEqual(functions.check_circular_dependencies('c', func_table), True)
 
+    def test_evaluate_tree(self):
+        func_table = {'c': functions.Function('{k}'),
+                      'k': functions.Function('{mass}*2')}
+        self.assertEqual(functions.evaluate_tree('c', func_table, self.generic_datatable).value, 50)
+
     generic_datatable = {'g': functions.Value(9.81, 0.01, False, [(1, 1), (2, 1), (3, -2)]),
                          'volume': functions.Value(532, 0.1, True, [(2, 3)]),
                          'mass': functions.Value(25, 1, False, [(1, 1)])}
