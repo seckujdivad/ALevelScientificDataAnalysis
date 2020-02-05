@@ -4,6 +4,7 @@ import typing
 
 import forms
 import sciplot.database
+import sciplot.functions
 
 
 class VariablesFrame(forms.SubFrame):
@@ -147,8 +148,18 @@ class VariablesFrame(forms.SubFrame):
             else:
                 data = self._prop_formula.GetPropertyValues(inc_attributes = False)
 
-                self.subframe_share['file'].query(sciplot.database.Query("UPDATE Variable SET Symbol = (?) WHERE ID = (?) AND Type = 1;", [data['symbol'], old_variable[2]], 0))
-                self.subframe_share['file'].query(sciplot.database.Query("UPDATE Formula SET Expression = (?) WHERE FormulaID = (?);", [data['formula'], old_variable[2]], 0))
+                func_lib = {}
+                for expression, symbol in self.subframe_share['file'].query(sciplot.database.Query("SELECT Expression, Symbol FROM Formula INNER JOIN Variable ON Variable.ID = Formula.FormulaID AND Type = 1;", [], 1))[0]:
+                    func_lib[symbol] = sciplot.functions.Function(expression)
+                
+                func_lib[data['symbol']] = sciplot.functions.Function(data['formula'])
+                
+                if sciplot.functions.check_circular_dependencies(data['symbol'], func_lib):
+                    wx.MessageBox("Circular dependency in your formula\nCheck the expression to make sure it doesn't refer to itself\nChanges will not be saved", "Circular dependency", wx.ICON_ERROR | wx.OK)
+                
+                else:
+                    self.subframe_share['file'].query(sciplot.database.Query("UPDATE Variable SET Symbol = (?) WHERE ID = (?) AND Type = 1;", [data['symbol'], old_variable[2]], 0))
+                    self.subframe_share['file'].query(sciplot.database.Query("UPDATE Formula SET Expression = (?) WHERE FormulaID = (?);", [data['formula'], old_variable[2]], 0))
         
         self._variable_current = self._lb_variables.GetSelection()
         variable = self._variable_data[self._variable_current]
