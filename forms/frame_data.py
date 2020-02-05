@@ -4,6 +4,7 @@ import typing
 
 import forms
 import sciplot.functions
+import sciplot.database
 
 
 class DataFrame(forms.SubFrame):
@@ -20,26 +21,32 @@ class DataFrame(forms.SubFrame):
         self._gbs_main.SetFlexibleDirection(wx.BOTH)
         self._gbs_main.SetNonFlexibleGrowMode(wx.FLEX_GROWMODE_SPECIFIED)
 
-        for i in range(1):
-            self._gbs_main.AddGrowableCol(i)
-        
-        for j in range(2):
-            self._gbs_main.AddGrowableRow(j)
-
         #create elements
         self._dvl_columns = []
         self._dvl_data = None
         self._recreate_dvl_data()
 
-        self._entry_new_column = wx.TextCtrl(self, wx.ID_ANY)
-        self._entry_new_column.SetMaxSize(wx.DefaultSize)
-        self._entry_new_column.SetMinSize(wx.DefaultSize)
+        self._lb_tables = wx.ListBox(self, wx.ID_ANY)
+        self._gbs_main.Add(self._lb_tables, wx.GBPosition(0, 1), wx.GBSpan(1, 3), wx.ALL | wx.EXPAND)
 
-        self._gbs_main.Add(self._entry_new_column, wx.GBPosition(0, 1), wx.GBSpan(1, 1), wx.ALL | wx.EXPAND)
+        self._entry_newtable = wx.TextCtrl(self, wx.ID_ANY)
+        self._gbs_main.Add(self._entry_newtable, wx.GBPosition(1, 1), wx.GBSpan(1, 1), wx.ALL | wx.EXPAND)
+        
+        self._btn_add = wx.Button(self, wx.ID_ANY, "Add")
+        self._gbs_main.Add(self._btn_add, wx.GBPosition(1, 2), wx.GBSpan(1, 1), wx.ALL | wx.EXPAND)
 
-        self._btn_new_column = wx.Button(self, wx.ID_ANY, "New Column")
-        self._btn_new_column.Bind(wx.EVT_BUTTON, self._new_column_clicked)
-        self._gbs_main.Add(self._btn_new_column, wx.GBPosition(1, 1), wx.GBSpan(1, 1), wx.ALL | wx.EXPAND)
+        self._btn_remove = wx.Button(self, wx.ID_ANY, "Remove")
+        self._gbs_main.Add(self._btn_remove, wx.GBPosition(1, 3), wx.GBSpan(1, 1), wx.ALL | wx.EXPAND)
+
+        self._ckl_columns = wx.CheckListBox(self, wx.ID_ANY)
+        self._gbs_main.Add(self._ckl_columns, wx.GBPosition(2, 1), wx.GBSpan(1, 3), wx.ALL | wx.EXPAND)
+
+        #set sizer weights
+        for i in [0]:
+            self._gbs_main.AddGrowableCol(i)
+        
+        for j in [0, 2]:
+            self._gbs_main.AddGrowableRow(j)
         
         #finalise layout
         self.SetSizer(self._gbs_main)
@@ -87,7 +94,7 @@ class DataFrame(forms.SubFrame):
             self._dvl_columns = []
         
         self._dvl_data = wx.dataview.DataViewListCtrl(self, wx.ID_ANY)
-        self._gbs_main.Add(self._dvl_data, wx.GBPosition(0, 0), wx.GBSpan(2, 1), wx.ALL | wx.EXPAND)
+        self._gbs_main.Add(self._dvl_data, wx.GBPosition(0, 0), wx.GBSpan(3, 1), wx.ALL | wx.EXPAND)
         self.Layout()
     
     #root frame hooks
