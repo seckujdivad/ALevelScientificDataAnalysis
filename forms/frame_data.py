@@ -268,18 +268,23 @@ class DataFrame(forms.SubFrame):
         event.Skip()
     
     def _column_selected(self, event):
+        #get selections from ui
         selection_index = self._ckl_columns.GetSelection()
         table_selection_index = self._lb_tables.GetSelection()
         if selection_index != -1:
-            variable_id, variable_symbol = self._columns[selection_index]
+            #get ids
+            variable_id = self._columns[selection_index][0]
             table_id = self._tables[table_selection_index][0]
 
-            if self._column_selected_previous != -1:
+            #get selected items - format strings only exist for selected items
+            selected_items = [self._columns[index][0] for index in self._ckl_columns.GetCheckedItems()]
+
+            #save previous format string (if it exists)
+            if self._column_selected_previous != -1 and self._columns[self._column_selected_previous][0] in selected_items:
                 format_pattern = self._entry_formatstring.GetValue()
                 self.subframe_share['file'].query(sciplot.database.Query("UPDATE TableColumn SET FormatPattern = (?) WHERE VariableID = (?) AND TableID = (?);", [format_pattern, self._columns[self._column_selected_previous][0], table_id], 0))
 
-            selected_items = [self._columns[index][0] for index in self._ckl_columns.GetCheckedItems()]
-
+            #load new format string if applicable
             if variable_id in selected_items:
                 value = self.subframe_share['file'].query(sciplot.database.Query("SELECT FormatPattern FROM TableColumn WHERE VariableID = (?) AND TableID = (?);", [variable_id, table_id], 1))
                 self._entry_formatstring.SetValue(value[0][0][0])
