@@ -200,6 +200,14 @@ class TestFunction(unittest.TestCase):
     def test_dependencies(self):
         self.assertEqual(functions.Function('{m}-{c}').evaluate_dependencies(), ['m', 'c'])
         self.assertEqual(functions.Function('({g}*{m})-{c}').evaluate_dependencies(), ['g', 'm', 'c'])
+    
+    def test_check_circular(self):
+        func_table = {'c': functions.Function('{k}'),
+                      'k': functions.Function('{r}*2')}
+        self.assertEqual(functions.check_circular_dependencies('c', func_table), False)
+
+        func_table['r'] = functions.Function('{c}')
+        self.assertEqual(functions.check_circular_dependencies('c', func_table), True)
 
     generic_datatable = {'g': functions.Value(9.81, 0.01, False, [(1, 1), (2, 1), (3, -2)]),
                          'volume': functions.Value(532, 0.1, True, [(2, 3)]),
