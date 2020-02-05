@@ -46,6 +46,9 @@ class TestFunction(unittest.TestCase):
         self.asserter('4^2', 4 * 4)
         self.asserter('4^0.5', 2)
     
+    def test_float(self):
+        self.asserter('0.5', 0.5)
+    
     def test_functions(self):
         self.asserter('sin0', 0)
         self.asserter('cos0', 1)
@@ -56,6 +59,7 @@ class TestFunction(unittest.TestCase):
     
     def test_variables(self):
         self.asserter('2*{x}', 6, args = self.convert_datatable({'x': 3}))
+        self.asserter('{x}', 3, args = self.convert_datatable({'x': 3}))
     
     def test_pre_eval_keeps_result(self):
         expr = '1 + (3 * 2 * {g}) + {k}'
