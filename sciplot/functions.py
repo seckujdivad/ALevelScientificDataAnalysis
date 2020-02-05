@@ -964,6 +964,29 @@ operator_register = [
     }
 ]
 
+
+#tree operations
+def check_circular_dependencies(function_name: str, functions: typing.Dict[str, Function]):
+    return _chk_circular([function_name], functions[function_name].evaluate_dependencies(), functions)
+
+def _chk_circular(tree: typing.List[str], function_names: typing.List[str], functions: typing.Dict[str, Function]):
+    for key in function_names:
+        if key in tree:
+            return True
+
+        if key in functions:
+            tree.append(key)
+
+            dependencies = functions[key].evaluate_dependencies()
+
+            if _chk_circular(tree, dependencies, functions):
+                return True
+
+            tree.pop(len(tree) - 1)
+    
+    return False
+
+
 #utility functions
 def _strip_brackets(string):
     while string.startswith('(') and string.endswith(')'):
