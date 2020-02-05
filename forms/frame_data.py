@@ -5,7 +5,6 @@ import typing
 import forms
 import sciplot.functions
 
-print(dir(forms))
 
 class DataFrame(forms.SubFrame):
     def __init__(self, parent, root_frame):
