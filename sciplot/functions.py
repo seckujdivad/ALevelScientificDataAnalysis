@@ -986,6 +986,23 @@ def _chk_circular(tree: typing.List[str], function_names: typing.List[str], func
     
     return False
 
+def evaluate_tree(function_name: str, functions: typing.Dict[str, Function], data_table = {}):
+    data_table = data_table.copy()
+
+    dependencies = functions[function_name].evaluate_dependencies()
+
+    local_data_table = {}
+    for dependency in dependencies:
+        if dependency in data_table:
+            local_data_table[dependency] = data_table[dependency]
+        
+        else:
+            result = evaluate_tree(dependency, functions, data_table)
+            local_data_table[dependency] = result
+            data_table[dependency] = result
+    
+    return functions[function_name].evaluate(local_data_table)
+
 
 #utility functions
 def _strip_brackets(string):
