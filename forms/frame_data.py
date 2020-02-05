@@ -135,7 +135,7 @@ class DataFrame(forms.SubFrame):
                     for j in range(len(data_table)):
                         if type(data_table[j]) == list:
                             value_formatters[j][0].value = data_table[j][i]
-                            data_table_formatted[i].append(value_formatters[j].format(value_formatters[j][1])[0])
+                            data_table_formatted[i].append(value_formatters[j][0].format(value_formatters[j][1])[0])
 
                         else:
                             for dependency in dependent_data:
@@ -224,6 +224,8 @@ class DataFrame(forms.SubFrame):
                 queries.append(sciplot.database.Query("DELETE FROM TableColumn WHERE VariableID = (?);", [variable_id], 0))
             
             self.subframe_share['file'].query(queries)
+
+            self.refresh_table()
 
         event.Skip()
     
