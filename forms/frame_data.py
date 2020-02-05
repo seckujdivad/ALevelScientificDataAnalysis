@@ -127,8 +127,8 @@ class DataFrame(forms.SubFrame):
         if selection_index != -1:
             table_id = self._tables[selection_index][0]
 
-            self.subframe_share['file'].query(sciplot.database.Query("DELETE FROM `Table` WHERE TableID = (?);", [table_id], 0),
-                                              sciplot.database.Query("DELETE FROM TableColumn WHERE TableID = (?);", [table_id], 0))
+            self.subframe_share['file'].query([sciplot.database.Query("DELETE FROM `Table` WHERE TableID = (?);", [table_id], 0),
+                                               sciplot.database.Query("DELETE FROM TableColumn WHERE TableID = (?);", [table_id], 0)])
 
             self.refresh_table_list()
 
