@@ -97,6 +97,20 @@ class DataFrame(forms.SubFrame):
         self._gbs_main.Add(self._dvl_data, wx.GBPosition(0, 0), wx.GBSpan(3, 1), wx.ALL | wx.EXPAND)
         self.Layout()
     
+    def refresh_column_list(self):
+        self._ckl_columns.Clear()
+        variables = [tup[0] for tup in self.subframe_share['file'].query(sciplot.database.Query("SELECT Symbol FROM Variable", [], 1))[0]]
+        for variable in variables:
+            self._ckl_columns.Append(variable)
+    
+    def refresh_table_list(self):
+        self._lb_tables.Clear()
+        tables = [tup[0] for tup in self.subframe_share['file'].query(sciplot.database.Query("SELECT Title FROM `Table`", [], 1))[0]]
+        for table in tables:
+            self._lb_tables.Append(table)
+    
     #root frame hooks
     def hook_file_opened(self):
         self.refresh_table()
+        self.refresh_column_list()
+        self.refresh_table_list()
