@@ -33,6 +33,7 @@ class DataFrame(forms.SubFrame):
         self._gbs_main.Add(self._entry_newtable, wx.GBPosition(1, 1), wx.GBSpan(1, 1), wx.ALL | wx.EXPAND)
         
         self._btn_add = wx.Button(self, wx.ID_ANY, "Add")
+        self._btn_add.Bind(wx.EVT_BUTTON, self._add_table)
         self._gbs_main.Add(self._btn_add, wx.GBPosition(1, 2), wx.GBSpan(1, 1), wx.ALL | wx.EXPAND)
 
         self._btn_remove = wx.Button(self, wx.ID_ANY, "Remove")
@@ -108,6 +109,11 @@ class DataFrame(forms.SubFrame):
         tables = [tup[0] for tup in self.subframe_share['file'].query(sciplot.database.Query("SELECT Title FROM `Table`", [], 1))[0]]
         for table in tables:
             self._lb_tables.Append(table)
+    
+    def _add_table(self, event):
+        self.subframe_share['file'].query(sciplot.database.Query("INSERT INTO `Table` (Title) VALUES ((?));", [self._entry_newtable.GetValue()], 0))
+        self.refresh_table_list()
+        event.Skip()
     
     #root frame hooks
     def hook_file_opened(self):
