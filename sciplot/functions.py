@@ -986,6 +986,23 @@ def _chk_circular(tree: typing.List[str], function_names: typing.List[str], func
     
     return False
 
+def evaluate_dependencies(function_name: str, functions: typing.Dict[str, Function]):
+    return _eval_deps([], functions[function_name].evaluate_dependencies(), functions)
+
+def _eval_deps(deps: typing.List[str], func_deps: typing.List[str], functions: typing.Dict[str, Function]):
+    for name in func_deps:
+        if name in functions:
+            new_deps = functions[name].evaluate_dependencies()
+
+            for dep in new_deps:
+                if dep not in deps:
+                    deps.append(dep)
+        
+        else:
+            deps.append(name)
+    
+    return deps
+
 def evaluate_tree(function_name: str, functions: typing.Dict[str, Function], data_table = {}):
     data_table = data_table.copy()
 
