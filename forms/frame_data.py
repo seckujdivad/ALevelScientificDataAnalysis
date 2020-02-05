@@ -26,6 +26,8 @@ class DataFrame(forms.SubFrame):
         self._dvl_data = None
         self._recreate_dvl_data()
 
+        self._tables = []
+
         self._lb_tables = wx.ListBox(self, wx.ID_ANY)
         self._gbs_main.Add(self._lb_tables, wx.GBPosition(0, 1), wx.GBSpan(1, 3), wx.ALL | wx.EXPAND)
 
@@ -37,6 +39,7 @@ class DataFrame(forms.SubFrame):
         self._gbs_main.Add(self._btn_add, wx.GBPosition(1, 2), wx.GBSpan(1, 1), wx.ALL | wx.EXPAND)
 
         self._btn_remove = wx.Button(self, wx.ID_ANY, "Remove")
+        self._btn_remove.Bind(wx.EVT_BUTTON, self._remove_table)
         self._gbs_main.Add(self._btn_remove, wx.GBPosition(1, 3), wx.GBSpan(1, 1), wx.ALL | wx.EXPAND)
 
         self._ckl_columns = wx.CheckListBox(self, wx.ID_ANY)
@@ -105,14 +108,29 @@ class DataFrame(forms.SubFrame):
             self._ckl_columns.Append(variable)
     
     def refresh_table_list(self):
+        self._tables.clear()
         self._lb_tables.Clear()
-        tables = [tup[0] for tup in self.subframe_share['file'].query(sciplot.database.Query("SELECT Title FROM `Table`", [], 1))[0]]
-        for table in tables:
-            self._lb_tables.Append(table)
+
+        tables = self.subframe_share['file'].query(sciplot.database.Query("SELECT TableID, Title FROM `Table`", [], 1))[0]
+        for table_id, table_title in tables:
+            self._lb_tables.Append(table_title)
+            self._tables.append((table_id, table_title))
     
     def _add_table(self, event):
         self.subframe_share['file'].query(sciplot.database.Query("INSERT INTO `Table` (Title) VALUES ((?));", [self._entry_newtable.GetValue()], 0))
         self.refresh_table_list()
+        event.Skip()
+    
+    def _remove_table(self, event):
+        selection_index = self._lb_tables.GetSelection()
+        if selection_index != -1:
+            table_id = self._tables[selection_index][0]
+
+            self.subframe_share['file'].query(sciplot.database.Query("DELETE FROM `Table` WHERE TableID = (?);", [table_id], 0),
+                                              sciplot.database.Query("DELETE FROM TableColumn WHERE TableID = (?);", [table_id], 0))
+
+            self.refresh_table_list()
+
         event.Skip()
     
     #root frame hooks
