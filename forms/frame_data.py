@@ -29,6 +29,8 @@ class DataFrame(forms.SubFrame):
         self._tables = []
         self._columns = []
 
+        self._column_selected_previous = -1
+
         self._lb_tables = wx.ListBox(self, wx.ID_ANY)
         self._lb_tables.Bind(wx.EVT_LISTBOX, self._table_selected)
         self._gbs_main.Add(self._lb_tables, wx.GBPosition(0, 1), wx.GBSpan(1, 3), wx.ALL | wx.EXPAND)
@@ -272,6 +274,10 @@ class DataFrame(forms.SubFrame):
             variable_id, variable_symbol = self._columns[selection_index]
             table_id = self._tables[table_selection_index][0]
 
+            if self._column_selected_previous != -1:
+                format_pattern = self._entry_formatstring.GetValue()
+                self.subframe_share['file'].query(sciplot.database.Query("UPDATE TableColumn SET FormatPattern = (?) WHERE VariableID = (?) AND TableID = (?);", [format_pattern, self._columns[self._column_selected_previous][0], table_id], 0))
+
             selected_items = [self._columns[index][0] for index in self._ckl_columns.GetCheckedItems()]
 
             if variable_id in selected_items:
@@ -279,6 +285,8 @@ class DataFrame(forms.SubFrame):
                 self._entry_formatstring.SetValue(value[0][0][0])
             else:
                 self._entry_formatstring.SetValue("")
+
+            self._column_selected_previous = self._ckl_columns.GetSelection()
 
         event.Skip()
     
