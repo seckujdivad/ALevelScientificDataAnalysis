@@ -43,6 +43,7 @@ class DataFrame(forms.SubFrame):
         self._gbs_main.Add(self._btn_remove, wx.GBPosition(1, 3), wx.GBSpan(1, 1), wx.ALL | wx.EXPAND)
 
         self._ckl_columns = wx.CheckListBox(self, wx.ID_ANY)
+        self._ckl_columns.Bind(wx.EVT_CHECKLISTBOX, self._column_selection_change)
         self._gbs_main.Add(self._ckl_columns, wx.GBPosition(2, 1), wx.GBSpan(1, 3), wx.ALL | wx.EXPAND)
 
         #set sizer weights
@@ -130,6 +131,15 @@ class DataFrame(forms.SubFrame):
                                               sciplot.database.Query("DELETE FROM TableColumn WHERE TableID = (?);", [table_id], 0))
 
             self.refresh_table_list()
+
+        event.Skip()
+    
+    def _column_selection_change(self, event):
+        selection_index = self._lb_tables.GetSelection()
+        if selection_index != -1:
+            print(selection_index)
+            selected_columns = list(self._ckl_columns.GetCheckedItems())
+            print(selected_columns)
 
         event.Skip()
     
