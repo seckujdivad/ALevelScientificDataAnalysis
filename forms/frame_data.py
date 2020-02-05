@@ -68,27 +68,86 @@ class DataFrame(forms.SubFrame):
         self._dvl_columns.append(self._dvl_data.AppendTextColumn(title))
     
     def refresh_table(self):
-        self._recreate_dvl_data()
+        selection_index = self._lb_tables.GetSelection()
+        if selection_index != -1:
+            table_id = self._tables[selection_index][0]
+            
+            self._recreate_dvl_data()
 
-        data_table = []
-        value_formatters = []
-        
-        for data_set_title, data_set_id, unc, uncisperc in self.subframe_share['file'].query(sciplot.database.Query("""SELECT Variable.Symbol, Variable.ID, DataSet.Uncertainty, DataSet.UncIsPerc FROM Variable INNER JOIN DataSet ON DataSet.DataSetID = Variable.ID WHERE Variable.Type = 0;""", [], 1))[0]:
-            self._dvl_columns.append(self._dvl_data.AppendTextColumn(data_set_title))
+            function_table = {}
+            for expression, name in self.subframe_share['file'].query(sciplot.database.Query("SELECT Expression, Symbol FROM Formula INNER JOIN Variable ON ID = FormulaID AND Type = 1", [], 1))[0]:
+                function_table[name] = sciplot.functions.Function(expression)
 
-            data_table.append(self.subframe_share['file'].query(sciplot.database.Query("""SELECT DataPoint.Value FROM DataPoint WHERE DataSetID = (?);""", [data_set_id], 1))[0])
-            value_formatters.append(sciplot.functions.Value(0, unc, bool(uncisperc)))
+            constants_table = {key: sciplot.functions.Value(value) for value, key in self.subframe_share['file'].list_constants()}
 
-        data_table_formatted = []
-        for i in range(len(data_table[0])):
-            data_table_formatted.append([])
+            data_table = []
+            value_formatters = []
+            dependent_data = {}
+            
+            for variable_symbol, variable_subid, variable_type, format_string in self.subframe_share['file'].query(sciplot.database.Query("""SELECT Variable.Symbol, Variable.ID, Variable.Type, TableColumn.FormatPattern FROM Variable INNER JOIN TableColumn ON TableColumn.VariableID = Variable.VariableID WHERE TableColumn.TableID = (?);""", [table_id], 1))[0]:
+                self._dvl_columns.append(self._dvl_data.AppendTextColumn(variable_symbol))
 
-            for j in range(len(data_table)):
-                value_formatters[j].value = data_table[j][i][0]
-                data_table_formatted[i].append('{} x 10^{} + {}'.format(*value_formatters[j].format_scientific()))
+                if variable_type == 0:
+                    dataset_uncertainty, dataset_uncisperc = self.subframe_share['file'].query(sciplot.database.Query("SELECT Uncertainty, UncIsPerc FROM DataSet WHERE DataSetID = (?);", [variable_subid], 1))[0][0]
+                    data_table.append([tup[0] for tup in self.subframe_share['file'].query(sciplot.database.Query("""SELECT DataPoint.Value FROM DataPoint WHERE DataSetID = (?);""", [variable_subid], 1))[0]])
+                    value_formatters.append((sciplot.functions.Value(0, dataset_uncertainty, bool(dataset_uncisperc)), format_string))
+                
+                else:
+                    data_table.append(variable_symbol)
+                    value_formatters.append((None, format_string))
 
-        for row in data_table_formatted:
-            self._dvl_data.AppendItem(row)
+                    dependencies = sciplot.functions.evaluate_dependencies(variable_symbol, function_table)
+                    for dependency in dependencies:
+                        if (dependency in function_table) or (dependency in dependent_data) or (dependency in constants_table):
+                            pass
+                        
+                        else:
+                            imported_data = self.subframe_share['file'].query(sciplot.database.Query("SELECT DataPoint.Value, DataSet.Uncertainty, DataSet.UncIsPerc FROM DataPoint INNER JOIN DataSet, Variable ON Variable.ID = DataSet.DataSetID AND DataPoint.DataSetID = DataSet.DataSetID WHERE Variable.Type = 0 AND Variable.Symbol = (?);", [dependency], 1))[0]
+
+                            dependent_data[dependency] = []
+
+                            for value, unc, uncisperc in imported_data:
+                                dependent_data[dependency].append(sciplot.functions.Value(value, unc, bool(uncisperc)))
+
+            data_table_formatted = []
+            data_table_len = -1
+            data_is_valid = True
+            for data in [data for data in data_table] + [dependent_data[key] for key in dependent_data]:
+                print(data)
+                if type(data) == list:
+                    if data_table_len == -1:
+                        data_table_len = len(data)
+
+                    elif len(data) == 1:
+                        pass
+                    
+                    elif data_table_len != len(data):
+                        data_is_valid = False
+            
+            function_data_table = {}
+            function_data_table.update(constants_table)
+
+            if data_is_valid:
+                print(data_table_len)
+                for i in range(data_table_len):
+                    data_table_formatted.append([])
+
+                    for j in range(len(data_table)):
+                        if type(data_table[j]) == list:
+                            value_formatters[j][0].value = data_table[j][i]
+                            data_table_formatted[i].append(value_formatters[j].format(value_formatters[j][1])[0])
+
+                        else:
+                            for dependency in dependent_data:
+                                function_data_table.update({dependency: dependent_data[dependency][i]})
+
+                            data_table_formatted[i].append(sciplot.functions.evaluate_tree(data_table[j], function_table, function_data_table).format(value_formatters[j][1])[0])
+
+                for row in data_table_formatted:
+                    self._dvl_data.AppendItem(row)
+            
+            else:
+                wx.MessageBox("Not all columns are the same length\nRemove all offending columns", "Column length error", wx.ICON_ERROR | wx.OK)
     
     def _recreate_dvl_data(self):
         """
@@ -159,7 +218,7 @@ class DataFrame(forms.SubFrame):
             
             queries = []
             for variable_id in to_add:
-                queries.append(sciplot.database.Query("INSERT INTO TableColumn (TableID, VariableID) VALUES ((?), (?));", [table_id, variable_id], 0))
+                queries.append(sciplot.database.Query("INSERT INTO TableColumn (TableID, VariableID, FormatPattern) VALUES ((?), (?), (?));", [table_id, variable_id, ""], 0))
             
             for variable_id in to_remove:
                 queries.append(sciplot.database.Query("DELETE FROM TableColumn WHERE VariableID = (?);", [variable_id], 0))
@@ -172,6 +231,8 @@ class DataFrame(forms.SubFrame):
         selection_index = self._lb_tables.GetSelection()
         if selection_index != -1:
             table_id = self._tables[selection_index][0]
+
+            #update table column selection
             columns_indexes = [tup[0] for tup in self.subframe_share['file'].query(sciplot.database.Query("SELECT VariableID FROM TableColumn WHERE TableID = (?);", [table_id], 1))[0]]
             new_checked_items = []
             column_ids = [tup[0] for tup in self._columns]
@@ -180,6 +241,9 @@ class DataFrame(forms.SubFrame):
                 new_checked_items.append(column_ids.index(variable_id))
 
             self._ckl_columns.SetCheckedItems(new_checked_items)
+
+            #update displayed table data
+            self.refresh_table()
 
         event.Skip()
     
