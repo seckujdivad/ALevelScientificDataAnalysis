@@ -344,7 +344,20 @@ class IMathematicalFunction:
                     matches.append([{'start': start, 'end': end}, operator])
         
         if len(matches) == 0:
-            raise ValueError('No valid operators found in "{}"'.format(string))
+            is_float = True
+            items = []
+            for char in string:
+                if char not in '1234567890.':
+                    is_float = False
+
+            if is_float:
+                return Float(string)
+            
+            elif string.startswith('{') and string.endswith('}') and '}' not in string[1:-1]: #check for variable
+                return Variable(string[1:len(string) - 1])
+
+            else:
+                raise ValueError('No valid operators found in "{}"'.format(string))
         
         else:
             #find operators that overlap and remove them first
@@ -406,7 +419,7 @@ class IMathematicalFunction:
                         is_float = False
 
                 if is_float:
-                        items.append(Float(item))
+                    items.append(Float(item))
                 
                 elif item.startswith('{') and item.endswith('}') and '}' not in item[1:-1]: #check for variable
                     items.append(Variable(item[1:len(item) - 1]))
