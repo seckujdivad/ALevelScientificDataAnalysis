@@ -72,36 +72,46 @@ class DataFrame(forms.SubFrame):
         if selection_index != -1:
             table_id = self._tables[selection_index][0]
             
+            #remake table ui so that new columns can be added
             self._recreate_dvl_data()
 
+            #construct all functions so that trees can be evaluated
             function_table = {}
             for expression, name in self.subframe_share['file'].query(sciplot.database.Query("SELECT Expression, Symbol FROM Formula INNER JOIN Variable ON ID = FormulaID AND Type = 1", [], 1))[0]:
                 function_table[name] = sciplot.functions.Function(expression)
 
+            #get all constants
             constants_table = {key: sciplot.functions.Value(value) for value, key in self.subframe_share['file'].list_constants()}
 
-            data_table = []
-            value_formatters = []
-            dependent_data = {}
+            data_table = [] #data to be added to the table
+            format_strings = [] #formatting data for each column
+            dependent_data = {} #data that isn't necessarily displayed in the table, but is needed as an input for an expression that is
             
-            for variable_symbol, variable_subid, variable_type, format_string in self.subframe_share['file'].query(sciplot.database.Query("""SELECT Variable.Symbol, Variable.ID, Variable.Type, TableColumn.FormatPattern FROM Variable INNER JOIN TableColumn ON TableColumn.VariableID = Variable.VariableID WHERE TableColumn.TableID = (?);""", [table_id], 1))[0]:
-                self._dvl_columns.append(self._dvl_data.AppendTextColumn(variable_symbol))
+            #iterate through all columns
+            for variable_symbol, variable_subid, variable_type, format_string in self.subframe_share['file'].query(sciplot.database.Query("SELECT Variable.Symbol, Variable.ID, Variable.Type, TableColumn.FormatPattern FROM Variable INNER JOIN TableColumn ON TableColumn.VariableID = Variable.VariableID WHERE TableColumn.TableID = (?);", [table_id], 1))[0]:
+                self._dvl_columns.append(self._dvl_data.AppendTextColumn(variable_symbol)) #create column header
 
-                if variable_type == 0:
+                if variable_type == 0: #dataset
                     dataset_uncertainty, dataset_uncisperc = self.subframe_share['file'].query(sciplot.database.Query("SELECT Uncertainty, UncIsPerc FROM DataSet WHERE DataSetID = (?);", [variable_subid], 1))[0][0]
-                    data_table.append([tup[0] for tup in self.subframe_share['file'].query(sciplot.database.Query("""SELECT DataPoint.Value FROM DataPoint WHERE DataSetID = (?);""", [variable_subid], 1))[0]])
-                    value_formatters.append((sciplot.functions.Value(0, dataset_uncertainty, bool(dataset_uncisperc)), format_string))
-                
-                else:
-                    data_table.append(variable_symbol)
-                    value_formatters.append((None, format_string))
 
-                    dependencies = sciplot.functions.evaluate_dependencies(variable_symbol, function_table)
+                    to_add = [] #get all data points in the data set
+                    for tup in self.subframe_share['file'].query(sciplot.database.Query("SELECT DataPoint.Value FROM DataPoint WHERE DataSetID = (?);", [variable_subid], 1))[0]:
+                        to_add.append(sciplot.functions.Value(tup[0], dataset_uncertainty, bool(dataset_uncisperc)))
+
+                    data_table.append(to_add)
+                    format_strings.append(format_string)
+                
+                else: #formula
+                    data_table.append(variable_symbol)
+                    format_strings.append(format_string)
+
+                    dependencies = sciplot.functions.evaluate_dependencies(variable_symbol, function_table) #get formulae and data sets that this formula depends on
                     for dependency in dependencies:
-                        if (dependency in function_table) or (dependency in dependent_data) or (dependency in constants_table):
+                        if (dependency in function_table) or (dependency in dependent_data) or (dependency in constants_table): #data already exists in a dependency table, so doesn't need getting from the database
                             pass
                         
                         else:
+                            #get data points from the database and store
                             imported_data = self.subframe_share['file'].query(sciplot.database.Query("SELECT DataPoint.Value, DataSet.Uncertainty, DataSet.UncIsPerc FROM DataPoint INNER JOIN DataSet, Variable ON Variable.ID = DataSet.DataSetID AND DataPoint.DataSetID = DataSet.DataSetID WHERE Variable.Type = 0 AND Variable.Symbol = (?);", [dependency], 1))[0]
 
                             dependent_data[dependency] = []
@@ -109,11 +119,11 @@ class DataFrame(forms.SubFrame):
                             for value, unc, uncisperc in imported_data:
                                 dependent_data[dependency].append(sciplot.functions.Value(value, unc, bool(uncisperc)))
 
+            #make sure all columns are the same length. if there are only formulas, determine the length that the columns should be
             data_table_formatted = []
             data_table_len = -1
             data_is_valid = True
             for data in [data for data in data_table] + [dependent_data[key] for key in dependent_data]:
-                print(data)
                 if type(data) == list:
                     if data_table_len == -1:
                         data_table_len = len(data)
@@ -124,25 +134,26 @@ class DataFrame(forms.SubFrame):
                     elif data_table_len != len(data):
                         data_is_valid = False
             
+            #aggregate inputs for functions
             function_data_table = {}
             function_data_table.update(constants_table)
 
             if data_is_valid:
-                print(data_table_len)
                 for i in range(data_table_len):
                     data_table_formatted.append([])
 
                     for j in range(len(data_table)):
-                        if type(data_table[j]) == list:
-                            value_formatters[j][0].value = data_table[j][i]
-                            data_table_formatted[i].append(value_formatters[j][0].format(value_formatters[j][1])[0])
+                        if type(data_table[j]) == list: #data set
+                            data_table_formatted[i].append(data_table[j][i].format(format_strings[j])[0])
 
-                        else:
+                        else: #function
+                            #aggregate more inputs for the function from this table row
                             for dependency in dependent_data:
                                 function_data_table.update({dependency: dependent_data[dependency][i]})
 
-                            data_table_formatted[i].append(sciplot.functions.evaluate_tree(data_table[j], function_table, function_data_table).format(value_formatters[j][1])[0])
+                            data_table_formatted[i].append(sciplot.functions.evaluate_tree(data_table[j], function_table, function_data_table).format(format_strings[j])[0])
 
+                #add the formatted data to the datalistviewctrl
                 for row in data_table_formatted:
                     self._dvl_data.AppendItem(row)
             
