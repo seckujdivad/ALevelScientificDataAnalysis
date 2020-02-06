@@ -22,8 +22,10 @@ class DataPointsFrame(forms.SubFrame):
 
         #create elements
         self._data_sets = []
+        self._data_points = []
 
         self._lb_datasets = wx.ListBox(self, wx.ID_ANY)
+        self._lb_datasets.Bind(wx.EVT_LISTBOX, self._bind_lb_datasets_new_selection)
         self._gbs_main.Add(self._lb_datasets, wx.GBPosition(0, 2), wx.GBSpan(3, 1), wx.ALL | wx.EXPAND)
 
         self._btn_add_new = wx.Button(self, wx.ID_ANY, "Add New")
@@ -60,6 +62,9 @@ class DataPointsFrame(forms.SubFrame):
         self.resize_datapoint_columns()
     
     #ui binds
+    def _bind_lb_datasets_new_selection(self, event):
+        self.refresh_data_points()
+        event.Skip()
 
     #frame methods
     def refresh_dataset_list(self):
@@ -71,3 +76,14 @@ class DataPointsFrame(forms.SubFrame):
     def resize_datapoint_columns(self):
         width = self._dvl_datapoints.GetSize()[0]
         self._dvc_col.SetWidth(width - 30)
+    
+    def refresh_data_points(self):
+        selection = self._lb_datasets.GetSelection()
+        if selection != -1:
+            data_set_id = self._data_sets[selection][0]
+
+            self._data_points = self._datafile.query(sciplot.database.Query("SELECT DataPointID, Value FROM DataPoint WHERE DataSetID = (?);", [data_set_id], 1))[0]
+            
+            self._dvl_datapoints.DeleteAllItems()
+            for data_point_id, value in self._data_points:
+                self._dvl_datapoints.AppendItem([value])
