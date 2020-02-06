@@ -323,3 +323,9 @@ class DataFrame(forms.SubFrame):
         self.refresh_table()
         self.refresh_column_list()
         self.refresh_table_list()
+    
+    def hook_frame_selected(self):
+        self._refresh_table()
+    
+    def hook_frame_unselected(self):
+        self._refresh_table()
