@@ -115,6 +115,14 @@ class Value:
                 if not post_capped:
                     post_size -= 1
                 
+                #pre rounding
+                if post_capped:
+                    return_string = float(return_string)
+                    return_string *= pow(10, post_size)
+                    return_string = self.upwards_round(return_string)
+                    return_string /= pow(10, post_size)
+                    return_string = str(return_string)
+                
                 #split value to format around decimal place
                 return_pivot = return_string.find('.')
                 if return_pivot == -1:
@@ -134,7 +142,24 @@ class Value:
                 elif post_size > len(post_return):
                     post_return += '0' * (post_size - len(post_return))
                 elif (post_size < len(post_return)) and post_capped:
-                    post_return = str(int(self.upwards_round(int(post_return) / pow(10, len(post_return) - post_size))))
+                    leading_zeroes = 0
+                    
+                    for i in range(len(post_return)):
+                        char = post_return[i]
+                        if char == '0':
+                            leading_zeroes += 1
+                        else:
+                            break
+                    
+                    check_round_up = True
+                    for j in range(i, len(post_return), 1):
+                        if self.upwards_round(int(post_return[j]) / 10) == 0:
+                            check_round_up = False
+                    
+                    if i < len(post_return) - 2 and post_return[i] == '9' and check_round_up:
+                        leading_zeroes -= 1
+                    
+                    post_return = '0' * leading_zeroes + str(int(self.upwards_round(int(post_return) / pow(10, len(post_return) - post_size))))
                 
                 if post_return == '':
                     return_string = pre_return
