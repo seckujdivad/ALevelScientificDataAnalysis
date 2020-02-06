@@ -54,6 +54,10 @@ class DataFrame(forms.SubFrame):
         self._entry_formatstring = wx.TextCtrl(self, wx.ID_ANY)
         self._gbs_main.Add(self._entry_formatstring, wx.GBPosition(3, 1), wx.GBSpan(1, 3), wx.ALL | wx.EXPAND)
 
+        self._btn_refresh = wx.Button(self, wx.ID_ANY, "Refresh")
+        self._btn_refresh.Bind(wx.EVT_BUTTON, self._refresh_table)
+        self._gbs_main.Add(self._btn_refresh, wx.GBPosition(3, 0), wx.GBSpan(1, 1), wx.ALL | wx.EXPAND)
+
         #set sizer weights
         for i in [0]:
             self._gbs_main.AddGrowableCol(i)
@@ -182,7 +186,7 @@ class DataFrame(forms.SubFrame):
             self._dvl_columns = []
         
         self._dvl_data = wx.dataview.DataViewListCtrl(self, wx.ID_ANY)
-        self._gbs_main.Add(self._dvl_data, wx.GBPosition(0, 0), wx.GBSpan(4, 1), wx.ALL | wx.EXPAND)
+        self._gbs_main.Add(self._dvl_data, wx.GBPosition(0, 0), wx.GBSpan(3, 1), wx.ALL | wx.EXPAND)
         self.Layout()
     
     def refresh_column_list(self):
@@ -221,7 +225,7 @@ class DataFrame(forms.SubFrame):
 
         event.Skip()
     
-    def _column_selection_change(self, event):
+    def _column_selection_change(self, event = None):
         selection_index = self._lb_tables.GetSelection()
         if selection_index != -1:
             table_id = self._tables[selection_index][0]
@@ -250,9 +254,10 @@ class DataFrame(forms.SubFrame):
 
             self.refresh_table()
 
-        event.Skip()
+        if event is not None:
+            event.Skip()
     
-    def _table_selected(self, event):
+    def _table_selected(self, event = None):
         selection_index = self._lb_tables.GetSelection()
         if selection_index != -1:
             table_id = self._tables[selection_index][0]
@@ -270,9 +275,10 @@ class DataFrame(forms.SubFrame):
             #update displayed table data
             self.refresh_table()
 
-        event.Skip()
+        if event is not None:
+            event.Skip()
     
-    def _column_selected(self, event):
+    def _column_selected(self, event = None):
         #get selections from ui
         selection_index = self._ckl_columns.GetSelection()
         table_selection_index = self._lb_tables.GetSelection()
@@ -298,7 +304,19 @@ class DataFrame(forms.SubFrame):
 
             self._column_selected_previous = self._ckl_columns.GetSelection()
 
-        event.Skip()
+        if event is not None:
+            event.Skip()
+    
+    def _refresh_table(self, event = None):
+        self._column_selected()
+        self._table_selected()
+        self._column_selection_change()
+        self.refresh_column_list()
+        self.refresh_table_list()
+        self.refresh_table()
+        
+        if event is not None:
+            event.Skip()
     
     #root frame hooks
     def hook_file_opened(self):
