@@ -90,6 +90,7 @@ class RootFrame(wx.Frame):
 
             self.Bind(wx.EVT_TOOL, functools.partial(self.toolbar_form_clicked, new_frame.identifier), self._tlbr_panelswitch_tools[new_frame.identifier])
             self._bk_sub.ShowNewPage(new_frame)
+            new_frame.hook_file_opened()
 
             new_frame.toolbar_index = i
 
