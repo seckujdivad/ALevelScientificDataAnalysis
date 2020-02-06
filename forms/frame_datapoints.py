@@ -23,6 +23,7 @@ class DataPointsFrame(forms.SubFrame):
         #create elements
         self._data_sets = []
         self._data_points = []
+        self._data_point_current = None
 
         self._lb_datasets = wx.ListBox(self, wx.ID_ANY)
         self._lb_datasets.Bind(wx.EVT_LISTBOX, self._bind_lb_datasets_new_selection)
@@ -35,6 +36,7 @@ class DataPointsFrame(forms.SubFrame):
         self._gbs_main.Add(self._btn_remove, wx.GBPosition(2, 1), wx.GBSpan(1, 1), wx.ALL | wx.EXPAND)
 
         self._dvl_datapoints = wx.dataview.DataViewListCtrl(self, wx.ID_ANY)
+        self._dvl_datapoints.Bind(wx.dataview.EVT_DATAVIEW_SELECTION_CHANGED, self._bind_dvl_datapoints_selection_changed)
         self._dvc_col = self._dvl_datapoints.AppendTextColumn("Value")
         self._gbs_main.Add(self._dvl_datapoints, wx.GBPosition(0, 0), wx.GBSpan(1, 2), wx.ALL | wx.EXPAND)
 
@@ -64,6 +66,15 @@ class DataPointsFrame(forms.SubFrame):
     #ui binds
     def _bind_lb_datasets_new_selection(self, event):
         self.refresh_data_points()
+        event.Skip()
+    
+    def _bind_dvl_datapoints_selection_changed(self, event):
+        selection = self._dvl_datapoints.GetSelectedRow()
+        if selection != -1:
+            data_point_id, value = self._data_points[selection]
+            self._data_point_current = data_point_id
+            self._spn_value.SetValue(value)
+
         event.Skip()
 
     #frame methods
