@@ -150,14 +150,19 @@ class DataFrame(forms.SubFrame):
 
                     for j in range(len(data_table)):
                         if type(data_table[j]) == list: #data set
-                            data_table_formatted[i].append(data_table[j][i].format(format_strings[j])[0])
+                            value = data_table[j][i]
 
                         else: #function
                             #aggregate more inputs for the function from this table row
                             for dependency in dependent_data:
                                 function_data_table.update({dependency: dependent_data[dependency][i]})
 
-                            data_table_formatted[i].append(sciplot.functions.evaluate_tree(data_table[j], function_table, function_data_table).format(format_strings[j])[0])
+                            value = sciplot.functions.evaluate_tree(data_table[j], function_table, function_data_table)
+                        
+                        formatted_string, exponent = value.format(format_strings[j])
+                        if exponent is not None:
+                            formatted_string = '{}E{}'.format(formatted_string, exponent)
+                        data_table_formatted[i].append(formatted_string)
 
                 #add the formatted data to the datalistviewctrl
                 for row in data_table_formatted:
