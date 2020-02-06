@@ -151,12 +151,6 @@ class RootFrame(wx.Frame):
 
         else:
             commit_changes = wx.OK
-        
-        if self.subframe_share['file is temp']:
-            if self.subframe_share['file'] is not None:
-                self.subframe_share['file'].close()
-            os.remove("user/temp.db")
-            self.subframe_share['file is temp'] = False
 
         if commit_changes != wx.CANCEL:
             with wx.FileDialog(self, "Open DataFile", wildcard = "DataFile (*.db)|*.db", defaultDir = sys.path[0], style = wx.FD_OPEN | wx.FD_FILE_MUST_EXIST) as file_dialog:
@@ -164,6 +158,12 @@ class RootFrame(wx.Frame):
                     pass
 
                 else:
+                    if self.subframe_share['file is temp']:
+                        if self.subframe_share['file'] is not None:
+                            self.subframe_share['file'].close()
+                        os.remove("user/temp.db")
+                        self.subframe_share['file is temp'] = False
+
                     path = file_dialog.GetPath()
                     
                     self.subframe_share['file'] = sciplot.database.DataFile(path)
