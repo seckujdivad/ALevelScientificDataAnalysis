@@ -423,13 +423,18 @@ WHERE DataSet.DataSetID = (?)'''
         
         if variable_id == -1:
             if remove_plots or remove_columns:
-                variable_id =self.query(Query('SELECT VariableID FROM Variable WHERE ID = (?) AND Type = (?)', [sub_id, variable_type], 2))[0]
+                variable_id = self.query(Query('SELECT VariableID FROM Variable WHERE ID = (?) AND Type = (?)', [sub_id, variable_type], 2))[0]
 
         if remove_plots:
             self.query(Query('DELETE FROM Plot WHERE VariableXID = (?) OR VariableYID = (?)', [variable_id, variable_id], 0))
         
         if remove_columns:
             self.query(Query('DELETE FROM TableColumn WHERE VariableID = (?)', [variable_id], 0))
+        
+        if variable_id == -1:
+            self.query(Query("DELETE FROM Variable WHERE ID = (?) AND Type = (?);", [sub_id, variable_type], 0))
+        else:
+            self.query(Query("DELETE FROM Variable WHERE VariableID = (?);", [variable_id], 0))
     
     #tables
     def list_tables(self):
