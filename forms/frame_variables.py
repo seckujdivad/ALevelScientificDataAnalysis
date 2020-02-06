@@ -208,16 +208,18 @@ class VariablesFrame(forms.SubFrame):
     def _delete_selected(self, event):
         current_variable = self._lb_variables.GetSelection()
         if current_variable != -1:
-            self._lb_variables.SetSelection((current_variable - 1) % (len(self._variable_data) - 1))
+            if len(self._variable_data) - 1 > 0:
+                self._lb_variables.SetSelection((current_variable - 1) % (len(self._variable_data) - 1))
 
             variable_id = self._variable_data[current_variable][3]
             self._datafile.remove_variable(variable_id)
 
             self.refresh_variable_list()
 
-            self._variable_current = current_variable % len(self._variable_data)
-            self._lb_variables.SetSelection(self._variable_current)
-            self.symbol_selected()
+            if len(self._variable_data) - 1 > 0:
+                self._variable_current = current_variable % len(self._variable_data)
+                self._lb_variables.SetSelection(self._variable_current)
+                self.symbol_selected()
 
         event.Skip()
     
