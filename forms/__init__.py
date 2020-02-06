@@ -70,6 +70,7 @@ import forms.frame_data
 import forms.frame_variables
 import forms.frame_formulae
 import forms.frame_graph
+import forms.frame_datapoints
 
 
-manifest: typing.List[SubFrame] = [forms.frame_data.DataFrame, forms.frame_variables.VariablesFrame, forms.frame_graph.GraphFrame, forms.frame_formulae.FormulaeFrame]# TablesFrame, , ConstantsFrame]
+manifest: typing.List[SubFrame] = [forms.frame_data.DataFrame, forms.frame_variables.VariablesFrame, forms.frame_datapoints.DataPointsFrame, forms.frame_graph.GraphFrame, forms.frame_formulae.FormulaeFrame]# TablesFrame, , ConstantsFrame]
