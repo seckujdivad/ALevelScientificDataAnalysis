@@ -46,9 +46,11 @@ class VariablesFrame(forms.SubFrame):
         self._gbs_main.Add(self._bk_props, wx.GBPosition(0, 2), wx.GBSpan(2, 1), wx.ALL | wx.EXPAND)
 
         self._btn_new_dataset = wx.Button(self, wx.ID_ANY, "New Dataset")
+        self._btn_new_dataset.Bind(wx.EVT_BUTTON, self._create_new_dataset)
         self._gbs_main.Add(self._btn_new_dataset, wx.GBPosition(1, 1), wx.GBSpan(1, 1), wx.ALL | wx.EXPAND)
 
         self._btn_new_formula = wx.Button(self, wx.ID_ANY, "New Formula")
+        self._btn_new_formula.Bind(wx.EVT_BUTTON, self._create_new_formula)
         self._gbs_main.Add(self._btn_new_formula, wx.GBPosition(1, 0), wx.GBSpan(1, 1), wx.ALL | wx.EXPAND)
 
         #finalise layout
@@ -183,6 +185,15 @@ class VariablesFrame(forms.SubFrame):
         self._bk_props.SetSelection(0)
         self._prop_dataset.CenterSplitter()
     
+    def _create_new_formula(self, event):
+        formula_id = self._datafile.create_formula("0")
+        self._datafile.create_variable("<blank>", 1, formula_id)
+        self.hook_file_opened()
+        event.Skip()
+    
+    def _create_new_dataset(self, event):
+        event.Skip()
+    
     #root frame hooks
     def hook_file_opened(self):
         self._prop_dataset.Freeze()
@@ -201,6 +212,7 @@ class VariablesFrame(forms.SubFrame):
         self._prop_dataset.Thaw()
 
         self._variable_data.clear()
+        self._lb_variables.Clear()
         for data in self.subframe_share['file'].query(sciplot.database.Query('SELECT Symbol, Type, ID FROM Variable;', [], 1))[0]:
             self._lb_variables.Append(data[0])
             self._variable_data.append(data)
