@@ -213,6 +213,11 @@ class DataFrame(forms.SubFrame):
                 #add the formatted data to the datalistviewctrl
                 for row in data_table_formatted:
                     self._dvl_data.AppendItem(row)
+                
+                #set column widths
+                col_width = (self._dvl_data.GetSize()[0] - 30) / len(self._dvl_columns)
+                for col in self._dvl_columns:
+                    col.SetWidth(col_width)
             
             else:
                 wx.MessageBox("Not all columns are the same length\nRemove all offending columns", "Column length error", wx.ICON_ERROR | wx.OK)
