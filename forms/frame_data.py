@@ -86,11 +86,11 @@ class DataFrame(forms.SubFrame):
             self._recreate_dvl_data()
 
             #get all constants
-            constants_table = {key: sciplot.functions.Value(value) for value, key in self.subframe_share['file'].list_constants()}
+            constants_table = {key: sciplot.functions.Value(value) for value, key in self._datafile.list_constants()}
 
             #construct all functions so that trees can be evaluated
             function_table = {}
-            for expression, name in self.subframe_share['file'].query(sciplot.database.Query("SELECT Expression, Symbol FROM Formula INNER JOIN Variable ON ID = FormulaID AND Type = 1", [], 1))[0]:
+            for expression, name in self._datafile.query(sciplot.database.Query("SELECT Expression, Symbol FROM Formula INNER JOIN Variable ON ID = FormulaID AND Type = 1", [], 1))[0]:
                 function_table[name] = sciplot.functions.Function(expression)
                 function_table[name].pre_evaluate(constants_table) #optimise functions
 
@@ -99,14 +99,14 @@ class DataFrame(forms.SubFrame):
             dependent_data = {} #data that isn't necessarily displayed in the table, but is needed as an input for an expression that is
             
             #iterate through all columns
-            for variable_symbol, variable_subid, variable_type, format_string in self.subframe_share['file'].query(sciplot.database.Query("SELECT Variable.Symbol, Variable.ID, Variable.Type, TableColumn.FormatPattern FROM Variable INNER JOIN TableColumn ON TableColumn.VariableID = Variable.VariableID WHERE TableColumn.TableID = (?);", [table_id], 1))[0]:
+            for variable_symbol, variable_subid, variable_type, format_string in self._datafile.query(sciplot.database.Query("SELECT Variable.Symbol, Variable.ID, Variable.Type, TableColumn.FormatPattern FROM Variable INNER JOIN TableColumn ON TableColumn.VariableID = Variable.VariableID WHERE TableColumn.TableID = (?);", [table_id], 1))[0]:
                 self._dvl_columns.append(self._dvl_data.AppendTextColumn(variable_symbol)) #create column header
 
                 if variable_type == 0: #dataset
-                    dataset_uncertainty, dataset_uncisperc = self.subframe_share['file'].query(sciplot.database.Query("SELECT Uncertainty, UncIsPerc FROM DataSet WHERE DataSetID = (?);", [variable_subid], 1))[0][0]
+                    dataset_uncertainty, dataset_uncisperc = self._datafile.query(sciplot.database.Query("SELECT Uncertainty, UncIsPerc FROM DataSet WHERE DataSetID = (?);", [variable_subid], 1))[0][0]
 
                     to_add = [] #get all data points in the data set
-                    for tup in self.subframe_share['file'].query(sciplot.database.Query("SELECT DataPoint.Value FROM DataPoint WHERE DataSetID = (?);", [variable_subid], 1))[0]:
+                    for tup in self._datafile.query(sciplot.database.Query("SELECT DataPoint.Value FROM DataPoint WHERE DataSetID = (?);", [variable_subid], 1))[0]:
                         to_add.append(sciplot.functions.Value(tup[0], dataset_uncertainty, bool(dataset_uncisperc)))
 
                     data_table.append(to_add)
@@ -123,7 +123,7 @@ class DataFrame(forms.SubFrame):
                         
                         else:
                             #get data points from the database and store
-                            imported_data = self.subframe_share['file'].query(sciplot.database.Query("SELECT DataPoint.Value, DataSet.Uncertainty, DataSet.UncIsPerc FROM DataPoint INNER JOIN DataSet, Variable ON Variable.ID = DataSet.DataSetID AND DataPoint.DataSetID = DataSet.DataSetID WHERE Variable.Type = 0 AND Variable.Symbol = (?);", [dependency], 1))[0]
+                            imported_data = self._datafile.query(sciplot.database.Query("SELECT DataPoint.Value, DataSet.Uncertainty, DataSet.UncIsPerc FROM DataPoint INNER JOIN DataSet, Variable ON Variable.ID = DataSet.DataSetID AND DataPoint.DataSetID = DataSet.DataSetID WHERE Variable.Type = 0 AND Variable.Symbol = (?);", [dependency], 1))[0]
 
                             dependent_data[dependency] = []
 
@@ -194,7 +194,7 @@ class DataFrame(forms.SubFrame):
         self._ckl_columns.Clear()
         self._columns.clear()
 
-        variables = self.subframe_share['file'].query(sciplot.database.Query("SELECT Symbol, VariableID FROM Variable", [], 1))[0]
+        variables = self._datafile.query(sciplot.database.Query("SELECT Symbol, VariableID FROM Variable", [], 1))[0]
         for variable_str, variable_id in variables:
             self._ckl_columns.Append(variable_str)
             self._columns.append((variable_id, variable_str))
@@ -203,13 +203,13 @@ class DataFrame(forms.SubFrame):
         self._tables.clear()
         self._lb_tables.Clear()
 
-        tables = self.subframe_share['file'].query(sciplot.database.Query("SELECT TableID, Title FROM `Table`", [], 1))[0]
+        tables = self._datafile.query(sciplot.database.Query("SELECT TableID, Title FROM `Table`", [], 1))[0]
         for table_id, table_title in tables:
             self._lb_tables.Append(table_title)
             self._tables.append((table_id, table_title))
     
     def _add_table(self, event):
-        self.subframe_share['file'].query(sciplot.database.Query("INSERT INTO `Table` (Title) VALUES ((?));", [self._entry_newtable.GetValue()], 0))
+        self._datafile.query(sciplot.database.Query("INSERT INTO `Table` (Title) VALUES ((?));", [self._entry_newtable.GetValue()], 0))
         self._entry_newtable.SetValue("")
         self.refresh_table_list()
         event.Skip()
@@ -219,7 +219,7 @@ class DataFrame(forms.SubFrame):
         if selection_index != -1:
             table_id = self._tables[selection_index][0]
 
-            self.subframe_share['file'].query([sciplot.database.Query("DELETE FROM `Table` WHERE TableID = (?);", [table_id], 0),
+            self._datafile.query([sciplot.database.Query("DELETE FROM `Table` WHERE TableID = (?);", [table_id], 0),
                                                sciplot.database.Query("DELETE FROM TableColumn WHERE TableID = (?);", [table_id], 0)])
 
             self.refresh_table_list()
@@ -231,7 +231,7 @@ class DataFrame(forms.SubFrame):
         if selection_index != -1:
             table_id = self._tables[selection_index][0]
             selected_columns_indexes = [self._columns[i][0] for i in list(self._ckl_columns.GetCheckedItems())]
-            database_columns_indexes = [tup[0] for tup in self.subframe_share['file'].query(sciplot.database.Query("SELECT VariableID FROM TableColumn WHERE TableID = (?);", [table_id], 1))[0]]
+            database_columns_indexes = [tup[0] for tup in self._datafile.query(sciplot.database.Query("SELECT VariableID FROM TableColumn WHERE TableID = (?);", [table_id], 1))[0]]
 
             to_add = []
             to_remove = []
@@ -251,7 +251,7 @@ class DataFrame(forms.SubFrame):
             for variable_id in to_remove:
                 queries.append(sciplot.database.Query("DELETE FROM TableColumn WHERE VariableID = (?);", [variable_id], 0))
             
-            self.subframe_share['file'].query(queries)
+            self._datafile.query(queries)
 
             self.refresh_table()
 
@@ -264,7 +264,7 @@ class DataFrame(forms.SubFrame):
             table_id = self._tables[selection_index][0]
 
             #update table column selection
-            columns_indexes = [tup[0] for tup in self.subframe_share['file'].query(sciplot.database.Query("SELECT VariableID FROM TableColumn WHERE TableID = (?);", [table_id], 1))[0]]
+            columns_indexes = [tup[0] for tup in self._datafile.query(sciplot.database.Query("SELECT VariableID FROM TableColumn WHERE TableID = (?);", [table_id], 1))[0]]
             new_checked_items = []
             column_ids = [tup[0] for tup in self._columns]
 
@@ -294,11 +294,11 @@ class DataFrame(forms.SubFrame):
             #save previous format string (if it exists)
             if self._column_selected_previous != -1 and self._columns[self._column_selected_previous][0] in selected_items:
                 format_pattern = self._entry_formatstring.GetValue()
-                self.subframe_share['file'].query(sciplot.database.Query("UPDATE TableColumn SET FormatPattern = (?) WHERE VariableID = (?) AND TableID = (?);", [format_pattern, self._columns[self._column_selected_previous][0], table_id], 0))
+                self._datafile.query(sciplot.database.Query("UPDATE TableColumn SET FormatPattern = (?) WHERE VariableID = (?) AND TableID = (?);", [format_pattern, self._columns[self._column_selected_previous][0], table_id], 0))
 
             #load new format string if applicable
             if variable_id in selected_items:
-                value = self.subframe_share['file'].query(sciplot.database.Query("SELECT FormatPattern FROM TableColumn WHERE VariableID = (?) AND TableID = (?);", [variable_id, table_id], 1))
+                value = self._datafile.query(sciplot.database.Query("SELECT FormatPattern FROM TableColumn WHERE VariableID = (?) AND TableID = (?);", [variable_id, table_id], 1))
                 self._entry_formatstring.SetValue(value[0][0][0])
             else:
                 self._entry_formatstring.SetValue("")
