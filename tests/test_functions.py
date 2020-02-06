@@ -261,6 +261,14 @@ class TestVariable(unittest.TestCase):
         self.assertEqual(self.format_value('*0.0*', 17.52), ('17.52', None))
         self.assertEqual(self.format_value('0.*', 17.52), ('7.52', None))
     
+    def test_value_close(self):
+        self.assertEqual(self.format_value('00.000', 0.0009999999999998899), ('00.001', None))
+        self.assertEqual(self.format_value('00.000', 0.053999999999999826), ('00.054', None))
+        self.assertEqual(self.format_value('00.000', 0.07799999999999985), ('00.078', None))
+
+        self.assertEqual(self.format_value('000.0', 0.980665), ('001.0', None))
+        self.assertEqual(self.format_value('000.0', 1.96133), ('002.0', None))
+    
     def test_exponential(self):
         self.assertEqual(self.format_value('0.0e', 253), ('2.5', '2'))
         self.assertEqual(self.format_value('0.00e', 253), ('2.53', '2'))
