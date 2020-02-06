@@ -126,3 +126,4 @@ dmypy.json
 ## vscode
 /vscode/
 /.vscode/
+user/temp.db
