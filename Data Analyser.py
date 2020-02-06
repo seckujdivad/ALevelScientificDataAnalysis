@@ -5,6 +5,8 @@ import typing
 import functools
 import ctypes
 import sys
+import shutil
+import os
 
 import forms
 import sciplot.database
@@ -22,8 +24,13 @@ class RootFrame(wx.Frame):
         self.SetMinSize(wx.Size(500, 400))
 
         self.subframe_share = {
-            'file': None
+            'file': None,
+            'file is temp': True
         }
+
+        #make temp datafile
+        sciplot.database.create_blank_datafile("user/temp.db")
+        self.subframe_share['file'] = sciplot.database.DataFile("user/temp.db")
 
         #set icon
         icon = wx.Icon()
@@ -59,7 +66,7 @@ class RootFrame(wx.Frame):
         self.SetMenuBar(self._mb_main)
 
         #add internal menu bar items
-        for cat, title, func in [('File', 'Open', self._choose_db), ('File', 'Save', self._commit_db)]:
+        for cat, title, func in [('File', 'Open', self._choose_db), ('File', 'Save', self._commit_db), ('File', 'Save Temporary File', self._save_temp)]:
             menu_item = self._mb_cats[cat].Append(wx.ID_ANY, title)
             self.Bind(wx.EVT_MENU, func, menu_item)
             self._mb_subitems[cat].append(menu_item)
@@ -120,7 +127,8 @@ class RootFrame(wx.Frame):
             if self._subframes[form].toolbar_index == -1:
                 raise Exception("This form hasn't been connected to a SimpleBook")
 
-            self._subframes[self._current_frame].hook_frame_unselected()
+            if self._current_frame is not None:
+                self._subframes[self._current_frame].hook_frame_unselected()
 
             self._bk_sub.SetSelection(self._subframes[form].toolbar_index)
             self._sb_main.PopStatusText()
@@ -133,7 +141,7 @@ class RootFrame(wx.Frame):
         event.Skip()
     
     def _choose_db(self, event):
-        if self.subframe_share['file'] is not None:
+        if self.subframe_share['file'] is not None and not self.subframe_share['file is temp']:
             commit_changes = wx.MessageBox("Commit changes to open file?", "Action required", wx.ICON_QUESTION | wx.OK | wx.CANCEL)
 
             if commit_changes == wx.OK:
@@ -156,6 +164,10 @@ class RootFrame(wx.Frame):
 
                     for frame in self._subframes:
                         self._subframes[frame].hook_file_opened()
+        
+        if self.subframe_share['file is temp']:
+            os.remove("user/temp.db")
+            self.subframe_share['file is temp'] = False
 
         event.Skip()
     
@@ -170,6 +182,24 @@ class RootFrame(wx.Frame):
         if self.subframe_share['file'] is not None:
             self.subframe_share['file'].commit()
             self.subframe_share['file'].close()
+    
+    def _save_temp(self, event):
+        if self.subframe_share['file is temp']:
+            with wx.FileDialog(self, "Save DataFile", wildcard = "DataFile (*.db)|*.db", defaultDir = sys.path[0], style = wx.FD_SAVE) as file_dialog:
+                if file_dialog.ShowModal() == wx.ID_CANCEL:
+                    pass
+
+                else:
+                    path = file_dialog.GetPath()
+                    self.subframe_share['file'].commit()
+                    self.subframe_share['file'].close()
+                    shutil.copyfile("user/temp.db", path)
+                    os.remove("user/temp.db")
+                    self.subframe_share['file'] = sciplot.database.DataFile(path)
+                    self.subframe_share['file is temp'] = False
+        
+        else:
+            wx.MessageBox("Currently open file is not temporary", "File not temporary", wx.ICON_ERROR | wx.OK)
 
 
 class App(wx.App):

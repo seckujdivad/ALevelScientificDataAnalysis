@@ -3,6 +3,7 @@ import multiprocessing, multiprocessing.connection
 import sqlite3
 import threading
 import typing
+import shutil
 
 
 @dataclass
@@ -472,3 +473,6 @@ WHERE DataSet.DataSetID = (?)'''
 
     def remove_plot(self, plot_id: int):
         self.query(Query('DELETE FROM Plot WHERE PlotID = (?)', [plot_id], 0))
+
+def create_blank_datafile(path):
+    shutil.copyfile("resources/template.db", path)
