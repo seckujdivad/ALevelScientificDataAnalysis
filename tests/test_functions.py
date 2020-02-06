@@ -256,6 +256,7 @@ class TestVariable(unittest.TestCase):
         self.assertEqual(self.format_value('*.000', 10.52), ('10.520', None))
         self.assertEqual(self.format_value('00.0', 17.52), ('17.5', None))
         self.assertEqual(self.format_value('0.0', 17.52), ('7.5', None))
+        self.assertEqual(self.format_value('00.000', 17.52), ('17.520', None))
         self.assertEqual(self.format_value('000.0', 17.52), ('017.5', None))
         self.assertEqual(self.format_value('*0.0*', 17.52), ('17.52', None))
         self.assertEqual(self.format_value('0.*', 17.52), ('7.52', None))
