@@ -54,6 +54,7 @@ class VariablesFrame(forms.SubFrame):
         self._gbs_main.Add(self._btn_new_formula, wx.GBPosition(1, 0), wx.GBSpan(1, 1), wx.ALL | wx.EXPAND)
 
         self._btn_delete = wx.Button(self, wx.ID_ANY, "Delete Variable")
+        self._btn_delete.Bind(wx.EVT_BUTTON, self._delete_selected)
         self._gbs_main.Add(self._btn_delete, wx.GBPosition(2, 0), wx.GBSpan(1, 2), wx.ALL | wx.EXPAND)
 
         #finalise layout
@@ -108,7 +109,7 @@ class VariablesFrame(forms.SubFrame):
         self._prop_dataset.SetPropertyValues(data, autofill = False)
         self._prop_dataset.Refresh()
     
-    def symbol_selected(self, event):
+    def symbol_selected(self, event = None):
         #store previous modifications
         if self._variable_current is not None:
             old_variable = self._variable_data[self._variable_current]
@@ -179,8 +180,11 @@ class VariablesFrame(forms.SubFrame):
             self.selected_dataset(variable[2], variable[0])
         else:
             self.selected_formula(variable[2], variable[0])
+        
+        self.refresh_variable_list()
 
-        event.Skip()
+        if event is not None:
+            event.Skip()
     
     def _centre_dividers(self): #centre splitter in property pages so that the labels can be read
         self._bk_props.SetSelection(1)
@@ -191,11 +195,42 @@ class VariablesFrame(forms.SubFrame):
     def _create_new_formula(self, event):
         formula_id = self._datafile.create_formula("0")
         self._datafile.create_variable("<blank>", 1, formula_id)
-        self.hook_file_opened()
+        self.refresh_variable_list()
         event.Skip()
     
     def _create_new_dataset(self, event):
+        unit_id = self._datafile.create_unit("<blank>", [])
+        data_set_id = self._datafile.create_data_set(0, False, unit_id)
+        self._datafile.create_variable("<blank>", 0, data_set_id)
+        self.refresh_variable_list()
         event.Skip()
+    
+    def _delete_selected(self, event):
+        current_variable = self._lb_variables.GetSelection()
+        if current_variable != -1:
+            self._lb_variables.SetSelection((current_variable - 1) % (len(self._variable_data) - 1))
+
+            variable_id = self._variable_data[current_variable][3]
+            self._datafile.remove_variable(variable_id)
+
+            self.refresh_variable_list()
+
+            self._variable_current = current_variable % len(self._variable_data)
+            self._lb_variables.SetSelection(self._variable_current)
+            self.symbol_selected()
+
+        event.Skip()
+    
+    def refresh_variable_list(self):
+        current_variable = self._lb_variables.GetSelection()
+
+        self._variable_data.clear()
+        self._lb_variables.Clear()
+        for data in self._datafile.query(sciplot.database.Query('SELECT Symbol, Type, ID, VariableID FROM Variable;', [], 1))[0]:
+            self._lb_variables.Append(data[0])
+            self._variable_data.append(data)
+        
+        self._lb_variables.SetSelection(min(current_variable, len(self._variable_data) - 1))
     
     #root frame hooks
     def hook_file_opened(self):
@@ -214,12 +249,7 @@ class VariablesFrame(forms.SubFrame):
         
         self._prop_dataset.Thaw()
 
-        self._variable_data.clear()
-        self._lb_variables.Clear()
-        for data in self._datafile.query(sciplot.database.Query('SELECT Symbol, Type, ID FROM Variable;', [], 1))[0]:
-            self._lb_variables.Append(data[0])
-            self._variable_data.append(data)
-        
+        self.refresh_variable_list()
         self._centre_dividers()
     
     def hook_frame_selected(self):
