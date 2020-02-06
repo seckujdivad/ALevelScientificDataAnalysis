@@ -2,6 +2,8 @@ import wx
 
 import typing
 
+import sciplot.database
+
 
 class SubFrame(wx.Panel):
     def __init__(self, parent, root_frame):
@@ -16,6 +18,8 @@ class SubFrame(wx.Panel):
         self.toolbar_index = -1
 
         self.subframe_share = self.root_frame.subframe_share
+
+        self._datafile: sciplot.database.DataFile = self._datafile
     
     def get_menu_items(self):
         """
@@ -32,6 +36,7 @@ class SubFrame(wx.Panel):
         """
         return []
     
+    #hooks
     def hook_file_opened(self):
         """
         Method called by root frame when a file is opened. Should be overwritten by inheriting class
@@ -46,6 +51,18 @@ class SubFrame(wx.Panel):
         """
         Method called by root frame when this frame is unselected. Should be overwritten by inheriting class
         """
+    
+    #properties
+    @property
+    def _datafile(self):
+        if 'file' in self.subframe_share:
+            return self.subframe_share['file']
+        else:
+            return None
+    
+    @_datafile.setter
+    def _datafile(self, value):
+        self.subframe_share['file'] = value
 
 
 #python seems to prefer the imports to be after SubFrame, or SubFrame won't be defined in the imports
