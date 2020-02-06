@@ -21,6 +21,8 @@ class DataPointsFrame(forms.SubFrame):
         self._gbs_main.SetNonFlexibleGrowMode(wx.FLEX_GROWMODE_SPECIFIED)
 
         #create elements
+        self._data_sets = []
+
         self._lb_datasets = wx.ListBox(self, wx.ID_ANY)
         self._gbs_main.Add(self._lb_datasets, wx.GBPosition(0, 2), wx.GBSpan(3, 1), wx.ALL | wx.EXPAND)
 
@@ -61,7 +63,10 @@ class DataPointsFrame(forms.SubFrame):
 
     #frame methods
     def refresh_dataset_list(self):
-        pass
+        self._data_sets = self._datafile.query(sciplot.database.Query("SELECT DataSetID, Symbol FROM DataSet INNER JOIN Variable ON ID = DataSetID AND TYPE = 0;", [], 1))[0]
+        self._lb_datasets.Clear()
+        for data_set_id, symbol in self._data_sets:
+            self._lb_datasets.Append(symbol)
 
     def resize_datapoint_columns(self):
         width = self._dvl_datapoints.GetSize()[0]
