@@ -43,7 +43,7 @@ class VariablesFrame(forms.SubFrame):
         self._bk_props.ShowNewPage(self._prop_dataset)
         self._bk_props.ShowNewPage(self._prop_formula)
         
-        self._gbs_main.Add(self._bk_props, wx.GBPosition(0, 2), wx.GBSpan(2, 1), wx.ALL | wx.EXPAND)
+        self._gbs_main.Add(self._bk_props, wx.GBPosition(0, 2), wx.GBSpan(3, 1), wx.ALL | wx.EXPAND)
 
         self._btn_new_dataset = wx.Button(self, wx.ID_ANY, "New Dataset")
         self._btn_new_dataset.Bind(wx.EVT_BUTTON, self._create_new_dataset)
@@ -52,6 +52,9 @@ class VariablesFrame(forms.SubFrame):
         self._btn_new_formula = wx.Button(self, wx.ID_ANY, "New Formula")
         self._btn_new_formula.Bind(wx.EVT_BUTTON, self._create_new_formula)
         self._gbs_main.Add(self._btn_new_formula, wx.GBPosition(1, 0), wx.GBSpan(1, 1), wx.ALL | wx.EXPAND)
+
+        self._btn_delete = wx.Button(self, wx.ID_ANY, "Delete Variable")
+        self._gbs_main.Add(self._btn_delete, wx.GBPosition(2, 0), wx.GBSpan(1, 2), wx.ALL | wx.EXPAND)
 
         #finalise layout
         for i in range(3):
