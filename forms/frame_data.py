@@ -32,30 +32,30 @@ class DataFrame(forms.SubFrame):
         self._column_selected_previous = -1
 
         self._lb_tables = wx.ListBox(self, wx.ID_ANY)
-        self._lb_tables.Bind(wx.EVT_LISTBOX, self._table_selected)
+        self._lb_tables.Bind(wx.EVT_LISTBOX, self._bind_lb_tables_new_selection)
         self._gbs_main.Add(self._lb_tables, wx.GBPosition(0, 1), wx.GBSpan(1, 3), wx.ALL | wx.EXPAND)
 
         self._entry_newtable = wx.TextCtrl(self, wx.ID_ANY)
         self._gbs_main.Add(self._entry_newtable, wx.GBPosition(1, 1), wx.GBSpan(1, 1), wx.ALL | wx.EXPAND)
         
         self._btn_add = wx.Button(self, wx.ID_ANY, "Add")
-        self._btn_add.Bind(wx.EVT_BUTTON, self._add_table)
+        self._btn_add.Bind(wx.EVT_BUTTON, self._bind_btn_add_clicked)
         self._gbs_main.Add(self._btn_add, wx.GBPosition(1, 2), wx.GBSpan(1, 1), wx.ALL | wx.EXPAND)
 
         self._btn_remove = wx.Button(self, wx.ID_ANY, "Remove")
-        self._btn_remove.Bind(wx.EVT_BUTTON, self._remove_table)
+        self._btn_remove.Bind(wx.EVT_BUTTON, self._bind_btn_remove_clicked)
         self._gbs_main.Add(self._btn_remove, wx.GBPosition(1, 3), wx.GBSpan(1, 1), wx.ALL | wx.EXPAND)
 
         self._ckl_columns = wx.CheckListBox(self, wx.ID_ANY)
-        self._ckl_columns.Bind(wx.EVT_CHECKLISTBOX, self._column_selection_change)
-        self._ckl_columns.Bind(wx.EVT_LISTBOX, self._column_selected)
+        self._ckl_columns.Bind(wx.EVT_CHECKLISTBOX, self._bind_ckl_columns_new_checked)
+        self._ckl_columns.Bind(wx.EVT_LISTBOX, self._bind_ckl_columns_new_selection)
         self._gbs_main.Add(self._ckl_columns, wx.GBPosition(2, 1), wx.GBSpan(1, 3), wx.ALL | wx.EXPAND)
 
         self._entry_formatstring = wx.TextCtrl(self, wx.ID_ANY)
         self._gbs_main.Add(self._entry_formatstring, wx.GBPosition(3, 1), wx.GBSpan(1, 3), wx.ALL | wx.EXPAND)
 
         self._btn_refresh = wx.Button(self, wx.ID_ANY, "Refresh")
-        self._btn_refresh.Bind(wx.EVT_BUTTON, self._refresh_table)
+        self._btn_refresh.Bind(wx.EVT_BUTTON, self._bind_btn_refresh_clicked)
         self._gbs_main.Add(self._btn_refresh, wx.GBPosition(3, 0), wx.GBSpan(1, 1), wx.ALL | wx.EXPAND)
 
         #set sizer weights
@@ -70,13 +70,54 @@ class DataFrame(forms.SubFrame):
         self.Layout()
         self._gbs_main.Fit(self)
     
-    def _new_column_clicked(self, event):
-        self._create_new_column(self._entry_new_column.GetValue())
+    #root frame hooks
+    def hook_file_opened(self):
+        self.refresh_table()
+        self.refresh_column_list()
+        self.refresh_table_list()
+    
+    def hook_frame_selected(self):
+        self._refresh_table()
+    
+    def hook_frame_unselected(self):
+        self._refresh_table()
+    
+    #ui binds
+    def _bind_btn_add_clicked(self, event):
+        self._datafile.query(sciplot.database.Query("INSERT INTO `Table` (Title) VALUES ((?));", [self._entry_newtable.GetValue()], 0))
+        self._entry_newtable.SetValue("")
+        self.refresh_table_list()
         event.Skip()
     
-    def _create_new_column(self, title):
-        self._dvl_columns.append(self._dvl_data.AppendTextColumn(title))
+    def _bind_btn_remove_clicked(self, event):
+        selection_index = self._lb_tables.GetSelection()
+        if selection_index != -1:
+            table_id = self._tables[selection_index][0]
+
+            self._datafile.query([sciplot.database.Query("DELETE FROM `Table` WHERE TableID = (?);", [table_id], 0),
+                                               sciplot.database.Query("DELETE FROM TableColumn WHERE TableID = (?);", [table_id], 0)])
+
+            self.refresh_table_list()
+
+        event.Skip()
     
+    def _bind_ckl_columns_new_checked(self, event):
+        self._column_selection_change()
+        event.Skip()
+    
+    def _bind_ckl_columns_new_selection(self, event):
+        self._column_selected()
+        event.Skip()
+    
+    def _bind_lb_tables_new_selection(self, event):
+        self._table_selected()
+        event.Skip()
+    
+    def _bind_btn_refresh_clicked(self, event):
+        self._refresh_table()
+        event.Skip()
+
+    #frame methods
     def refresh_table(self):
         selection_index = self._lb_tables.GetSelection()
         if selection_index != -1:
@@ -208,25 +249,7 @@ class DataFrame(forms.SubFrame):
             self._lb_tables.Append(table_title)
             self._tables.append((table_id, table_title))
     
-    def _add_table(self, event):
-        self._datafile.query(sciplot.database.Query("INSERT INTO `Table` (Title) VALUES ((?));", [self._entry_newtable.GetValue()], 0))
-        self._entry_newtable.SetValue("")
-        self.refresh_table_list()
-        event.Skip()
-    
-    def _remove_table(self, event):
-        selection_index = self._lb_tables.GetSelection()
-        if selection_index != -1:
-            table_id = self._tables[selection_index][0]
-
-            self._datafile.query([sciplot.database.Query("DELETE FROM `Table` WHERE TableID = (?);", [table_id], 0),
-                                               sciplot.database.Query("DELETE FROM TableColumn WHERE TableID = (?);", [table_id], 0)])
-
-            self.refresh_table_list()
-
-        event.Skip()
-    
-    def _column_selection_change(self, event = None):
+    def _column_selection_change(self):
         selection_index = self._lb_tables.GetSelection()
         if selection_index != -1:
             table_id = self._tables[selection_index][0]
@@ -254,11 +277,8 @@ class DataFrame(forms.SubFrame):
             self._datafile.query(queries)
 
             self.refresh_table()
-
-        if event is not None:
-            event.Skip()
     
-    def _table_selected(self, event = None):
+    def _table_selected(self):
         selection_index = self._lb_tables.GetSelection()
         if selection_index != -1:
             table_id = self._tables[selection_index][0]
@@ -275,11 +295,8 @@ class DataFrame(forms.SubFrame):
 
             #update displayed table data
             self.refresh_table()
-
-        if event is not None:
-            event.Skip()
     
-    def _column_selected(self, event = None):
+    def _column_selected(self):
         #get selections from ui
         selection_index = self._ckl_columns.GetSelection()
         table_selection_index = self._lb_tables.GetSelection()
@@ -304,29 +321,11 @@ class DataFrame(forms.SubFrame):
                 self._entry_formatstring.SetValue("")
 
             self._column_selected_previous = self._ckl_columns.GetSelection()
-
-        if event is not None:
-            event.Skip()
     
-    def _refresh_table(self, event = None):
+    def _refresh_table(self):
         self._column_selected()
         self._table_selected()
         self._column_selection_change()
         self.refresh_column_list()
         self.refresh_table_list()
         self.refresh_table()
-        
-        if event is not None:
-            event.Skip()
-    
-    #root frame hooks
-    def hook_file_opened(self):
-        self.refresh_table()
-        self.refresh_column_list()
-        self.refresh_table_list()
-    
-    def hook_frame_selected(self):
-        self._refresh_table()
-    
-    def hook_frame_unselected(self):
-        self._refresh_table()
