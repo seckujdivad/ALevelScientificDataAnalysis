@@ -22,15 +22,23 @@ class DataPointsFrame(forms.SubFrame):
 
         #create elements
         self._lb_datasets = wx.ListBox(self, wx.ID_ANY)
-        self._gbs_main.Add(self._lb_datasets, wx.GBPosition(0, 1), wx.GBSpan(1, 1), wx.ALL | wx.EXPAND)
+        self._gbs_main.Add(self._lb_datasets, wx.GBPosition(0, 2), wx.GBSpan(3, 1), wx.ALL | wx.EXPAND)
+
+        self._btn_add_new = wx.Button(self, wx.ID_ANY, "Add New")
+        self._gbs_main.Add(self._btn_add_new, wx.GBPosition(2, 0), wx.GBSpan(1, 1), wx.ALL | wx.EXPAND)
+
+        self._btn_remove = wx.Button(self, wx.ID_ANY, "Remove")
+        self._gbs_main.Add(self._btn_remove, wx.GBPosition(2, 1), wx.GBSpan(1, 1), wx.ALL | wx.EXPAND)
 
         self._dvl_datapoints = wx.dataview.DataViewListCtrl(self, wx.ID_ANY)
         self._dvc_col = self._dvl_datapoints.AppendTextColumn("Value")
+        self._gbs_main.Add(self._dvl_datapoints, wx.GBPosition(0, 0), wx.GBSpan(1, 2), wx.ALL | wx.EXPAND)
 
-        self._gbs_main.Add(self._dvl_datapoints, wx.GBPosition(0, 0), wx.GBSpan(1, 1), wx.ALL | wx.EXPAND)
+        self._spn_value = wx.SpinCtrl(self, wx.ID_ANY)
+        self._gbs_main.Add(self._spn_value, wx.GBPosition(1, 0), wx.GBSpan(1, 2), wx.ALL | wx.EXPAND)
 
         #set sizer weights
-        for i in [0, 1]:
+        for i in [0, 1, 2]:
             self._gbs_main.AddGrowableCol(i)
         
         for j in [0]:
@@ -57,4 +65,4 @@ class DataPointsFrame(forms.SubFrame):
 
     def resize_datapoint_columns(self):
         width = self._dvl_datapoints.GetSize()[0]
-        self._dvc_col.SetWidth(width)
+        self._dvc_col.SetWidth(width - 30)
