@@ -246,7 +246,7 @@ class DataFrame(forms.SubFrame):
             
             queries = []
             for variable_id in to_add:
-                queries.append(sciplot.database.Query("INSERT INTO TableColumn (TableID, VariableID, FormatPattern) VALUES ((?), (?), (?));", [table_id, variable_id, ""], 0))
+                queries.append(sciplot.database.Query("INSERT INTO TableColumn (TableID, VariableID, FormatPattern) VALUES ((?), (?), (?));", [table_id, variable_id, "*.*"], 0))
             
             for variable_id in to_remove:
                 queries.append(sciplot.database.Query("DELETE FROM TableColumn WHERE VariableID = (?);", [variable_id], 0))
