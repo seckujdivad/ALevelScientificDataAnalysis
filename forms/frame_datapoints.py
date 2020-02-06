@@ -13,7 +13,7 @@ class DataPointsFrame(forms.SubFrame):
         #toolbar
         self.identifier = 'datapoints'
         self.styling_name = 'Data Points'
-        self.styling_icon = wx.Bitmap('resources/toolbar/formulae.bmp')
+        self.styling_icon = wx.Bitmap('resources/toolbar/dataset.bmp')
 
         #set up sizer
         self._gbs_main = wx.GridBagSizer(0, 0)
