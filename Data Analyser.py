@@ -120,6 +120,8 @@ class RootFrame(wx.Frame):
             if self._subframes[form].toolbar_index == -1:
                 raise Exception("This form hasn't been connected to a SimpleBook")
 
+            self._subframes[self._current_frame].hook_frame_unselected()
+
             self._bk_sub.SetSelection(self._subframes[form].toolbar_index)
             self._sb_main.PopStatusText()
             self._subframes[form].hook_frame_selected()

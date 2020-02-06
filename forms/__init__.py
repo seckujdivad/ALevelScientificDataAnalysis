@@ -41,6 +41,11 @@ class SubFrame(wx.Panel):
         """
         Method called by root frame when this frame is selected. Should be overwritten by inheriting class
         """
+    
+    def hook_frame_unselected(self):
+        """
+        Method called by root frame when this frame is unselected. Should be overwritten by inheriting class
+        """
 
 
 #python seems to prefer the imports to be after SubFrame, or SubFrame won't be defined in the imports
