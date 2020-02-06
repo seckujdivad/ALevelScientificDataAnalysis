@@ -85,13 +85,14 @@ class DataFrame(forms.SubFrame):
             #remake table ui so that new columns can be added
             self._recreate_dvl_data()
 
+            #get all constants
+            constants_table = {key: sciplot.functions.Value(value) for value, key in self.subframe_share['file'].list_constants()}
+
             #construct all functions so that trees can be evaluated
             function_table = {}
             for expression, name in self.subframe_share['file'].query(sciplot.database.Query("SELECT Expression, Symbol FROM Formula INNER JOIN Variable ON ID = FormulaID AND Type = 1", [], 1))[0]:
                 function_table[name] = sciplot.functions.Function(expression)
-
-            #get all constants
-            constants_table = {key: sciplot.functions.Value(value) for value, key in self.subframe_share['file'].list_constants()}
+                function_table[name].pre_evaluate(constants_table) #optimise functions
 
             data_table = [] #data to be added to the table
             format_strings = [] #formatting data for each column
