@@ -38,7 +38,7 @@ class DataPointsFrame(forms.SubFrame):
         self._dvc_col = self._dvl_datapoints.AppendTextColumn("Value")
         self._gbs_main.Add(self._dvl_datapoints, wx.GBPosition(0, 0), wx.GBSpan(1, 2), wx.ALL | wx.EXPAND)
 
-        self._spn_value = wx.SpinCtrl(self, wx.ID_ANY)
+        self._spn_value = wx.SpinCtrlDouble(self, wx.ID_ANY)
         self._gbs_main.Add(self._spn_value, wx.GBPosition(1, 0), wx.GBSpan(1, 2), wx.ALL | wx.EXPAND)
 
         #set sizer weights
