@@ -115,9 +115,14 @@ class GraphFrame(forms.SubFrame):
 
     #frame methods
     def refresh(self):
+        #plot titles
+        selection = self._lb_plots.GetSelection()
         self._plot_ids.clear()
         self._lb_plots.Clear()
 
         for plot_id, plot_title_x, plot_title_y in self._datafile.query(sciplot.database.Query("SELECT PlotID, VariableXTitle, VariableYTitle FROM Plot", [], 1))[0]:
             self._lb_plots.Append("{}-{}".format(plot_title_y, plot_title_x))
             self._plot_ids.append(plot_id)
+        
+        if selection != -1 and len(self._plot_ids) > 0:
+            self._lb_plots.SetSelection(min(len(self._plot_ids) - 1, selection))
