@@ -1,5 +1,6 @@
 from sciplot.database import *
 
+
 class DataFile(Database):
     """
     A thread-safe database object with methods specific to databases following the internal file structure
