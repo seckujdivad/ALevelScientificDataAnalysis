@@ -23,7 +23,8 @@ class DataPointsFrame(forms.SubFrame):
         #create elements
         self._data_sets = []
         self._data_points = []
-        self._data_point_current = None
+        self._data_point_current = None #self._data_points index
+        self._data_set_id = None #data set ID
 
         self._lb_datasets = wx.ListBox(self, wx.ID_ANY)
         self._lb_datasets.Bind(wx.EVT_LISTBOX, self._bind_lb_datasets_new_selection)
@@ -71,8 +72,16 @@ class DataPointsFrame(forms.SubFrame):
     def _bind_dvl_datapoints_selection_changed(self, event):
         selection = self._dvl_datapoints.GetSelectedRow()
         if selection != -1:
+            if self._data_point_current is not None and self._data_set_id is not None:
+                old_data_point_id = self._data_points[self._data_point_current][0]
+                self._data_points[self._data_point_current][1] = self._spn_value.GetValue()
+                self._datafile.query(sciplot.database.Query("UPDATE DataPoint SET Value = (?) WHERE DataSetID = (?) AND DataPointID = (?);", [self._spn_value.GetValue(), self._data_set_id, old_data_point_id], 0))
+
+                self.refresh_data_points()
+                self._dvl_datapoints.SelectRow(selection)
+
             data_point_id, value = self._data_points[selection]
-            self._data_point_current = data_point_id
+            self._data_point_current = selection
             self._spn_value.SetValue(value)
 
         event.Skip()
@@ -91,10 +100,12 @@ class DataPointsFrame(forms.SubFrame):
     def refresh_data_points(self):
         selection = self._lb_datasets.GetSelection()
         if selection != -1:
-            data_set_id = self._data_sets[selection][0]
+            self._data_set_id = self._data_sets[selection][0]
 
-            self._data_points = self._datafile.query(sciplot.database.Query("SELECT DataPointID, Value FROM DataPoint WHERE DataSetID = (?);", [data_set_id], 1))[0]
+            self._data_points = [[tup[0], tup[1]] for tup in self._datafile.query(sciplot.database.Query("SELECT DataPointID, Value FROM DataPoint WHERE DataSetID = (?);", [self._data_set_id], 1))[0]]
             
             self._dvl_datapoints.DeleteAllItems()
             for data_point_id, value in self._data_points:
                 self._dvl_datapoints.AppendItem([value])
+            
+        self._data_point_current = None
