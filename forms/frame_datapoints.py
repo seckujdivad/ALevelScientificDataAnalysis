@@ -31,6 +31,7 @@ class DataPointsFrame(forms.SubFrame):
         self._gbs_main.Add(self._lb_datasets, wx.GBPosition(0, 2), wx.GBSpan(3, 1), wx.ALL | wx.EXPAND)
 
         self._btn_add_new = wx.Button(self, wx.ID_ANY, "Add New")
+        self._btn_add_new.Bind(wx.EVT_BUTTON, self._bind_btn_add_new_clicked)
         self._gbs_main.Add(self._btn_add_new, wx.GBPosition(2, 0), wx.GBSpan(1, 1), wx.ALL | wx.EXPAND)
 
         self._btn_remove = wx.Button(self, wx.ID_ANY, "Remove")
@@ -83,6 +84,13 @@ class DataPointsFrame(forms.SubFrame):
     
     def _bind_spn_value_updated(self, event):
         self.write_current_data_point()
+        event.Skip()
+    
+    def _bind_btn_add_new_clicked(self, event):
+        if self._data_set_id is not None:
+            self._datafile.query(sciplot.database.Query("INSERT INTO DataPoint (DataSetID, Value) VALUES ((?), (?));", [self._data_set_id, 0], 0))
+            self.refresh_data_points()
+
         event.Skip()
 
     #frame methods
