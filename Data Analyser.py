@@ -10,6 +10,7 @@ import os
 
 import forms
 import sciplot.database
+import sciplot.datafile
 
 
 class RootFrame(wx.Frame):
@@ -29,8 +30,8 @@ class RootFrame(wx.Frame):
         }
 
         #make temp datafile
-        sciplot.database.create_blank_datafile("user/temp.db")
-        self.subframe_share['file'] = sciplot.database.DataFile("user/temp.db")
+        sciplot.datafile.create_blank_datafile("user/temp.db")
+        self.subframe_share['file'] = sciplot.datafile.DataFile("user/temp.db")
 
         #set icon
         icon = wx.Icon()
@@ -167,7 +168,7 @@ class RootFrame(wx.Frame):
 
                     path = file_dialog.GetPath()
                     
-                    self.subframe_share['file'] = sciplot.database.DataFile(path)
+                    self.subframe_share['file'] = sciplot.datafile.DataFile(path)
 
                     for frame in self._subframes:
                         self._subframes[frame].hook_file_opened()
@@ -198,7 +199,7 @@ class RootFrame(wx.Frame):
                     self.subframe_share['file'].close()
                     shutil.copyfile("user/temp.db", path)
                     os.remove("user/temp.db")
-                    self.subframe_share['file'] = sciplot.database.DataFile(path)
+                    self.subframe_share['file'] = sciplot.datafile.DataFile(path)
                     self.subframe_share['file is temp'] = False
         
         else:
