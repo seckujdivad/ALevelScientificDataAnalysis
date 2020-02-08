@@ -22,6 +22,7 @@ class GraphFrame(forms.SubFrame):
 
         #create elements
         self._plot_ids = []
+        self._variable_ids = []
 
         self._lb_plots = wx.ListBox(self, wx.ID_ANY)
         self._gbs_main.Add(self._lb_plots, wx.GBPosition(0, 0), wx.GBSpan(1, 2), wx.ALL | wx.EXPAND)
@@ -115,8 +116,12 @@ class GraphFrame(forms.SubFrame):
 
     #frame methods
     def refresh(self):
-        #plot titles
+        self.refresh_plot_titles()
+        self.refresh_variables()
+    
+    def refresh_plot_titles(self):
         selection = self._lb_plots.GetSelection()
+
         self._plot_ids.clear()
         self._lb_plots.Clear()
 
@@ -126,3 +131,23 @@ class GraphFrame(forms.SubFrame):
         
         if selection != -1 and len(self._plot_ids) > 0:
             self._lb_plots.SetSelection(min(len(self._plot_ids) - 1, selection))
+    
+    def refresh_variables(self):
+        selection_x = self._lb_plot_x.GetSelection()
+        selection_y = self._lb_plot_y.GetSelection()
+
+        self._variable_ids.clear()
+        self._lb_plot_x.Clear()
+        self._lb_plot_y.Clear()
+
+        for variable_id, variable_symbol in self._datafile.query(sciplot.database.Query("SELECT VariableID, Symbol FROM Variable", [], 1))[0]:
+            self._variable_ids.append(variable_id)
+            self._lb_plot_x.Append(variable_symbol)
+            self._lb_plot_y.Append(variable_symbol)
+        
+        if len(self._variable_ids) > 0:
+            if selection_x != -1:
+                self._lb_plot_x.SetSelection(min(len(self._variable_ids) - 1, selection_x))
+            
+            if selection_y != -1:
+                self._lb_plot_y.SetSelection(min(len(self._variable_ids) - 1, selection_y))
