@@ -35,6 +35,7 @@ class DataPointsFrame(forms.SubFrame):
         self._gbs_main.Add(self._btn_add_new, wx.GBPosition(2, 0), wx.GBSpan(1, 1), wx.ALL | wx.EXPAND)
 
         self._btn_remove = wx.Button(self, wx.ID_ANY, "Remove")
+        self._btn_remove.Bind(wx.EVT_BUTTON, self._bind_btn_remove_clicked)
         self._gbs_main.Add(self._btn_remove, wx.GBPosition(2, 1), wx.GBSpan(1, 1), wx.ALL | wx.EXPAND)
 
         self._dvl_datapoints = wx.dataview.DataViewListCtrl(self, wx.ID_ANY)
@@ -90,6 +91,16 @@ class DataPointsFrame(forms.SubFrame):
         if self._data_set_id is not None:
             self._datafile.query(sciplot.database.Query("INSERT INTO DataPoint (DataSetID, Value) VALUES ((?), (?));", [self._data_set_id, 0], 0))
             self.refresh_data_points()
+
+        event.Skip()
+    
+    def _bind_btn_remove_clicked(self, event):
+        if self._data_point_current is not None and self._data_set_id is not None:
+            self._datafile.query(sciplot.database.Query("DELETE FROM DataPoint WHERE DataSetID = (?) AND DataPointID = (?);", [self._data_set_id, self._data_points[self._data_point_current][0]], 0))
+            self.refresh_data_points()
+
+            selection = self._dvl_datapoints.GetSelectedRow()
+            self._spn_value.SetValue(self._data_points[self._data_point_current][1])
 
         event.Skip()
 
