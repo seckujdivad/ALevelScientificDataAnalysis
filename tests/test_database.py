@@ -6,6 +6,7 @@ up1 = os.path.abspath('../')
 sys.path.insert(0, up1)
 
 import sciplot.database as database #pylint: disable=import-error
+import sciplot.datafile as datafile
 
 sys.path.pop(0)
 
@@ -68,7 +69,7 @@ class TestDatabase(unittest.TestCase):
 
 class TestDataFile(unittest.TestCase):
     def connect_datafile(self):
-        return database.DataFile(os.path.join(sys.path[0], 'datasets', 'datafile.db'))
+        return datafile.DataFile(os.path.join(sys.path[0], 'datasets', 'datafile.db'))
 
     def test_list_constants(self):
         with self.connect_datafile() as df:
