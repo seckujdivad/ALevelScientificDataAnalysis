@@ -42,6 +42,7 @@ class DataPointsFrame(forms.SubFrame):
         self._gbs_main.Add(self._dvl_datapoints, wx.GBPosition(0, 0), wx.GBSpan(1, 2), wx.ALL | wx.EXPAND)
 
         self._spn_value = wx.SpinCtrlDouble(self, wx.ID_ANY)
+        self._spn_value.Bind(wx.EVT_SPINCTRLDOUBLE, self._bind_spn_value_updated)
         self._gbs_main.Add(self._spn_value, wx.GBPosition(1, 0), wx.GBSpan(1, 2), wx.ALL | wx.EXPAND)
 
         #set sizer weights
@@ -72,18 +73,16 @@ class DataPointsFrame(forms.SubFrame):
     def _bind_dvl_datapoints_selection_changed(self, event):
         selection = self._dvl_datapoints.GetSelectedRow()
         if selection != -1:
-            if self._data_point_current is not None and self._data_set_id is not None:
-                old_data_point_id = self._data_points[self._data_point_current][0]
-                self._data_points[self._data_point_current][1] = self._spn_value.GetValue()
-                self._datafile.query(sciplot.database.Query("UPDATE DataPoint SET Value = (?) WHERE DataSetID = (?) AND DataPointID = (?);", [self._spn_value.GetValue(), self._data_set_id, old_data_point_id], 0))
-
-                self.refresh_data_points()
-                self._dvl_datapoints.SelectRow(selection)
+            self.write_current_data_point()
 
             data_point_id, value = self._data_points[selection]
             self._data_point_current = selection
             self._spn_value.SetValue(value)
 
+        event.Skip()
+    
+    def _bind_spn_value_updated(self, event):
+        self.write_current_data_point()
         event.Skip()
 
     #frame methods
@@ -107,5 +106,17 @@ class DataPointsFrame(forms.SubFrame):
             self._dvl_datapoints.DeleteAllItems()
             for data_point_id, value in self._data_points:
                 self._dvl_datapoints.AppendItem([value])
-            
-        self._data_point_current = None
+        
+        else:
+            self._data_point_current = None
+    
+    def write_current_data_point(self):
+        selection = self._dvl_datapoints.GetSelectedRow()
+
+        if self._data_point_current is not None and self._data_set_id is not None:
+            old_data_point_id = self._data_points[self._data_point_current][0]
+            self._data_points[self._data_point_current][1] = self._spn_value.GetValue()
+            self._datafile.query(sciplot.database.Query("UPDATE DataPoint SET Value = (?) WHERE DataSetID = (?) AND DataPointID = (?);", [self._spn_value.GetValue(), self._data_set_id, old_data_point_id], 0))
+
+            self.refresh_data_points()
+            self._dvl_datapoints.SelectRow(selection)
