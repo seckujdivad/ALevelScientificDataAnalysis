@@ -3,6 +3,8 @@ import wx.lib.plot.plotcanvas
 
 import forms
 
+import sciplot.database
+
 
 class GraphFrame(forms.SubFrame):
     def __init__(self, parent, root_frame):
@@ -19,6 +21,8 @@ class GraphFrame(forms.SubFrame):
         self._gbs_main.SetNonFlexibleGrowMode(wx.FLEX_GROWMODE_SPECIFIED)
 
         #create elements
+        self._plot_ids = []
+
         self._lb_plots = wx.ListBox(self, wx.ID_ANY)
         self._gbs_main.Add(self._lb_plots, wx.GBPosition(0, 0), wx.GBSpan(1, 2), wx.ALL | wx.EXPAND)
 
@@ -105,4 +109,9 @@ class GraphFrame(forms.SubFrame):
 
     #frame methods
     def refresh(self):
-        pass
+        self._plot_ids.clear()
+        self._lb_plots.Clear()
+
+        for plot_id, plot_title_x, plot_title_y in self._datafile.query(sciplot.database.Query("SELECT PlotID, VariableXTitle, VariableYTitle FROM Plot", [], 1))[0]:
+            self._lb_plots.Append("{}-{}".format(plot_title_y, plot_title_x))
+            self._plot_ids.append(plot_id)
