@@ -43,6 +43,9 @@ class GraphFrame(forms.SubFrame):
         self._lb_plot_y = wx.ListBox(self, wx.ID_ANY)
         self._gbs_main.Add(self._lb_plot_y, wx.GBPosition(4, 1), wx.GBSpan(1, 1), wx.ALL | wx.EXPAND)
 
+        self._btn_refresh = wx.Button(self, wx.ID_ANY, "Refresh")
+        self._gbs_main.Add(self._btn_refresh, wx.GBPosition(5, 0), wx.GBSpan(1, 2), wx.ALL | wx.EXPAND)
+
         self._plot_main = wx.lib.plot.plotcanvas.PlotCanvas(self, wx.ID_ANY)
         self._plot_main.enableAxes = True
         data = [[1,5],[2,4],[3,8],[4,3],[5,2]]
@@ -53,6 +56,9 @@ class GraphFrame(forms.SubFrame):
         self._plot_main.enableDrag = True
         self._plot_main.Bind(wx.EVT_MOUSEWHEEL, self._bind_graph_scroll)
         self._gbs_main.Add(self._plot_main, wx.GBPosition(0, 2), wx.GBSpan(5, 1), wx.ALL | wx.EXPAND)
+
+        self._btn_reset_zoom = wx.Button(self, wx.ID_ANY, "Reset Zoom")
+        self._gbs_main.Add(self._btn_reset_zoom, wx.GBPosition(5, 2), wx.GBSpan(1, 1), wx.ALL | wx.EXPAND)
 
         #set sizer weights
         for i in [2]:
