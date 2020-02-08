@@ -58,6 +58,7 @@ class GraphFrame(forms.SubFrame):
         self._gbs_main.Add(self._plot_main, wx.GBPosition(0, 2), wx.GBSpan(5, 1), wx.ALL | wx.EXPAND)
 
         self._btn_reset_zoom = wx.Button(self, wx.ID_ANY, "Reset Zoom")
+        self._btn_reset_zoom.Bind(wx.EVT_BUTTON, self._bind_btn_reset_zoom)
         self._gbs_main.Add(self._btn_reset_zoom, wx.GBPosition(5, 2), wx.GBSpan(1, 1), wx.ALL | wx.EXPAND)
 
         #set sizer weights
@@ -84,4 +85,8 @@ class GraphFrame(forms.SubFrame):
                   self._plot_main.yCurrentRange[0] + (self._plot_main.yCurrentRange[1] - self._plot_main.yCurrentRange[0]) / 2)
 
         self._plot_main.Zoom(centre, (zoom, zoom))
+        event.Skip()
+    
+    def _bind_btn_reset_zoom(self, event):
+        self._plot_main.Reset()
         event.Skip()
