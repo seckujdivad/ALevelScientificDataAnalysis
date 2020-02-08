@@ -230,6 +230,9 @@ class DataFrame(forms.SubFrame):
                         if len(units) > 0:
                             unit_string = ""
                             for unit_id, power in units:
+                                if power.is_integer():
+                                    power = int(power)
+
                                 if power == 1:
                                     unit_string += ' {}'.format(self._datafile.get_base_unit(unit_id))
                                 else:
