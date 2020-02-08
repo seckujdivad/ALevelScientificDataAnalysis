@@ -44,6 +44,7 @@ class GraphFrame(forms.SubFrame):
         self._gbs_main.Add(self._lb_plot_y, wx.GBPosition(4, 1), wx.GBSpan(1, 1), wx.ALL | wx.EXPAND)
 
         self._btn_refresh = wx.Button(self, wx.ID_ANY, "Refresh")
+        self._btn_refresh.Bind(wx.EVT_BUTTON, self._bind_btn_refresh_clicked)
         self._gbs_main.Add(self._btn_refresh, wx.GBPosition(5, 0), wx.GBSpan(1, 2), wx.ALL | wx.EXPAND)
 
         self._plot_main = wx.lib.plot.plotcanvas.PlotCanvas(self, wx.ID_ANY)
@@ -58,7 +59,7 @@ class GraphFrame(forms.SubFrame):
         self._gbs_main.Add(self._plot_main, wx.GBPosition(0, 2), wx.GBSpan(5, 1), wx.ALL | wx.EXPAND)
 
         self._btn_reset_zoom = wx.Button(self, wx.ID_ANY, "Reset Zoom")
-        self._btn_reset_zoom.Bind(wx.EVT_BUTTON, self._bind_btn_reset_zoom)
+        self._btn_reset_zoom.Bind(wx.EVT_BUTTON, self._bind_btn_reset_zoom_clicked)
         self._gbs_main.Add(self._btn_reset_zoom, wx.GBPosition(5, 2), wx.GBSpan(1, 1), wx.ALL | wx.EXPAND)
 
         #set sizer weights
@@ -87,6 +88,21 @@ class GraphFrame(forms.SubFrame):
         self._plot_main.Zoom(centre, (zoom, zoom))
         event.Skip()
     
-    def _bind_btn_reset_zoom(self, event):
+    def _bind_btn_reset_zoom_clicked(self, event):
         self._plot_main.Reset()
         event.Skip()
+    
+    def _bind_btn_refresh_clicked(self, event):
+        self.refresh()
+        event.Skip()
+    
+    #root frame hooks
+    def hook_file_opened(self):
+        self.refresh()
+    
+    def hook_frame_selected(self):
+        self.refresh()
+
+    #frame methods
+    def refresh(self):
+        pass
