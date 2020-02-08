@@ -38,18 +38,24 @@ class GraphFrame(forms.SubFrame):
         self._lbl_plot_x = wx.StaticText(self, wx.ID_ANY, "x-axis", style = wx.ALIGN_CENTRE_HORIZONTAL)
         self._gbs_main.Add(self._lbl_plot_x, wx.GBPosition(3, 0), wx.GBSpan(1, 1), wx.ALL | wx.EXPAND)
 
+        self._entry_variable_title_x = wx.TextCtrl(self, wx.ID_ANY)
+        self._gbs_main.Add(self._entry_variable_title_x, wx.GBPosition(4, 0), wx.GBSpan(1, 1), wx.ALL | wx.EXPAND)
+
         self._lb_plot_x = wx.ListBox(self, wx.ID_ANY)
-        self._gbs_main.Add(self._lb_plot_x, wx.GBPosition(4, 0), wx.GBSpan(1, 1), wx.ALL | wx.EXPAND)
+        self._gbs_main.Add(self._lb_plot_x, wx.GBPosition(5, 0), wx.GBSpan(1, 1), wx.ALL | wx.EXPAND)
 
         self._lbl_plot_y = wx.StaticText(self, wx.ID_ANY, "y-axis", style = wx.ALIGN_CENTRE_HORIZONTAL)
         self._gbs_main.Add(self._lbl_plot_y, wx.GBPosition(3, 1), wx.GBSpan(1, 1), wx.ALL | wx.EXPAND)
 
+        self._entry_variable_title_y = wx.TextCtrl(self, wx.ID_ANY)
+        self._gbs_main.Add(self._entry_variable_title_y, wx.GBPosition(4, 1), wx.GBSpan(1, 1), wx.ALL | wx.EXPAND)
+
         self._lb_plot_y = wx.ListBox(self, wx.ID_ANY)
-        self._gbs_main.Add(self._lb_plot_y, wx.GBPosition(4, 1), wx.GBSpan(1, 1), wx.ALL | wx.EXPAND)
+        self._gbs_main.Add(self._lb_plot_y, wx.GBPosition(5, 1), wx.GBSpan(1, 1), wx.ALL | wx.EXPAND)
 
         self._btn_refresh = wx.Button(self, wx.ID_ANY, "Refresh")
         self._btn_refresh.Bind(wx.EVT_BUTTON, self._bind_btn_refresh_clicked)
-        self._gbs_main.Add(self._btn_refresh, wx.GBPosition(5, 0), wx.GBSpan(1, 2), wx.ALL | wx.EXPAND)
+        self._gbs_main.Add(self._btn_refresh, wx.GBPosition(6, 0), wx.GBSpan(1, 2), wx.ALL | wx.EXPAND)
 
         self._plot_main = wx.lib.plot.plotcanvas.PlotCanvas(self, wx.ID_ANY)
         self._plot_main.enableAxes = True
@@ -60,17 +66,17 @@ class GraphFrame(forms.SubFrame):
         self._plot_main.enableAntiAliasing = True
         self._plot_main.enableDrag = True
         self._plot_main.Bind(wx.EVT_MOUSEWHEEL, self._bind_graph_scroll)
-        self._gbs_main.Add(self._plot_main, wx.GBPosition(0, 2), wx.GBSpan(5, 1), wx.ALL | wx.EXPAND)
+        self._gbs_main.Add(self._plot_main, wx.GBPosition(0, 2), wx.GBSpan(6, 1), wx.ALL | wx.EXPAND)
 
         self._btn_reset_zoom = wx.Button(self, wx.ID_ANY, "Reset Zoom")
         self._btn_reset_zoom.Bind(wx.EVT_BUTTON, self._bind_btn_reset_zoom_clicked)
-        self._gbs_main.Add(self._btn_reset_zoom, wx.GBPosition(5, 2), wx.GBSpan(1, 1), wx.ALL | wx.EXPAND)
+        self._gbs_main.Add(self._btn_reset_zoom, wx.GBPosition(6, 2), wx.GBSpan(1, 1), wx.ALL | wx.EXPAND)
 
         #set sizer weights
         for i in [2]:
             self._gbs_main.AddGrowableCol(i)
         
-        for j in [0, 4]:
+        for j in [0, 5]:
             self._gbs_main.AddGrowableRow(j)
         
         #finalise layout
