@@ -47,6 +47,7 @@ class GraphFrame(forms.SubFrame):
         self._gbs_main.Add(self._entry_variable_title_x, wx.GBPosition(4, 0), wx.GBSpan(1, 1), wx.ALL | wx.EXPAND)
 
         self._lb_plot_x = wx.ListBox(self, wx.ID_ANY)
+        self._lb_plot_x.Bind(wx.EVT_LISTBOX, self._bind_lb_plot_x_new_selection)
         self._gbs_main.Add(self._lb_plot_x, wx.GBPosition(5, 0), wx.GBSpan(1, 1), wx.ALL | wx.EXPAND)
 
         self._lbl_plot_y = wx.StaticText(self, wx.ID_ANY, "y-axis", style = wx.ALIGN_CENTRE_HORIZONTAL)
@@ -56,6 +57,7 @@ class GraphFrame(forms.SubFrame):
         self._gbs_main.Add(self._entry_variable_title_y, wx.GBPosition(4, 1), wx.GBSpan(1, 1), wx.ALL | wx.EXPAND)
 
         self._lb_plot_y = wx.ListBox(self, wx.ID_ANY)
+        self._lb_plot_y.Bind(wx.EVT_LISTBOX, self._bind_lb_plot_y_new_selection)
         self._gbs_main.Add(self._lb_plot_y, wx.GBPosition(5, 1), wx.GBSpan(1, 1), wx.ALL | wx.EXPAND)
 
         self._btn_refresh = wx.Button(self, wx.ID_ANY, "Refresh")
@@ -144,6 +146,26 @@ class GraphFrame(forms.SubFrame):
         if selection != -1:
             self._datafile.query(sciplot.database.Query("UPDATE Plot SET ShowRegression = (?) WHERE PlotID = (?);", [int(self._chk_show_regression.GetValue()), self._plot_ids[selection]], 0))
         
+        event.Skip()
+    
+    def _bind_lb_plot_x_new_selection(self, event):
+        plot_selection = self._lb_plots.GetSelection()
+        var_selection = self._lb_plot_x.GetSelection()
+        if plot_selection != -1 and var_selection != -1:
+            plot_id = self._plot_ids[plot_selection]
+            var_id = self._variable_ids[var_selection]
+            self._datafile.query(sciplot.database.Query("UPDATE Plot SET VariableXID = (?) WHERE PlotID = (?);", [var_id, plot_id], 0))
+
+        event.Skip()
+
+    def _bind_lb_plot_y_new_selection(self, event):
+        plot_selection = self._lb_plots.GetSelection()
+        var_selection = self._lb_plot_y.GetSelection()
+        if plot_selection != -1 and var_selection != -1:
+            plot_id = self._plot_ids[plot_selection]
+            var_id = self._variable_ids[var_selection]
+            self._datafile.query(sciplot.database.Query("UPDATE Plot SET VariableYID = (?) WHERE PlotID = (?);", [var_id, plot_id], 0))
+
         event.Skip()
     
     #root frame hooks
