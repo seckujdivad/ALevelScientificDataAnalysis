@@ -32,7 +32,9 @@ class VariablesFrame(forms.SubFrame):
         self._bk_props = wx.Simplebook(self, wx.ID_ANY)
 
         self._prop_dataset = wx.propgrid.PropertyGrid(self._bk_props, wx.ID_ANY)
+        self._prop_dataset.Bind(wx.propgrid.EVT_PG_CHANGED, self._bind_property_changed)
         self._prop_formula = wx.propgrid.PropertyGrid(self._bk_props, wx.ID_ANY)
+        self._prop_formula.Bind(wx.propgrid.EVT_PG_CHANGED, self._bind_property_changed)
 
         self._prop_dataset.SetColumnCount(2)
 
@@ -126,6 +128,14 @@ class VariablesFrame(forms.SubFrame):
                 self.symbol_selected()
 
         event.Skip()
+    
+    def _bind_property_changed(self, property_event):
+        selection = self._lb_variables.GetSelection()
+        if selection != -1 and property_event.GetPropertyName() == "symbol":
+            prop = property_event.GetProperty()
+            self._datafile.query(sciplot.database.Query("UPDATE Variable SET Symbol = (?) WHERE VariableID = (?);", [prop.GetValue(), self._variable_data[selection][3]], 0))
+
+            self.refresh_variable_list()
 
     #frame methods
     def selected_formula(self, var_id, var_symbol):
