@@ -32,6 +32,7 @@ class GraphFrame(forms.SubFrame):
         self._gbs_main.Add(self._chk_show_regression, wx.GBPosition(1, 0), wx.GBSpan(1, 2), wx.ALL | wx.EXPAND)
 
         self._btn_new_plot = wx.Button(self, wx.ID_ANY, "Add New")
+        self._btn_new_plot.Bind(wx.EVT_BUTTON, self._bind_btn_new_plot_clicked)
         self._gbs_main.Add(self._btn_new_plot, wx.GBPosition(2, 0), wx.GBSpan(1, 1), wx.ALL | wx.EXPAND)
 
         self._btn_remove_plot = wx.Button(self, wx.ID_ANY, "Remove")
@@ -110,6 +111,16 @@ class GraphFrame(forms.SubFrame):
     
     def _bind_lb_plots_new_selection(self, event):
         self.refresh_variable_selections()
+        event.Skip()
+    
+    def _bind_btn_new_plot_clicked(self, event):
+        if len(self._variable_ids) == 0:
+            wx.MessageBox("This file contains no variables\nYou need to create one before you make a plot", "No variables", wx.ICON_ERROR | wx.OK)
+        else:
+            self._datafile.query(sciplot.database.Query("INSERT INTO Plot (VariableXID, VariableYID, VariableXTitle, VariableYTitle, ShowRegression) VALUES ((?), (?), (?), (?), (?))", [self._variable_ids[0], self._variable_ids[0], "<blank>", "<blank>", 1], 0))
+
+            self.refresh()
+
         event.Skip()
     
     #root frame hooks
