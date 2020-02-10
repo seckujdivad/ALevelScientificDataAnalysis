@@ -29,6 +29,7 @@ class GraphFrame(forms.SubFrame):
         self._gbs_main.Add(self._lb_plots, wx.GBPosition(0, 0), wx.GBSpan(1, 2), wx.ALL | wx.EXPAND)
 
         self._chk_show_regression = wx.CheckBox(self, wx.ID_ANY, "Show Regression", style = wx.ALIGN_CENTRE_HORIZONTAL)
+        self._chk_show_regression.Bind(wx.EVT_CHECKBOX, self._bind_chk_show_regression_changed)
         self._gbs_main.Add(self._chk_show_regression, wx.GBPosition(1, 0), wx.GBSpan(1, 2), wx.ALL | wx.EXPAND)
 
         self._btn_new_plot = wx.Button(self, wx.ID_ANY, "Add New")
@@ -136,6 +137,13 @@ class GraphFrame(forms.SubFrame):
             self._datafile.query(sciplot.database.Query("DELETE FROM Plot WHERE PlotID = (?)", [self._plot_ids[selection]], 0))
             self.refresh()
     
+        event.Skip()
+    
+    def _bind_chk_show_regression_changed(self, event):
+        selection = self._lb_plots.GetSelection()
+        if selection != -1:
+            self._datafile.query(sciplot.database.Query("UPDATE Plot SET ShowRegression = (?) WHERE PlotID = (?);", [int(self._chk_show_regression.GetValue()), self._plot_ids[selection]], 0))
+        
         event.Skip()
     
     #root frame hooks
