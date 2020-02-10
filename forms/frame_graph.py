@@ -27,8 +27,8 @@ class GraphFrame(forms.SubFrame):
         self._lb_plots = wx.ListBox(self, wx.ID_ANY)
         self._gbs_main.Add(self._lb_plots, wx.GBPosition(0, 0), wx.GBSpan(1, 2), wx.ALL | wx.EXPAND)
 
-        self._entry_plot_name = wx.TextCtrl(self, wx.ID_ANY)
-        self._gbs_main.Add(self._entry_plot_name, wx.GBPosition(1, 0), wx.GBSpan(1, 2), wx.ALL | wx.EXPAND)
+        self._chk_show_regression = wx.CheckBox(self, wx.ID_ANY, "Show Regression", style = wx.ALIGN_CENTRE_HORIZONTAL)
+        self._gbs_main.Add(self._chk_show_regression, wx.GBPosition(1, 0), wx.GBSpan(1, 2), wx.ALL | wx.EXPAND)
 
         self._btn_new_plot = wx.Button(self, wx.ID_ANY, "Add New")
         self._gbs_main.Add(self._btn_new_plot, wx.GBPosition(2, 0), wx.GBSpan(1, 1), wx.ALL | wx.EXPAND)
