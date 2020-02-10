@@ -112,6 +112,12 @@ class GraphFrame(forms.SubFrame):
     
     def _bind_lb_plots_new_selection(self, event):
         self.refresh_variable_selections()
+        
+        selection = self._lb_plots.GetSelection()
+        if selection != -1:
+            show_regression = bool(self._datafile.query(sciplot.database.Query("SELECT ShowRegression FROM Plot WHERE PlotID = (?);", [self._plot_ids[selection]], 2))[0][0])
+            self._chk_show_regression.SetValue(show_regression)
+
         event.Skip()
     
     def _bind_btn_new_plot_clicked(self, event):
