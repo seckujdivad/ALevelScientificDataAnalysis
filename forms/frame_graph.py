@@ -25,6 +25,7 @@ class GraphFrame(forms.SubFrame):
         self._variable_ids = []
 
         self._lb_plots = wx.ListBox(self, wx.ID_ANY)
+        self._lb_plots.Bind(wx.EVT_LISTBOX, self._bind_lb_plots_new_selection)
         self._gbs_main.Add(self._lb_plots, wx.GBPosition(0, 0), wx.GBSpan(1, 2), wx.ALL | wx.EXPAND)
 
         self._chk_show_regression = wx.CheckBox(self, wx.ID_ANY, "Show Regression", style = wx.ALIGN_CENTRE_HORIZONTAL)
@@ -107,6 +108,10 @@ class GraphFrame(forms.SubFrame):
         self.refresh()
         event.Skip()
     
+    def _bind_lb_plots_new_selection(self, event):
+        self.refresh_variable_selections()
+        event.Skip()
+    
     #root frame hooks
     def hook_file_opened(self):
         self.refresh()
@@ -118,6 +123,7 @@ class GraphFrame(forms.SubFrame):
     def refresh(self):
         self.refresh_plot_titles()
         self.refresh_variables()
+        self.refresh_variable_selections()
     
     def refresh_plot_titles(self):
         selection = self._lb_plots.GetSelection()
@@ -151,3 +157,15 @@ class GraphFrame(forms.SubFrame):
             
             if selection_y != -1:
                 self._lb_plot_y.SetSelection(min(len(self._variable_ids) - 1, selection_y))
+    
+    def refresh_variable_selections(self):
+        selection = self._lb_plots.GetSelection()
+        if selection != -1:
+            plot_x_id, plot_y_id = self._datafile.query(sciplot.database.Query("SELECT VariableXID, VariableYID FROM Plot WHERE PlotID = (?)", [self._plot_ids[selection]], 2))[0]
+
+            self._lb_plot_x.SetSelection(self._variable_ids.index(plot_x_id))
+            self._lb_plot_y.SetSelection(self._variable_ids.index(plot_y_id))
+        
+        else:
+            self._lb_plot_x.SetSelection(-1)
+            self._lb_plot_y.SetSelection(-1)
