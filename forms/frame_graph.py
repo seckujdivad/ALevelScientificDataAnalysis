@@ -120,8 +120,8 @@ class GraphFrame(forms.SubFrame):
         if selection != -1:
             show_regression, variable_x_title, variable_y_title = self._datafile.query(sciplot.database.Query("SELECT ShowRegression, VariableXTitle, VariableYTitle FROM Plot WHERE PlotID = (?);", [self._plot_ids[selection]], 2))[0]
             self._chk_show_regression.SetValue(bool(show_regression))
-            self._entry_variable_title_x.SetValue(variable_x_title)
-            self._entry_variable_title_y.SetValue(variable_y_title)
+            self._entry_variable_title_x.ChangeValue(variable_x_title)
+            self._entry_variable_title_y.ChangeValue(variable_y_title)
 
         event.Skip()
     
