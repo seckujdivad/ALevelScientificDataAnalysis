@@ -36,6 +36,7 @@ class GraphFrame(forms.SubFrame):
         self._gbs_main.Add(self._btn_new_plot, wx.GBPosition(2, 0), wx.GBSpan(1, 1), wx.ALL | wx.EXPAND)
 
         self._btn_remove_plot = wx.Button(self, wx.ID_ANY, "Remove")
+        self._btn_remove_plot.Bind(wx.EVT_BUTTON, self._bind_btn_remove_plot_clicked)
         self._gbs_main.Add(self._btn_remove_plot, wx.GBPosition(2, 1), wx.GBSpan(1, 1), wx.ALL | wx.EXPAND)
 
         self._lbl_plot_x = wx.StaticText(self, wx.ID_ANY, "x-axis", style = wx.ALIGN_CENTRE_HORIZONTAL)
@@ -121,6 +122,14 @@ class GraphFrame(forms.SubFrame):
 
             self.refresh()
 
+        event.Skip()
+    
+    def _bind_btn_remove_plot_clicked(self, event):
+        selection = self._lb_plots.GetSelection()
+        if selection != -1:
+            self._datafile.query(sciplot.database.Query("DELETE FROM Plot WHERE PlotID = (?)", [self._plot_ids[selection]], 0))
+            self.refresh()
+    
         event.Skip()
     
     #root frame hooks
