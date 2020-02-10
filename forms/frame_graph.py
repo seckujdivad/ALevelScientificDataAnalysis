@@ -44,6 +44,7 @@ class GraphFrame(forms.SubFrame):
         self._gbs_main.Add(self._lbl_plot_x, wx.GBPosition(3, 0), wx.GBSpan(1, 1), wx.ALL | wx.EXPAND)
 
         self._entry_variable_title_x = wx.TextCtrl(self, wx.ID_ANY)
+        self._entry_variable_title_x.Bind(wx.EVT_TEXT, self._bind_entry_variable_title_x_changed)
         self._gbs_main.Add(self._entry_variable_title_x, wx.GBPosition(4, 0), wx.GBSpan(1, 1), wx.ALL | wx.EXPAND)
 
         self._lb_plot_x = wx.ListBox(self, wx.ID_ANY)
@@ -54,6 +55,7 @@ class GraphFrame(forms.SubFrame):
         self._gbs_main.Add(self._lbl_plot_y, wx.GBPosition(3, 1), wx.GBSpan(1, 1), wx.ALL | wx.EXPAND)
 
         self._entry_variable_title_y = wx.TextCtrl(self, wx.ID_ANY)
+        self._entry_variable_title_y.Bind(wx.EVT_TEXT, self._bind_entry_variable_title_y_changed)
         self._gbs_main.Add(self._entry_variable_title_y, wx.GBPosition(4, 1), wx.GBSpan(1, 1), wx.ALL | wx.EXPAND)
 
         self._lb_plot_y = wx.ListBox(self, wx.ID_ANY)
@@ -167,6 +169,26 @@ class GraphFrame(forms.SubFrame):
             plot_id = self._plot_ids[plot_selection]
             var_id = self._variable_ids[var_selection]
             self._datafile.query(sciplot.database.Query("UPDATE Plot SET VariableYID = (?) WHERE PlotID = (?);", [var_id, plot_id], 0))
+
+        event.Skip()
+    
+    def _bind_entry_variable_title_x_changed(self, event):
+        selection = self._lb_plots.GetSelection()
+        if selection != -1:
+            plot_id = self._plot_ids[selection]
+            self._datafile.query(sciplot.database.Query("UPDATE Plot SET VariableXTitle = (?) WHERE PlotID = (?);", [self._entry_variable_title_x.GetValue(), plot_id], 0))
+
+            self.refresh_plot_titles()
+
+        event.Skip()
+    
+    def _bind_entry_variable_title_y_changed(self, event):
+        selection = self._lb_plots.GetSelection()
+        if selection != -1:
+            plot_id = self._plot_ids[selection]
+            self._datafile.query(sciplot.database.Query("UPDATE Plot SET VariableYTitle = (?) WHERE PlotID = (?);", [self._entry_variable_title_y.GetValue(), plot_id], 0))
+
+            self.refresh_plot_titles()
 
         event.Skip()
     
