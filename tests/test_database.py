@@ -122,7 +122,7 @@ class TestDataFile(unittest.TestCase):
     
     def test_list_data_sets(self):
         with self.connect_datafile() as df:
-            self.assertEqual(df.list_data_sets(), [1, 2, 3])
+            self.assertEqual(df.list_data_sets(), [1, 2, 3, 4])
     
     def test_get_data_set(self):
         with self.connect_datafile() as df:
@@ -137,7 +137,7 @@ class TestDataFile(unittest.TestCase):
     def test_remove_data_set(self):
         with self.connect_datafile() as df:
             df.remove_data_set(1)
-            self.assertEqual(df.list_data_sets(), [2, 3])
+            self.assertEqual(df.list_data_sets(), [2, 3, 4])
             df.goto_rollback()
     
     def test_get_data_points(self):
@@ -162,7 +162,7 @@ class TestDataFile(unittest.TestCase):
     
     def test_list_formulae(self):
         with self.connect_datafile() as df:
-            self.assertEqual(df.list_formulae(), [1, 2, 3, 4])
+            self.assertEqual(df.list_formulae(), [1, 2, 3, 4, 5])
     
     def test_get_formula(self):
         with self.connect_datafile() as df:
