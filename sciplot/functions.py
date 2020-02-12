@@ -1014,19 +1014,55 @@ def _chk_circular(tree: typing.List[str], function_names: typing.List[str], func
 def evaluate_dependencies(function_name: str, functions: typing.Dict[str, Function]):
     return _eval_deps([], functions[function_name].evaluate_dependencies(), functions)
 
-def _eval_deps(deps: typing.List[str], func_deps: typing.List[str], functions: typing.Dict[str, Function]):
+def _eval_deps(deps: typing.List[typing.Tuple[str, str]], func_deps: typing.List[str], functions: typing.Dict[str, Function]):
     for name in func_deps:
-        if name in functions:
-            new_deps = functions[name].evaluate_dependencies()
-
-            for dep in new_deps:
-                if dep not in deps:
-                    deps.append(dep)
+        symbols = get_variable_names(name)
+        if type(symbols) != list:
+            symbols = [symbols]
         
-        else:
-            deps.append(name)
+        for symbol in symbols:
+            if symbol in functions:
+                new_deps = [(get_variable_names(full_name), full_name) for full_name in functions[symbol].evaluate_dependencies()]
+
+                for dep, full_name in new_deps:
+                    if dep not in deps:
+                        deps.append((dep, full_name))
+            
+            else:
+                deps.append((symbol, name))
     
     return deps
+
+def get_variable_names(full_name):
+    full_name_split = full_name.split('.')
+
+    if full_name_split[-1] == "MEAN":
+        return full_name[:-5]
+    
+    elif full_name_split[-1] == "MAX":
+        return full_name[:-4]
+    
+    elif full_name_split[-1] == "MIN":
+        return full_name[:-4]
+
+    elif len(full_name_split) > 2 and full_name_split[0] in ["BEST", "WORST", "WORSTMIN", "WORSTMAX"]: #name is of two graphically processed variables
+        if full_name_split[1] not in ["GRAD", "GRADIENT", "SLOPE", "INTERCEPT", "Y-INTERCEPT"]:
+            raise ValueError("Invalid formula dependency - not a graph attribute: {}".format(full_name))
+        
+        #reconstruct string
+        dep_name_str = ""
+        for string in full_name_split[2:-1]:
+            dep_name_str += string + '.'
+        dep_name_str += full_name_split[-1]
+
+        graph_names = dep_name_str.split('-')
+        if len(graph_names) == 2:
+            return graph_names
+        else:
+            raise ValueError("Invalid formula dependency - wrong number of variables (must be 2): {}".format(full_name))
+    
+    else:
+        return full_name
 
 def evaluate_tree(function_name: str, functions: typing.Dict[str, Function], data_table = {}):
     data_table = data_table.copy()

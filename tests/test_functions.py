@@ -216,9 +216,9 @@ class TestFunction(unittest.TestCase):
     
     def test_evaluate_dependency_trees(self):
         func_table = {'c': functions.Function('{k}*{j}'),
-                      'k': functions.Function('{mass}*2'),
+                      'k': functions.Function('{mass.MEAN}*2'),
                       'j': functions.Function('{g}*2')}
-        self.assertEqual(functions.evaluate_dependencies('c', func_table), ['mass', 'g'])
+        self.assertEqual(functions.evaluate_dependencies('c', func_table), [('mass', 'mass.MEAN'), ('g', 'g')])
 
     generic_datatable = {'g': functions.Value(9.81, 0.01, False, [(1, 1), (2, 1), (3, -2)]),
                          'volume': functions.Value(532, 0.1, True, [(2, 3)]),
