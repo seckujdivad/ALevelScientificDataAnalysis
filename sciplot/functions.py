@@ -1027,6 +1027,9 @@ def _eval_deps(deps: typing.List[typing.Tuple[str, str]], func_deps: typing.List
                 for dep, full_name in new_deps:
                     if dep not in deps:
                         deps.append((dep, full_name))
+                
+                if symbol != name: #processed formula
+                    deps.append((symbol, name))
             
             else:
                 deps.append((symbol, name))
