@@ -4,6 +4,7 @@ import wx.lib.plot.plotcanvas
 import forms
 
 import sciplot.database
+import sciplot.datafile
 
 
 class GraphFrame(forms.SubFrame):
@@ -68,10 +69,7 @@ class GraphFrame(forms.SubFrame):
 
         self._plot_main = wx.lib.plot.plotcanvas.PlotCanvas(self, wx.ID_ANY)
         self._plot_main.enableAxes = True
-        data = [[1,5],[2,4],[3,8],[4,3],[5,2]]
-        line = wx.lib.plot.PolyLine(data, colour='red', width=1)
-        gc = wx.lib.plot.PlotGraphics([line], 'Title', 'x-axis', 'y-axis')
-        self._plot_main.Draw(gc)
+        
         self._plot_main.enableAntiAliasing = True
         self._plot_main.enableDrag = True
         self._plot_main.Bind(wx.EVT_MOUSEWHEEL, self._bind_graph_scroll)
@@ -204,6 +202,7 @@ class GraphFrame(forms.SubFrame):
         self.refresh_plot_titles()
         self.refresh_variables()
         self.refresh_variable_selections()
+        self.refresh_plot()
     
     def refresh_plot_titles(self):
         selection = self._lb_plots.GetSelection()
@@ -249,3 +248,19 @@ class GraphFrame(forms.SubFrame):
         else:
             self._lb_plot_x.SetSelection(-1)
             self._lb_plot_y.SetSelection(-1)
+    
+    def refresh_plot(self):
+        self._plot_main.Clear()
+
+        y_axis_title = 'y'
+        x_axis_title = "x"
+
+        gc = wx.lib.plot.PlotGraphics(self.get_plot_lines(), 'Plot of {} against {}'.format(y_axis_title, x_axis_title), x_axis_title, y_axis_title)
+        self._plot_main.Draw(gc)
+
+    def get_plot_lines(self):
+        data = [[1,5],[2,4],[3,8],[4,3],[5,2]]
+        
+        line = wx.lib.plot.PolyMarker(data, colour = 'red', width = 1, marker = 'cross')
+
+        return [line]
