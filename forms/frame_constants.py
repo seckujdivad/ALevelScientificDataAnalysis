@@ -130,6 +130,7 @@ class ConstantsFrame(forms.SubFrame):
     def _bind_btn_remove_clicked(self, event):
         selection = self._lb_constants.GetSelection()
         if selection != -1:
+            self._datafile.query(sciplot.database.Query("DELETE FROM Constant WHERE ConstantID = (?);", [self._constant_ids[selection]], 0))
             self.refresh_constants_list()
 
         event.Skip()
