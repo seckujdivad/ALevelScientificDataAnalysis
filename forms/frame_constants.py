@@ -26,7 +26,7 @@ class ConstantsFrame(forms.SubFrame):
         self._gbs_main.Add(self._lb_constants, wx.GBPosition(0, 0), wx.GBSpan(1, 2), wx.ALL | wx.EXPAND)
 
         self._spn_value = wx.SpinCtrlDouble(self, wx.ID_ANY)
-        self._spn_value.SetDigits(10)
+        self._spn_value.SetDigits(10) #maximum digits in the spinbox. I would set it higher, but it is capped at 20 and at 20 digits, double imprecision is a factor
         self._lb_constants.Bind(wx.EVT_SPINCTRLDOUBLE, self._bind_spn_value_changed)
         self._gbs_main.Add(self._spn_value, wx.GBPosition(1, 0), wx.GBSpan(1, 2), wx.ALL | wx.EXPAND)
 
