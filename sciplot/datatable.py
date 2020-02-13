@@ -198,13 +198,13 @@ class Datatable:
                         if len(values) != 0:
                             if dependency_data["processing"] == "max":
                                 new_value = functions.Value(max([value.value for value in values]), values[0].absolute_uncertainty, False, values[0].units)
-                                values_table[dependency_data["symbol"]] = new_value
+                                values_table[dependency_name] = new_value
                             elif dependency_data["processing"] == "min":
                                 new_value = functions.Value(min([value.value for value in values]), values[0].absolute_uncertainty, False, values[0].units)
-                                values_table[dependency_data["symbol"]] = new_value
+                                values_table[dependency_name] = new_value
                             elif dependency_data["processing"] == "mean":
                                 new_value = functions.Value(sum([value.value for value in values]) / len(values), values[0].percentage_uncertainty / math.sqrt(len(values)), True, values[0].units)
-                                values_table[dependency_data["symbol"]] = new_value
+                                values_table[dependency_name] = new_value
                             else:
                                 raise ValueError("Invalid dataset processing step '{}' on dependency '{}'".format(dependency_data["processing"], dependency_data))
 
@@ -214,10 +214,60 @@ class Datatable:
                         raise NotImplementedError("Graphical attributes haven't been implemented in this part of the software yet")
         
         print(values_table)
-        print(values_table['area'].value)
+        print(values_table['area.MEAN'].value)
 
-        #check column lengths
+        
         #evaluate all columns
+        for variable_id, variable_symbol, variable_subid, variable_type in variable_data:
+            if var_type_lookup[variable_type] == "formula":
+                dataset_length = -1
+                function_inputs = {}
+
+                func_dependencies = functions.evaluate_dependencies(variable_symbol, function_table, step_into_processed_sets = False)
+                print(func_dependencies)
+                for func_dependency_symbol, func_dependency in func_dependencies:
+                    print(func_dependency)
+                    if func_dependency in constants_table:
+                        function_inputs[func_dependency] = constants_table[func_dependency]
+                        function_input_table[func_dependency] = constants_table[func_dependency]
+
+                    elif func_dependency in values_table:
+                        function_inputs[func_dependency] = values_table[func_dependency]
+                        function_input_table[func_dependency] = values_table[func_dependency]
+
+                    elif func_dependency in dataset_table:
+                        function_inputs[func_dependency] = dataset_table[func_dependency]
+
+                        if dataset_length == -1:
+                            dataset_length = len(dataset_table[func_dependency])
+                        elif len(dataset_table[func_dependency]) != dataset_length:
+                            raise ValueError("Dataset '{}' length ({}) differs from length of other datasets ({}), in function '{}' evaluation".format(func_dependency, len(dataset_table[func_dependency]), dataset_length, dependency_name))
+                
+                self._value_table[variable_id] = []
+
+                for i in range(max(dataset_length, 1)):
+                    for key in function_inputs:
+                        if type(function_inputs[key]) == list:
+                            function_input_table[key] = function_inputs[key][i]
+                    
+                    print(function_input_table)
+                    
+                    self._value_table[variable_id].append(functions.evaluate_tree(variable_symbol, function_table, function_input_table))
+            
+            else:
+                self._value_table[variable_id] = dataset_table[variable_symbol]
+        
+        #check column lengths to make sure they all match
+        length = -1
+        for key in self._value_table:
+            if length == -1:
+                length = len(self._value_table[key])
+            
+            elif len(self._value_table[key]) != length:
+                raise ValueError("Column length mismatch: {} is of length {}, but length {} is required".format(key, len(self._value_table[key]), length))
+        
+        print('Final values:')
+        print(*[(key, [value.value for value in self._value_table[key]]) for key in self._value_table], sep = '\n')
 
     def as_rows(self):
         if len(self._value_table) > 0: #transpose row-column layout
