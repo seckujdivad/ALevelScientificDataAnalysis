@@ -59,6 +59,11 @@ class ConstantsFrame(forms.SubFrame):
 
     #ui binds
     def _bind_lb_constants_selected(self, event):
+        selection = self._lb_constants.GetSelection()
+        if selection != -1:
+            value = self._datafile.query(sciplot.database.Query("SELECT `Value` FROM Constant WHERE ConstantID = (?);", [self._constant_ids[selection]], 2))[0][0]
+            self._spn_value.SetValue(value)
+
         event.Skip()
     
     def _bind_spn_value_changed(self, event):
