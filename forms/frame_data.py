@@ -160,7 +160,18 @@ class DataFrame(forms.SubFrame):
             for row in data_as_rows:
                 formatted_row = []
                 for i in range(len(row)):
-                    formatted_row.append(row[i].format(format_strings[i])[0])
+                    value, exponent = row[i].format(format_strings[i])
+                    
+                    if exponent is None:
+                        formatted_row.append(value)
+                    else:
+                        if exponent < 0:
+                            sign = '-'
+                        else:
+                            sign = '+'
+
+                        formatted_row.append('{}E{}{}'.format(value, sign, exponent))
+
                 self._dvl_data.AppendItem(formatted_row)
             
             #set column titles
