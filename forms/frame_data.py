@@ -215,6 +215,8 @@ class DataFrame(forms.SubFrame):
         self.Layout()
     
     def refresh_column_list(self):
+        selection = self._ckl_columns.GetSelection()
+
         self._ckl_columns.Clear()
         self._columns.clear()
 
@@ -222,8 +224,13 @@ class DataFrame(forms.SubFrame):
         for variable_str, variable_id in variables:
             self._ckl_columns.Append(variable_str)
             self._columns.append((variable_id, variable_str))
+        
+        if selection != -1:
+            self._ckl_columns.SetSelection(selection)
     
     def refresh_table_list(self):
+        selection = self._lb_tables.GetSelection()
+
         self._tables.clear()
         self._lb_tables.Clear()
 
@@ -231,6 +238,9 @@ class DataFrame(forms.SubFrame):
         for table_id, table_title in tables:
             self._lb_tables.Append(table_title)
             self._tables.append((table_id, table_title))
+        
+        if selection != -1:
+            self._lb_tables.SetSelection(selection)
     
     def _column_selection_change(self):
         selection_index = self._lb_tables.GetSelection()
