@@ -19,6 +19,7 @@ class ConstantsFrame(forms.SubFrame):
         self._gbs_main.SetNonFlexibleGrowMode(wx.FLEX_GROWMODE_SPECIFIED)
 
         self._constant_ids = []
+        self._old_constant_selection = None
 
         #create elements
         self._lb_constants = wx.ListBox(self, wx.ID_ANY)
@@ -57,17 +58,25 @@ class ConstantsFrame(forms.SubFrame):
     
     def hook_frame_selected(self):
         self.refresh_constants_list()
+    
+    def hook_frame_unselected(self):
+        self.store_spin_value()
 
     #ui binds
     def _bind_lb_constants_selected(self, event):
         selection = self._lb_constants.GetSelection()
         if selection != -1:
+            self.store_spin_value(old = True)
+
             value = self._datafile.query(sciplot.database.Query("SELECT `Value` FROM Constant WHERE ConstantID = (?);", [self._constant_ids[selection]], 2))[0][0]
             self._spn_value.SetValue(value)
+
+            self._old_constant_selection = selection
 
         event.Skip()
     
     def _bind_spn_value_changed(self, event):
+        self.store_spin_value()
         event.Skip()
 
     def _bind_btn_add_new_clicked(self, event):
@@ -88,3 +97,16 @@ class ConstantsFrame(forms.SubFrame):
 
         if selection != -1:
             self._lb_constants.SetSelection(selection)
+    
+    def store_spin_value(self, old = False):
+        if old == True:
+            if self._old_constant_selection is None:
+                selection = -1
+            else:
+                selection = self._old_constant_selection
+        else:
+            selection = self._lb_constants.GetSelection()
+
+        if selection != -1:
+            value = self._spn_value.GetValue()
+            self._datafile.query(sciplot.database.Query("UPDATE Constant SET `Value` = (?)  WHERE ConstantID = (?);", [value, self._constant_ids[selection]], 0))
