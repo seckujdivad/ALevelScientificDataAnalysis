@@ -46,8 +46,6 @@ class Datatable:
 
             if variable_symbol not in function_table: #is a dataset
                 dependencies.append((variable_symbol, variable_symbol))
-        
-        print(dependencies)
 
         #get formula dependencies
         for variable_id, variable_symbol, variable_subid, variable_type in variable_data:
@@ -55,8 +53,6 @@ class Datatable:
                 for dependency_info in functions.evaluate_dependencies(variable_symbol, function_table):
                     if dependency_info not in dependencies:
                         dependencies.append(dependency_info)
-        
-        print(dependencies)
         
         #process dependencies
         dependency_table: typing.Dict[str, typing.Dict[str, object]] = {}
@@ -113,10 +109,6 @@ class Datatable:
 
             dependency_table[dependency] = current_dependency
         
-        print("dependencies:")
-        print(*["{}: {}".format(key, dependency_table[key]) for key in dependency_table], sep = '\n')
-        
-        print("dataset contents:")
         #get dataset dependency values
         dataset_table: typing.Dict[str, typing.List[functions.Value]] = {}
         for dependency_name in dependency_table:
@@ -130,8 +122,6 @@ class Datatable:
                     value_obj.units = self._datafile.get_unit_by_id(unit_id)[1]
 
                     values.append(value_obj)
-                
-                print(dependency_data["symbol"], values)
         
                 dataset_table[dependency_name] = values
         
@@ -212,11 +202,7 @@ class Datatable:
                     
                     elif dependency_data["type"] == "graphical":
                         raise NotImplementedError("Graphical attributes haven't been implemented in this part of the software yet")
-        
-        print(values_table)
-        print(values_table['area.MEAN'].value)
 
-        
         #evaluate all columns
         for variable_id, variable_symbol, variable_subid, variable_type in variable_data:
             if var_type_lookup[variable_type] == "formula":
@@ -225,9 +211,7 @@ class Datatable:
                 function_input_table = {}
 
                 func_dependencies = functions.evaluate_dependencies(variable_symbol, function_table, step_into_processed_sets = False)
-                print(func_dependencies)
                 for func_dependency_symbol, func_dependency in func_dependencies:
-                    print(func_dependency)
                     if func_dependency in constants_table:
                         function_inputs[func_dependency] = constants_table[func_dependency]
                         function_input_table[func_dependency] = constants_table[func_dependency]
@@ -251,8 +235,6 @@ class Datatable:
                         if type(function_inputs[key]) == list:
                             function_input_table[key] = function_inputs[key][i]
                     
-                    print(function_input_table)
-                    
                     self._value_table[variable_id].append(functions.evaluate_tree(variable_symbol, function_table, function_input_table))
             
             else:
@@ -266,9 +248,6 @@ class Datatable:
             
             elif len(self._value_table[key]) != length:
                 raise ValueError("Column length mismatch: {} is of length {}, but length {} is required".format(key, len(self._value_table[key]), length))
-        
-        print('Final values:')
-        print(*[(key, [value.value for value in self._value_table[key]]) for key in self._value_table], sep = '\n')
 
     def as_rows(self):
         if len(self._value_table) > 0: #transpose row-column layout
