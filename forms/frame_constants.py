@@ -28,7 +28,7 @@ class ConstantsFrame(forms.SubFrame):
         self._lb_constants.Bind(wx.EVT_LISTBOX, self._bind_lb_constants_selected)
         self._gbs_main.Add(self._lb_constants, wx.GBPosition(0, 0), wx.GBSpan(1, 2), wx.ALL | wx.EXPAND)
 
-        self._spn_value = wx.SpinCtrlDouble(self, wx.ID_ANY)
+        self._spn_value = wx.SpinCtrlDouble(self, wx.ID_ANY, min = -9999, max = 9999)
         self._spn_value.SetDigits(10) #maximum digits in the spinbox. I would set it higher, but it is capped at 20 and at 20 digits, double imprecision is a factor
         self._spn_value.Bind(wx.EVT_SPINCTRLDOUBLE, self._bind_spn_value_changed)
         self._spn_value.Bind(wx.EVT_TEXT, self._bind_spn_value_changed)
@@ -45,7 +45,7 @@ class ConstantsFrame(forms.SubFrame):
         self._lb_units = wx.ListBox(self, wx.ID_ANY)
         self._gbs_main.Add(self._lb_units, wx.GBPosition(0, 2), wx.GBSpan(2, 1), wx.ALL | wx.EXPAND)
 
-        self._spn_power = wx.SpinCtrlDouble(self, wx.ID_ANY)
+        self._spn_power = wx.SpinCtrlDouble(self, wx.ID_ANY, min = -9999, max = 9999)
         self._spn_power.SetDigits(10)
         self._gbs_main.Add(self._spn_power, wx.GBPosition(2, 2), wx.GBSpan(1, 1), wx.ALL | wx.EXPAND)
 
