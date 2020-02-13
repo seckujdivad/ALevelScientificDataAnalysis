@@ -206,7 +206,13 @@ class Value:
         if self._uncertainty_is_percentage:
             return self._uncertainty
         else:
-            return self._uncertainty / self.value
+            if self.value == 0:
+                if self._uncertainty > 0:
+                    return float("+inf")
+                else:
+                    return float("-inf")
+            else:
+                return self._uncertainty / self.value
     
     def _set_unc_perc(self, value):
         self._uncertainty = value
