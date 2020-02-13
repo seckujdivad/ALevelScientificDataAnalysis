@@ -1,6 +1,7 @@
 import wx
 
 import forms
+import sciplot.database
 
 
 class ConstantsFrame(forms.SubFrame):
@@ -17,12 +18,15 @@ class ConstantsFrame(forms.SubFrame):
         self._gbs_main.SetFlexibleDirection(wx.BOTH)
         self._gbs_main.SetNonFlexibleGrowMode(wx.FLEX_GROWMODE_SPECIFIED)
 
+        self._constant_ids = []
+
         #create elements
         self._lb_constants = wx.ListBox(self, wx.ID_ANY)
         self._lb_constants.Bind(wx.EVT_LISTBOX, self._bind_lb_constants_selected)
         self._gbs_main.Add(self._lb_constants, wx.GBPosition(0, 0), wx.GBSpan(1, 2), wx.ALL | wx.EXPAND)
 
         self._spn_value = wx.SpinCtrlDouble(self, wx.ID_ANY)
+        self._spn_value.SetDigits(10)
         self._lb_constants.Bind(wx.EVT_SPINCTRLDOUBLE, self._bind_spn_value_changed)
         self._gbs_main.Add(self._spn_value, wx.GBPosition(1, 0), wx.GBSpan(1, 2), wx.ALL | wx.EXPAND)
 
@@ -47,6 +51,11 @@ class ConstantsFrame(forms.SubFrame):
         self._gbs_main.Fit(self)
     
     #root frame hooks
+    def hook_file_opened(self):
+        self.refresh_constants_list()
+    
+    def hook_frame_selected(self):
+        self.refresh_constants_list()
 
     #ui binds
     def _bind_lb_constants_selected(self, event):
@@ -62,3 +71,14 @@ class ConstantsFrame(forms.SubFrame):
         event.Skip()
 
     #frame methods
+    def refresh_constants_list(self):
+        selection = self._lb_constants.GetSelection()
+
+        self._lb_constants.Clear()
+        self._constant_ids.clear()
+        for constant_id, constant_symbol in self._datafile.query(sciplot.database.Query("SELECT ConstantID, Symbol FROM Constant;", [], 1))[0]:
+            self._lb_constants.Append(constant_symbol)
+            self._constant_ids.append(constant_id)
+
+        if selection != -1:
+            self._lb_constants.SetSelection(selection)
