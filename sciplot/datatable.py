@@ -222,6 +222,7 @@ class Datatable:
             if var_type_lookup[variable_type] == "formula":
                 dataset_length = -1
                 function_inputs = {}
+                function_input_table = {}
 
                 func_dependencies = functions.evaluate_dependencies(variable_symbol, function_table, step_into_processed_sets = False)
                 print(func_dependencies)
