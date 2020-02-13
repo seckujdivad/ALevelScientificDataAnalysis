@@ -19,6 +19,7 @@ class ConstantsFrame(forms.SubFrame):
         self._gbs_main.SetNonFlexibleGrowMode(wx.FLEX_GROWMODE_SPECIFIED)
 
         self._constant_ids = []
+        self._constant_symbols = []
         self._unit_ids = []
         self._base_unit_data = []
         self._unit_table = {}
@@ -82,6 +83,7 @@ class ConstantsFrame(forms.SubFrame):
         if selection != -1:
             #store old value
             self.store_spin_value(old = True)
+            self.store_power_value(old = True)
 
             #get new value
             value = self._datafile.query(sciplot.database.Query("SELECT `Value` FROM Constant WHERE ConstantID = (?);", [self._constant_ids[selection]], 2))[0][0]
@@ -112,6 +114,7 @@ class ConstantsFrame(forms.SubFrame):
         event.Skip()
 
     def _bind_spn_power_changed(self, event):
+        self.store_power_value()
         event.Skip()
 
     #frame methods
@@ -121,8 +124,10 @@ class ConstantsFrame(forms.SubFrame):
         self._lb_constants.Clear()
         self._constant_ids.clear()
         self._unit_ids.clear()
+        self._constant_symbols.clear()
         for constant_id, constant_symbol, constant_unit_id in self._datafile.query(sciplot.database.Query("SELECT ConstantID, Symbol, UnitCompositeID FROM Constant;", [], 1))[0]:
             self._lb_constants.Append(constant_symbol)
+            self._constant_symbols.append(constant_symbol)
             self._constant_ids.append(constant_id)
             self._unit_ids.append(constant_unit_id)
 
@@ -167,3 +172,24 @@ class ConstantsFrame(forms.SubFrame):
 
         else:
             self._spn_power.SetValue(0)
+    
+    def store_power_value(self, old = False):
+        if old == True:
+            if self._old_constant_selection is None:
+                selection = -1
+            else:
+                selection = self._old_constant_selection
+        else:
+            selection = self._lb_constants.GetSelection()
+        
+        if selection != -1:
+            value = self._spn_power.GetValue()
+            unit_id, unit_symbol = self._base_unit_data[selection]
+            self._unit_table[unit_symbol] = value
+
+            constant_id = self._constant_ids[selection]
+            unit_table = [(self._datafile.query(sciplot.database.Query("SELECT UnitID FROM Unit WHERE Symbol = (?);", [unit_symbol], 2))[0][0], self._unit_table[unit_symbol]) for unit_symbol in self._unit_table]
+
+            self._datafile.update_units("Constant", constant_id, None, unit_table)
+
+            self.refresh_constants_list()
