@@ -40,8 +40,15 @@ class ConstantsFrame(forms.SubFrame):
         self._btn_remove.Bind(wx.EVT_BUTTON, self._bind_btn_remove_clicked)
         self._gbs_main.Add(self._btn_remove, wx.GBPosition(2, 1), wx.GBSpan(1, 1), wx.ALL | wx.EXPAND)
 
+        self._lb_units = wx.ListBox(self, wx.ID_ANY)
+        self._gbs_main.Add(self._lb_units, wx.GBPosition(0, 2), wx.GBSpan(2, 1), wx.ALL | wx.EXPAND)
+
+        self._spn_power = wx.SpinCtrlDouble(self, wx.ID_ANY)
+        self._spn_power.SetDigits(10)
+        self._gbs_main.Add(self._spn_power, wx.GBPosition(2, 2), wx.GBSpan(1, 1), wx.ALL | wx.EXPAND)
+
         #set sizer weights
-        for i in [0, 1]:
+        for i in [0, 1, 2]:
             self._gbs_main.AddGrowableCol(i)
         
         for j in [0]:
