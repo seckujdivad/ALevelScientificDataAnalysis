@@ -94,15 +94,15 @@ class Datatable:
                 else:
                     current_dependency["type"] = "value"
 
-                    if dependency.endswith(".MEAN"):
+                    if split_dep_name[-1] == "MEAN":
                         current_dependency["access mode"] = "single"
                         current_dependency["processing"] = "mean"
                     
-                    elif dependency.endswith(".MAX"):
+                    elif split_dep_name[-1] == "MAX":
                         current_dependency["access mode"] = "single"
                         current_dependency["processing"] = "max"
                     
-                    elif dependency.endswith(".MIN"):
+                    elif split_dep_name[-1] == "MIN":
                         current_dependency["access mode"] = "single"
                         current_dependency["processing"] = "min"
                 
