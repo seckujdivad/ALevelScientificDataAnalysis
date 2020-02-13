@@ -108,7 +108,7 @@ class TestDataFile(unittest.TestCase):
     
     def test_list_units(self):
         with self.connect_datafile() as df:
-            self.assertEqual(df.list_units(), [1, 2, 3, 4, 5])
+            self.assertEqual(df.list_units(), [1, 2, 3, 4, 5, 6])
     
     def test_get_metadata(self):
         with self.connect_datafile() as df:
@@ -234,7 +234,7 @@ class TestDataFile(unittest.TestCase):
     
     def test_getunitid_empty(self):
         with self.connect_datafile() as db:
-            self.assertEqual(db.get_unit_id_by_table([]), [])
+            self.assertEqual(db.get_unit_id_by_table([]), [6])
     
     def test_getunitid_exact_match(self):
         with self.connect_datafile() as db:
