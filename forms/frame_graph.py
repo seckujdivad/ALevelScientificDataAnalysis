@@ -254,15 +254,17 @@ class GraphFrame(forms.SubFrame):
     def refresh_plot(self):
         self._plot_main.Clear()
 
-        y_axis_title = 'y'
-        x_axis_title = "x"
+        selection = self._lb_plots.GetSelection()
+        if selection != -1:
+            plot_id = self._plot_ids[selection]
+            x_axis_id, y_axis_id, x_axis_title, y_axis_title = self._datafile.query(sciplot.database.Query("SELECT VariableXID, VariableYID, VariableXTitle, VariableYTitle FROM Plot WHERE PlotID = (?)", [plot_id], 2))[0]
 
-        gc = wx.lib.plot.PlotGraphics(self.get_plot_lines(), 'Plot of {} against {}'.format(y_axis_title, x_axis_title), x_axis_title, y_axis_title)
-        self._plot_main.Draw(gc)
+            gc = wx.lib.plot.PlotGraphics(self.get_plot_lines(), 'Plot of {} against {}'.format(y_axis_title, x_axis_title), x_axis_title, y_axis_title)
+            self._plot_main.Draw(gc)
 
     def get_plot_lines(self):
         data = [[1,5],[2,4],[3,8],[4,3],[5,2]]
         
-        line = wx.lib.plot.PolyMarker(data, colour = 'red', width = 1, marker = 'cross')
+        line = wx.lib.plot.PolyMarker(data, colour = 'black', width = 1, marker = 'cross')
 
         return [line]
