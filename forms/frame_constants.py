@@ -139,6 +139,11 @@ class ConstantsFrame(forms.SubFrame):
         event.Skip()
     
     def _bind_entry_name_changed(self, event):
+        selection = self._lb_constants.GetSelection()
+        if selection != -1:
+            self._datafile.query(sciplot.database.Query("UPDATE Constant SET Symbol = (?) WHERE ConstantID = (?);", [self._entry_name.GetValue(), self._constant_ids[selection]], 0))
+            self.refresh_constants_list()
+
         event.Skip()
 
     #frame methods
