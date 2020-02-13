@@ -127,13 +127,16 @@ class DataFrame(forms.SubFrame):
             #remake table ui so that new columns can be added
             self._recreate_dvl_data()
 
+            #create datatable object
             datatable = sciplot.datatable.Datatable(self._datafile)
 
             #set variable ids for columns
             variable_ids = []
+            variable_symbols = []
             format_strings = []
             for variable_symbol, variable_id, format_string in self._datafile.query(sciplot.database.Query("SELECT Variable.Symbol, Variable.VariableID, TableColumn.FormatPattern FROM Variable INNER JOIN TableColumn ON TableColumn.VariableID = Variable.VariableID WHERE TableColumn.TableID = (?);", [table_id], 1))[0]:
                 self._dvl_columns.append(self._dvl_data.AppendTextColumn(variable_symbol)) #create column header
+                variable_symbols.append(variable_symbol)
                 variable_ids.append(variable_id)
                 format_strings.append(format_string)
             
@@ -147,6 +150,7 @@ class DataFrame(forms.SubFrame):
                     value.units = self._datafile.get_unit_by_id(composite_unit_id)[1]
                 constants_table[constant_symbol] = constant_value
         
+            #load all data from the datafile into memory
             datatable.load(constants_table)
 
             for row in datatable.as_rows():
@@ -154,6 +158,27 @@ class DataFrame(forms.SubFrame):
                 for i in range(len(row)):
                     formatted_row.append(row[i].format(format_strings[i])[0])
                 self._dvl_data.AppendItem(formatted_row)
+            
+            #set column titles
+            if len(data_as_rows) > 0:
+                for index in range(len(data_as_rows[0])):
+                    column_obj = self._dvl_columns[index]
+                    new_col_string = variable_symbols[index]
+                    value_obj = data_as_rows[0][index]
+
+                    unit_string = ""
+                    for unit_id, unit_power in value_obj.units:
+                        if unit_power != 0:
+                            unit_name = self._datafile.get_base_unit(unit_id)
+
+                            if unit_power == 1:
+                                unit_string += ' {}'.format(unit_name)
+                            else:
+                                unit_string += ' {}^{}'.format(unit_name, unit_power)
+                    
+                    if unit_string != '':
+                        new_col_string += ':' + unit_string
+                        column_obj.SetTitle(new_col_string)
     
     def _recreate_dvl_data(self):
         """
