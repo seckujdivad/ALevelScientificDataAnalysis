@@ -25,6 +25,5 @@ class TestDatatable(unittest.TestCase):
             datatable.set_variables([2, 4])
             datatable.load(self.generic_datatable)
     
-    generic_datatable = {'g': sciplot.functions.Value(9.81, 0.01, False, [(1, 1), (2, 1), (3, -2)]),
-                         'volume': sciplot.functions.Value(532, 0.1, True, [(2, 3)]),
-                         'mass': sciplot.functions.Value(25, 1, False, [(1, 1)])}
+    generic_datatable = {'pi': sciplot.functions.Value(3.14159265359, 0.00, False, []),
+                         'g': sciplot.functions.Value(9.81, 0.01, False, [(1, 1), (2, 1), (3, -2)])}
