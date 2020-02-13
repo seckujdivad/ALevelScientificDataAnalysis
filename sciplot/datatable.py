@@ -274,7 +274,15 @@ class Datatable:
             result = []
             row = []
 
-            for row_index in range(len(self._value_table[0])):
+            #check lengths before transposing
+            length = -1
+            for key in self._value_table:
+                if length == -1:
+                    length = len(self._value_table[key])
+                elif length != len(self._value_table[key]):
+                    raise ValueError('Can\'t transpose: column {} has length {}, required length {}'.format(key, len(self._value_table[key]), length))
+
+            for row_index in range(length):
                 row.clear()
                 for variable_id in self._variable_ids:
                     row.append(self._value_table[variable_id][row_index])
