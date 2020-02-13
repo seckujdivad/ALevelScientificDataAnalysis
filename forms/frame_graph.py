@@ -259,11 +259,21 @@ class GraphFrame(forms.SubFrame):
             plot_id = self._plot_ids[selection]
             x_axis_id, y_axis_id, x_axis_title, y_axis_title = self._datafile.query(sciplot.database.Query("SELECT VariableXID, VariableYID, VariableXTitle, VariableYTitle FROM Plot WHERE PlotID = (?)", [plot_id], 2))[0]
 
-            gc = wx.lib.plot.PlotGraphics(self.get_plot_lines(), 'Plot of {} against {}'.format(y_axis_title, x_axis_title), x_axis_title, y_axis_title)
+            gc = wx.lib.plot.PlotGraphics(self.get_plot_lines(x_axis_id, y_axis_id), 'Plot of {} against {}'.format(y_axis_title, x_axis_title), x_axis_title, y_axis_title)
             self._plot_main.Draw(gc)
 
-    def get_plot_lines(self):
-        data = [[1,5],[2,4],[3,8],[4,3],[5,2]]
+    def get_plot_lines(self, x_axis_id, y_axis_id):
+        constants_table = {}
+        for composite_unit_id, constant_symbol, constant_value in self._datafile.query(sciplot.database.Query("SELECT UnitCompositeID, Symbol, Value FROM Constant;", [], 1))[0]:
+            value = sciplot.functions.Value(constant_value)
+            if composite_unit_id != None:
+                value.units = self._datafile.get_unit_by_id(composite_unit_id)[1]
+            constants_table[constant_symbol] = constant_value
+
+        datatable = sciplot.datatable.Datatable(self._datafile)
+        datatable.set_variables([x_axis_id, y_axis_id])
+        datatable.load(constants_table)
+        data = [[value.value for value in row] for row in datatable.as_rows()]
         
         line = wx.lib.plot.PolyMarker(data, colour = 'black', width = 1, marker = 'cross')
 
