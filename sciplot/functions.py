@@ -1011,14 +1011,17 @@ def _chk_circular(tree: typing.List[str], function_names: typing.List[str], func
     
     return False
 
-def evaluate_dependencies(function_name: str, functions: typing.Dict[str, Function]):
-    return _eval_deps([], functions[function_name].evaluate_dependencies(), functions)
+def evaluate_dependencies(function_name: str, functions: typing.Dict[str, Function], step_into_processed_sets = True):
+    return _eval_deps([], functions[function_name].evaluate_dependencies(), functions, step_into_processed_sets)
 
-def _eval_deps(deps: typing.List[typing.Tuple[str, str]], func_deps: typing.List[str], functions: typing.Dict[str, Function]):
+def _eval_deps(deps: typing.List[typing.Tuple[str, str]], func_deps: typing.List[str], functions: typing.Dict[str, Function], step_into_processed_sets):
     for name in func_deps:
-        symbols = get_variable_names(name)
-        if type(symbols) != list:
-            symbols = [symbols]
+        if step_into_processed_sets:
+            symbols = get_variable_names(name)
+            if type(symbols) != list:
+                symbols = [symbols]
+        else:
+            symbols = [name]
         
         for symbol in symbols:
             if symbol in functions:
