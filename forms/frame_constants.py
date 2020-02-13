@@ -109,6 +109,22 @@ class ConstantsFrame(forms.SubFrame):
         event.Skip()
 
     def _bind_btn_add_new_clicked(self, event):
+        self.store_spin_value(old = True)
+        self.store_power_value(old = True)
+
+        unit_id = self._datafile.create_unit(None, [(1, 1)])
+        constant_id = self._datafile.query([sciplot.database.Query("INSERT INTO Constant (Symbol, UnitCompositeID, Value) VALUES ((?), (?), 0)", [self._entry_name.GetValue(), unit_id], 0),
+                                            sciplot.database.Query("SELECT last_insert_rowid();", [], 2)])[0][0]
+        
+        self._datafile.update_units("Constant", constant_id, None, [])
+
+        self._spn_value.SetValue(0)
+        self._spn_power.SetValue(0)
+
+        self.refresh_constants_list()
+        self._unit_table = {}
+        self.refresh_unit_selection()
+
         event.Skip()
 
     def _bind_btn_remove_clicked(self, event):
