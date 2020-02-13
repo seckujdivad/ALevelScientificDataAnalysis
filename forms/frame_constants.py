@@ -21,6 +21,7 @@ class ConstantsFrame(forms.SubFrame):
         self._constant_ids = []
         self._unit_ids = []
         self._base_unit_data = []
+        self._unit_table = {}
         self._old_constant_selection = None
 
         #create elements
@@ -43,10 +44,13 @@ class ConstantsFrame(forms.SubFrame):
         self._gbs_main.Add(self._btn_remove, wx.GBPosition(2, 1), wx.GBSpan(1, 1), wx.ALL | wx.EXPAND)
 
         self._lb_units = wx.ListBox(self, wx.ID_ANY)
+        self._lb_units.Bind(wx.EVT_LISTBOX, self._bind_lb_units_selected)
         self._gbs_main.Add(self._lb_units, wx.GBPosition(0, 2), wx.GBSpan(2, 1), wx.ALL | wx.EXPAND)
 
         self._spn_power = wx.SpinCtrlDouble(self, wx.ID_ANY, min = -9999, max = 9999)
         self._spn_power.SetDigits(10)
+        self._spn_power.Bind(wx.EVT_SPINCTRLDOUBLE, self._bind_spn_power_changed)
+        self._spn_power.Bind(wx.EVT_TEXT, self._bind_spn_power_changed)
         self._gbs_main.Add(self._spn_power, wx.GBPosition(2, 2), wx.GBSpan(1, 1), wx.ALL | wx.EXPAND)
 
         #set sizer weights
@@ -83,12 +87,11 @@ class ConstantsFrame(forms.SubFrame):
             value = self._datafile.query(sciplot.database.Query("SELECT `Value` FROM Constant WHERE ConstantID = (?);", [self._constant_ids[selection]], 2))[0][0]
             self._spn_value.SetValue(value)
 
-            
-
             #load units
             unit_powers_raw = self._datafile.query(sciplot.database.Query('SELECT Unit.Symbol, UnitCompositeDetails.Power FROM Unit INNER JOIN UnitCompositeDetails ON Unit.UnitID = UnitCompositeDetails.UnitID WHERE UnitCompositeDetails.UnitCompositeID = (?);', [self._unit_ids[selection]], 1))[0]
 
-            unit_powers = {key: value for key, value in unit_powers_raw} #change from tuple pairs to dictionary
+            self._unit_table = {key: value for key, value in unit_powers_raw} #change from tuple pairs to dictionary
+            self.refresh_unit_selection()
 
             self._old_constant_selection = selection
 
@@ -102,6 +105,13 @@ class ConstantsFrame(forms.SubFrame):
         event.Skip()
 
     def _bind_btn_remove_clicked(self, event):
+        event.Skip()
+    
+    def _bind_lb_units_selected(self, event):
+        self.refresh_unit_selection()
+        event.Skip()
+
+    def _bind_spn_power_changed(self, event):
         event.Skip()
 
     #frame methods
@@ -144,3 +154,16 @@ class ConstantsFrame(forms.SubFrame):
 
         if selection != -1:
             self._lb_units.SetSelection(selection)
+    
+    def refresh_unit_selection(self):
+        selection = self._lb_units.GetSelection()
+        if selection != -1:
+            unit_id, unit_symbol = self._base_unit_data[selection]
+
+            if unit_symbol in self._unit_table:
+                self._spn_power.SetValue(self._unit_table[unit_symbol])
+            else:
+                self._spn_power.SetValue(0)
+
+        else:
+            self._spn_power.SetValue(0)
