@@ -182,7 +182,7 @@ class TestDataFile(unittest.TestCase):
     
     def test_list_tables(self):
         with self.connect_datafile() as df:
-            self.assertEqual(df.list_tables(), [(1, 'Force-extension')])
+            self.assertEqual(df.list_tables(), [(1, 'Force-extension'), (2, 'Stress-strain')])
 
     def test_create_table(self):
         with self.connect_datafile() as df:
