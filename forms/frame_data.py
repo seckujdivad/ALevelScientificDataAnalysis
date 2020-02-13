@@ -5,6 +5,7 @@ import typing
 import forms
 import sciplot.functions
 import sciplot.database
+import sciplot.datatable
 
 
 class DataFrame(forms.SubFrame):
@@ -126,131 +127,33 @@ class DataFrame(forms.SubFrame):
             #remake table ui so that new columns can be added
             self._recreate_dvl_data()
 
-            #get all constants
-            constants_table = {key: sciplot.functions.Value(value) for value, key in self._datafile.list_constants()}
+            datatable = sciplot.datatable.Datatable(self._datafile)
 
-            #construct all functions so that trees can be evaluated
-            function_table = {}
-            for expression, name in self._datafile.query(sciplot.database.Query("SELECT Expression, Symbol FROM Formula INNER JOIN Variable ON ID = FormulaID AND Type = 1", [], 1))[0]:
-                function_table[name] = sciplot.functions.Function(expression)
-                function_table[name].pre_evaluate(constants_table) #optimise functions
-
-            data_table = [] #data to be added to the table
-            format_strings = [] #formatting data for each column
-            dependent_data = {} #data that isn't necessarily displayed in the table, but is needed as an input for an expression that is
-            column_titles = []
-            
-            #iterate through all columns
-            for variable_symbol, variable_subid, variable_type, format_string in self._datafile.query(sciplot.database.Query("SELECT Variable.Symbol, Variable.ID, Variable.Type, TableColumn.FormatPattern FROM Variable INNER JOIN TableColumn ON TableColumn.VariableID = Variable.VariableID WHERE TableColumn.TableID = (?);", [table_id], 1))[0]:
+            #set variable ids for columns
+            variable_ids = []
+            format_strings = []
+            for variable_symbol, variable_id, format_string in self._datafile.query(sciplot.database.Query("SELECT Variable.Symbol, Variable.VariableID, TableColumn.FormatPattern FROM Variable INNER JOIN TableColumn ON TableColumn.VariableID = Variable.VariableID WHERE TableColumn.TableID = (?);", [table_id], 1))[0]:
                 self._dvl_columns.append(self._dvl_data.AppendTextColumn(variable_symbol)) #create column header
-                column_titles.append(variable_symbol)
-
-                if variable_type == 0: #dataset
-                    dataset_uncertainty, dataset_uncisperc, unit_id = self._datafile.query(sciplot.database.Query("SELECT Uncertainty, UncIsPerc, UnitCompositeID FROM DataSet WHERE DataSetID = (?);", [variable_subid], 1))[0][0]
-
-                    to_add = [] #get all data points in the data set
-                    for tup in self._datafile.query(sciplot.database.Query("SELECT DataPoint.Value FROM DataPoint WHERE DataSetID = (?);", [variable_subid], 1))[0]:
-                        value = sciplot.functions.Value(tup[0], dataset_uncertainty, bool(dataset_uncisperc))
-                        value.units = self._datafile.get_unit_by_id(unit_id)[1]
-                        to_add.append(value)
-
-                    data_table.append(to_add)
-                    format_strings.append(format_string)
-                
-                else: #formula
-                    data_table.append(variable_symbol)
-                    format_strings.append(format_string)
-
-                    dependencies = sciplot.functions.evaluate_dependencies(variable_symbol, function_table) #get formulae and data sets that this formula depends on
-                    for dependency in dependencies:
-                        if (dependency in function_table) or (dependency in dependent_data) or (dependency in constants_table): #data already exists in a dependency table, so doesn't need getting from the database
-                            pass
-                        
-                        else:
-                            #get data points from the database and store
-                            imported_data = self._datafile.query(sciplot.database.Query("SELECT DataPoint.Value, DataSet.Uncertainty, DataSet.UncIsPerc, DataSet.UnitCompositeID FROM DataPoint INNER JOIN DataSet, Variable ON Variable.ID = DataSet.DataSetID AND DataPoint.DataSetID = DataSet.DataSetID WHERE Variable.Type = 0 AND Variable.Symbol = (?);", [dependency], 1))[0]
-
-                            dependent_data[dependency] = []
-
-                            for value, unc, uncisperc, unit_id in imported_data:
-                                value = sciplot.functions.Value(value, unc, bool(uncisperc))
-                                value.units = self._datafile.get_unit_by_id(unit_id)[1]
-                                dependent_data[dependency].append(value)
-
-            #make sure all columns are the same length. if there are only formulas, determine the length that the columns should be
-            data_table_formatted = []
-            data_table_len = -1
-            data_is_valid = True
-            for data in [data for data in data_table] + [dependent_data[key] for key in dependent_data]:
-                if type(data) == list:
-                    if data_table_len == -1:
-                        data_table_len = len(data)
-
-                    elif len(data) == 1:
-                        pass
-                    
-                    elif data_table_len != len(data):
-                        data_is_valid = False
+                variable_ids.append(variable_id)
+                format_strings.append(format_string)
             
-            #aggregate inputs for functions
-            function_data_table = {}
-            function_data_table.update(constants_table)
+            datatable.set_variables(variable_ids)
 
-            if data_is_valid:
-                #store units for each column
-                column_units = []
-                
-                for i in range(data_table_len):
-                    data_table_formatted.append([])
+            #load constants for the datatable
+            constants_table = {}
+            for composite_unit_id, constant_symbol, constant_value in self._datafile.query(sciplot.database.Query("SELECT UnitCompositeID, Symbol, Value FROM Constant;", [], 1))[0]:
+                value = sciplot.functions.Value(constant_value)
+                if composite_unit_id != None:
+                    value.units = self._datafile.get_unit_by_id(composite_unit_id)[1]
+                constants_table[constant_symbol] = constant_value
+        
+            datatable.load(constants_table)
 
-                    for j in range(len(data_table)):
-                        if type(data_table[j]) == list: #data set
-                            value = data_table[j][i]
-
-                        else: #function
-                            #aggregate more inputs for the function from this table row
-                            for dependency in dependent_data:
-                                function_data_table.update({dependency: dependent_data[dependency][i]})
-
-                            value = sciplot.functions.evaluate_tree(data_table[j], function_table, function_data_table)
-                        
-                        formatted_string, exponent = value.format(format_strings[j])
-                        if exponent is not None:
-                            formatted_string = '{}E{}'.format(formatted_string, exponent)
-                        data_table_formatted[i].append(formatted_string)
-
-                        column_units.append(value.units)
-                
-                if len(data_table_formatted) > 0:
-                    for index in range(len(self._dvl_columns)):
-                        column = self._dvl_columns[index]
-                        symbol = column_titles[index]
-                        units = [[unit_id, power] for unit_id, power in column_units[index]]# if power != 0]
-
-                        if len(units) > 0:
-                            unit_string = ""
-                            for unit_id, power in units:
-                                if power.is_integer():
-                                    power = int(power)
-
-                                if power == 1:
-                                    unit_string += ' {}'.format(self._datafile.get_base_unit(unit_id))
-                                else:
-                                    unit_string += ' {}^{}'.format(self._datafile.get_base_unit(unit_id), power)
-
-                            column.SetTitle("{}:{}".format(symbol, unit_string))
-
-                #add the formatted data to the datalistviewctrl
-                for row in data_table_formatted:
-                    self._dvl_data.AppendItem(row)
-                
-                #set column widths
-                col_width = (self._dvl_data.GetSize()[0] - 30) / len(self._dvl_columns)
-                for col in self._dvl_columns:
-                    col.SetWidth(col_width)
-            
-            else:
-                wx.MessageBox("Not all columns are the same length\nRemove all offending columns", "Column length error", wx.ICON_ERROR | wx.OK)
+            for row in datatable.as_rows():
+                formatted_row = []
+                for i in range(len(row)):
+                    formatted_row.append(row[i].format(format_strings[i])[0])
+                self._dvl_data.AppendItem(formatted_row)
     
     def _recreate_dvl_data(self):
         """
