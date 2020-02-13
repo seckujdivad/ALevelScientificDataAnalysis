@@ -153,7 +153,11 @@ class DataFrame(forms.SubFrame):
             #load all data from the datafile into memory
             datatable.load(constants_table)
 
-            for row in datatable.as_rows():
+            #load transposed data
+            data_as_rows = datatable.as_rows()
+            
+            #put data into table
+            for row in data_as_rows:
                 formatted_row = []
                 for i in range(len(row)):
                     formatted_row.append(row[i].format(format_strings[i])[0])
