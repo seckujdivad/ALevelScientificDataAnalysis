@@ -128,6 +128,10 @@ class ConstantsFrame(forms.SubFrame):
         event.Skip()
 
     def _bind_btn_remove_clicked(self, event):
+        selection = self._lb_constants.GetSelection()
+        if selection != -1:
+            self.refresh_constants_list()
+
         event.Skip()
     
     def _bind_lb_units_selected(self, event):
@@ -205,18 +209,20 @@ class ConstantsFrame(forms.SubFrame):
     def store_power_value(self, old = False):
         if old == True:
             if self._old_constant_selection is None:
-                selection = -1
+                constant_selection = -1
             else:
-                selection = self._old_constant_selection
+                constant_selection = self._old_constant_selection
         else:
-            selection = self._lb_constants.GetSelection()
+            constant_selection = self._lb_constants.GetSelection()
+
+        unit_selection = self._lb_units.GetSelection()
         
-        if selection != -1:
+        if constant_selection != -1 and unit_selection != -1:
             value = self._spn_power.GetValue()
-            unit_id, unit_symbol = self._base_unit_data[selection]
+            unit_id, unit_symbol = self._base_unit_data[unit_selection]
             self._unit_table[unit_symbol] = value
 
-            constant_id = self._constant_ids[selection]
+            constant_id = self._constant_ids[constant_selection]
             unit_table = [(self._datafile.query(sciplot.database.Query("SELECT UnitID FROM Unit WHERE Symbol = (?);", [unit_symbol], 2))[0][0], self._unit_table[unit_symbol]) for unit_symbol in self._unit_table]
 
             self._datafile.update_units("Constant", constant_id, None, unit_table)
