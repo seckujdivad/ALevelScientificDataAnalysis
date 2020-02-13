@@ -36,23 +36,27 @@ class ConstantsFrame(forms.SubFrame):
         self._spn_value.Bind(wx.EVT_TEXT, self._bind_spn_value_changed)
         self._gbs_main.Add(self._spn_value, wx.GBPosition(1, 0), wx.GBSpan(1, 2), wx.ALL | wx.EXPAND)
 
+        self._entry_name = wx.TextCtrl(self, wx.ID_ANY)
+        self._entry_name.Bind(wx.EVT_TEXT, self._bind_entry_name_changed)
+        self._gbs_main.Add(self._entry_name, wx.GBPosition(2, 0), wx.GBSpan(1, 2), wx.ALL | wx.EXPAND)
+
         self._btn_add_new = wx.Button(self, wx.ID_ANY, "Add New")
         self._btn_add_new.Bind(wx.EVT_BUTTON, self._bind_btn_add_new_clicked)
-        self._gbs_main.Add(self._btn_add_new, wx.GBPosition(2, 0), wx.GBSpan(1, 1), wx.ALL | wx.EXPAND)
+        self._gbs_main.Add(self._btn_add_new, wx.GBPosition(3, 0), wx.GBSpan(1, 1), wx.ALL | wx.EXPAND)
 
         self._btn_remove = wx.Button(self, wx.ID_ANY, "Remove")
         self._btn_remove.Bind(wx.EVT_BUTTON, self._bind_btn_remove_clicked)
-        self._gbs_main.Add(self._btn_remove, wx.GBPosition(2, 1), wx.GBSpan(1, 1), wx.ALL | wx.EXPAND)
+        self._gbs_main.Add(self._btn_remove, wx.GBPosition(3, 1), wx.GBSpan(1, 1), wx.ALL | wx.EXPAND)
 
         self._lb_units = wx.ListBox(self, wx.ID_ANY)
         self._lb_units.Bind(wx.EVT_LISTBOX, self._bind_lb_units_selected)
-        self._gbs_main.Add(self._lb_units, wx.GBPosition(0, 2), wx.GBSpan(2, 1), wx.ALL | wx.EXPAND)
+        self._gbs_main.Add(self._lb_units, wx.GBPosition(0, 2), wx.GBSpan(3, 1), wx.ALL | wx.EXPAND)
 
         self._spn_power = wx.SpinCtrlDouble(self, wx.ID_ANY, min = -9999, max = 9999)
         self._spn_power.SetDigits(10)
         self._spn_power.Bind(wx.EVT_SPINCTRLDOUBLE, self._bind_spn_power_changed)
         self._spn_power.Bind(wx.EVT_TEXT, self._bind_spn_power_changed)
-        self._gbs_main.Add(self._spn_power, wx.GBPosition(2, 2), wx.GBSpan(1, 1), wx.ALL | wx.EXPAND)
+        self._gbs_main.Add(self._spn_power, wx.GBPosition(3, 2), wx.GBSpan(1, 1), wx.ALL | wx.EXPAND)
 
         #set sizer weights
         for i in [0, 1, 2]:
@@ -115,6 +119,9 @@ class ConstantsFrame(forms.SubFrame):
 
     def _bind_spn_power_changed(self, event):
         self.store_power_value()
+        event.Skip()
+    
+    def _bind_entry_name_changed(self, event):
         event.Skip()
 
     #frame methods
