@@ -244,6 +244,8 @@ class GraphFrame(forms.SubFrame):
 
             self._lb_plot_x.SetSelection(self._variable_ids.index(plot_x_id))
             self._lb_plot_y.SetSelection(self._variable_ids.index(plot_y_id))
+
+            self.refresh_plot()
         
         else:
             self._lb_plot_x.SetSelection(-1)
