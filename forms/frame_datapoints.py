@@ -102,6 +102,8 @@ class DataPointsFrame(forms.SubFrame):
             selection = self._dvl_datapoints.GetSelectedRow()
             self._spn_value.SetValue(self._data_points[self._data_point_current][1])
 
+            self._datafile.prune_unused_composite_units()
+
         event.Skip()
 
     #frame methods
