@@ -1,4 +1,5 @@
 import typing
+import math
 
 import sciplot.functions as functions
 import sciplot.database as database
@@ -87,6 +88,8 @@ class Datatable:
                         current_dependency["subtype"] = "gradient"
                     elif split_dep_name[1] in ["INTERCEPT", "Y-INTERCEPT"]:
                         current_dependency["subtype"] = "intercept"
+                    
+                    current_dependency["axis names"] = functions.get_variable_names(dependency)
 
                 else:
                     current_dependency["type"] = "value"
@@ -114,16 +117,104 @@ class Datatable:
         print(*["{}: {}".format(key, dependency_table[key]) for key in dependency_table], sep = '\n')
         
         print("dataset contents:")
-        #get dataset dependencies
-        dataset_table: typing.Dict[str, typing.Union[functions.Value, typing.List[functions.Value]]] = {}
+        #get dataset dependency values
+        dataset_table: typing.Dict[str, typing.List[functions.Value]] = {}
         for dependency_name in dependency_table:
             dependency_data = dependency_table[dependency_name]
             if dependency_data["type"] == "dataset" and dependency_data["subtype"] is None:
-                values = [tup[0] for tup in self._datafile.query(database.Query("SELECT `Value` FROM DataPoint INNER JOIN DataSet ON DataPoint.DataSetID = DataSet.DataSetID INNER JOIN `Variable` ON DataSet.DataSetID = Variable.ID WHERE Symbol = (?) AND Type = 0;", [dependency_data["symbol"]], 1))[0]]
-                print(dependency_data["symbol"], values)
+                values_raw = self._datafile.query(database.Query("SELECT `Value`, DataSet.Uncertainty, DataSet.UncIsPerc, DataSet.UnitCompositeID FROM DataPoint INNER JOIN DataSet ON DataPoint.DataSetID = DataSet.DataSetID INNER JOIN `Variable` ON DataSet.DataSetID = Variable.ID WHERE Symbol = (?) AND Type = 0;", [dependency_data["symbol"]], 1))[0]
+                
+                values = []
+                for value, unc, uncisperc, unit_id in values_raw:
+                    value_obj = functions.Value(value, unc, bool(uncisperc))
+                    value_obj.units = self._datafile.get_unit_by_id(unit_id)[1]
 
-            elif dependency_data["type"] == "graphical":
-                pass
+                    values.append(value_obj)
+                
+                print(dependency_data["symbol"], values)
+        
+                dataset_table[dependency_name] = values
+        
+        #process averages, maxes, mins
+        values_to_evaluate = []
+        for dependency_name in dependency_table:
+            dependency_data = dependency_table[dependency_name]
+            if dependency_data["type"] == "value":
+                values_to_evaluate.append(dependency_data)
+
+        values_table = {}
+        while len(values_to_evaluate) != 0:
+            for dependency_name in dependency_table:
+                dependency_data = dependency_table[dependency_name]
+                if dependency_data in values_to_evaluate:
+                    if dependency_data["type"] == "value":
+                        values = []
+                        if dependency_data["subtype"] is None: #set of values
+                            values = dataset_table[dependency_name]
+
+                        else: #function
+                            ready_for_evaluation = True
+                            func_dependencies = functions.evaluate_dependencies(dependency_data["symbol"], function_table)
+
+                            #Notes on use of break in this loop:
+                            #Using a break in this situation is justified as it improves readability and maintains performance in what is an o(n^2) dependency check
+                            #The way of achieving the same functionality (breaking out of an iteration) would be achieved with a while loop and a counter. This would
+                            #actually decrease readability and require me to add extra boilerplate code for getting the list of dictionary keys, managing the counter
+                            #etc. In fact, breaks aren't dissimilar to other syntax like return and raise. Because of this, I have decided to use it in this situation
+                            #instead of other, less readable constructs that are a part of structured programming.
+
+                            function_inputs = {}
+                            function_input_table = {}
+                            dataset_length = -1 #datasets must all be the same length to be properly evaluated
+                            for func_dependency_symbol, func_dependency in func_dependencies:
+                                if func_dependency in values_to_evaluate:
+                                    break #a dependency is yet to be completed, stop compiling dependencies
+
+                                else:
+                                    if func_dependency in constants_table:
+                                        function_inputs[func_dependency] = constants_table[func_dependency]
+                                        function_input_table[func_dependency] = constants_table[func_dependency]
+
+                                    elif func_dependency in values_table:
+                                        function_inputs[func_dependency] = values_table[func_dependency]
+                                        function_input_table[func_dependency] = values_table[func_dependency]
+
+                                    elif func_dependency in dataset_table:
+                                        function_inputs[func_dependency] = dataset_table[func_dependency]
+
+                                        if dataset_length == -1:
+                                            dataset_length = len(dataset_table[func_dependency])
+                                        elif len(dataset_table[func_dependency]) != dataset_length:
+                                            raise ValueError("Dataset '{}' length ({}) differs from length of other datasets ({}), in function '{}' evaluation".format(func_dependency, len(dataset_table[func_dependency]), dataset_length, dependency_name))
+
+                            else: #break not triggered, function can be evaluated using the function inputs
+                                for i in range(max(dataset_length, 1)):
+                                    for key in function_inputs:
+                                        if type(function_inputs[key]) == list:
+                                            function_input_table[key] = function_inputs[key][i]
+                                    
+                                    values.append(functions.evaluate_tree(dependency_data["symbol"], function_table, function_input_table))
+                        
+                        if len(values) != 0:
+                            if dependency_data["processing"] == "max":
+                                new_value = functions.Value(max([value.value for value in values]), values[0].absolute_uncertainty, False, values[0].units)
+                                values_table[dependency_data["symbol"]] = new_value
+                            elif dependency_data["processing"] == "min":
+                                new_value = functions.Value(min([value.value for value in values]), values[0].absolute_uncertainty, False, values[0].units)
+                                values_table[dependency_data["symbol"]] = new_value
+                            elif dependency_data["processing"] == "mean":
+                                new_value = functions.Value(sum([value.value for value in values]) / len(values), values[0].percentage_uncertainty / math.sqrt(len(values)), True, values[0].units)
+                                values_table[dependency_data["symbol"]] = new_value
+                            else:
+                                raise ValueError("Invalid dataset processing step '{}' on dependency '{}'".format(dependency_data["processing"], dependency_data))
+
+                            values_to_evaluate.remove(dependency_data)
+        
+        print(values_table)
+        print(values_table['area'].value)
+
+        #check column lengths
+        #evaluate all columns
 
     def as_rows(self):
         if len(self._value_table) > 0: #transpose row-column layout
