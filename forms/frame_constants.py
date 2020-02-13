@@ -90,8 +90,9 @@ class ConstantsFrame(forms.SubFrame):
             self.store_power_value(old = True)
 
             #get new value
-            value = self._datafile.query(sciplot.database.Query("SELECT `Value` FROM Constant WHERE ConstantID = (?);", [self._constant_ids[selection]], 2))[0][0]
+            value, symbol = self._datafile.query(sciplot.database.Query("SELECT `Value`, Symbol FROM Constant WHERE ConstantID = (?);", [self._constant_ids[selection]], 2))[0]
             self._spn_value.SetValue(value)
+            self._entry_name.SetValue(symbol)
 
             #load units
             unit_powers_raw = self._datafile.query(sciplot.database.Query('SELECT Unit.Symbol, UnitCompositeDetails.Power FROM Unit INNER JOIN UnitCompositeDetails ON Unit.UnitID = UnitCompositeDetails.UnitID WHERE UnitCompositeDetails.UnitCompositeID = (?);', [self._unit_ids[selection]], 1))[0]
