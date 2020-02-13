@@ -27,15 +27,16 @@ class ConstantsFrame(forms.SubFrame):
 
         self._spn_value = wx.SpinCtrlDouble(self, wx.ID_ANY)
         self._spn_value.SetDigits(10) #maximum digits in the spinbox. I would set it higher, but it is capped at 20 and at 20 digits, double imprecision is a factor
-        self._lb_constants.Bind(wx.EVT_SPINCTRLDOUBLE, self._bind_spn_value_changed)
+        self._spn_value.Bind(wx.EVT_SPINCTRLDOUBLE, self._bind_spn_value_changed)
+        self._spn_value.Bind(wx.EVT_TEXT, self._bind_spn_value_changed)
         self._gbs_main.Add(self._spn_value, wx.GBPosition(1, 0), wx.GBSpan(1, 2), wx.ALL | wx.EXPAND)
 
         self._btn_add_new = wx.Button(self, wx.ID_ANY, "Add New")
-        self._lb_constants.Bind(wx.EVT_BUTTON, self._bind_btn_add_new_clicked)
+        self._btn_add_new.Bind(wx.EVT_BUTTON, self._bind_btn_add_new_clicked)
         self._gbs_main.Add(self._btn_add_new, wx.GBPosition(2, 0), wx.GBSpan(1, 1), wx.ALL | wx.EXPAND)
 
         self._btn_remove = wx.Button(self, wx.ID_ANY, "Remove")
-        self._lb_constants.Bind(wx.EVT_BUTTON, self._bind_btn_remove_clicked)
+        self._btn_remove.Bind(wx.EVT_BUTTON, self._bind_btn_remove_clicked)
         self._gbs_main.Add(self._btn_remove, wx.GBPosition(2, 1), wx.GBSpan(1, 1), wx.ALL | wx.EXPAND)
 
         #set sizer weights
