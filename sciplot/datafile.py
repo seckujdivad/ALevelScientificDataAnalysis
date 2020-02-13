@@ -131,6 +131,11 @@ class DataFile(Database):
 
         unit_composite_id = self.query(Query("SELECT UnitCompositeID FROM {0} WHERE {0}ID = (?);".format(table_name), [table_id], 2))[0][0]
 
+        #remove 0 powers
+        for tup in unit_table:
+            if tup[1] == 0:
+                unit_table.remove(tup)
+
         units_changed = False
         if self.query(Query("SELECT Symbol FROM UnitComposite WHERE UnitCompositeID = (?);", [unit_composite_id], 2))[0][0] != unit_name:
             units_changed = True
