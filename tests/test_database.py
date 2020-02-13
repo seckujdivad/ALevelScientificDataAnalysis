@@ -214,7 +214,7 @@ class TestDataFile(unittest.TestCase):
     
     def test_list_plots(self):
         with self.connect_datafile() as df:
-            self.assertEqual(df.list_plots(), [1])
+            self.assertEqual(df.list_plots(), [1, 2])
     
     def test_create_plot(self):
         with self.connect_datafile() as df:
