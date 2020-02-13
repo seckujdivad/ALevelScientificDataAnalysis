@@ -125,6 +125,41 @@ class DataFile(Database):
             queries.append(Query("INSERT INTO UnitCompositeDetails (`UnitCompositeID`, `UnitID`, `Power`) VALUES ((?), (?), (?))", [primary_key, unit_id, power], 0))
         self.query(queries)
     
+    def update_units(self, table_name: str, table_id: int, unit_name: str, unit_table: typing.List[typing.Tuple[int, float]]):
+        if table_name not in ["DataSet", "Constant"]: #sanitise input
+            raise ValueError('Invalid table: {}'.format(table_name))
+
+        unit_composite_id = self.query(Query("SELECT UnitCompositeID FROM {0} WHERE {0}ID = (?);".format(table_name), [table_id], 2))[0][0]
+
+        units_changed = False
+        if self.query(Query("SELECT Symbol FROM UnitComposite WHERE UnitCompositeID = (?);", [unit_composite_id], 2))[0][0] != unit_name:
+            units_changed = True
+        if set(self.get_unit_by_id(unit_composite_id)[1]) != set(unit_table):
+            units_changed = True
+        
+        if units_changed: #merge/split/edit current composite units
+            references = [tup[0] for tup in self.query(Query("SELECT {0}ID FROM {0} WHERE UnitCompositeID = (?);".format(table_name), [unit_composite_id], 1))[0]]
+
+            if len(references) > 1:
+                new_composite_id = self.create_unit(unit_name, unit_table)
+                self.query(Query("UPDATE {0} SET UnitCompositeID = (?) WHERE {0}ID = (?);".format(table_name), [new_composite_id, table_id], 0))
+
+            else:
+                shared_units = self.get_unit_id_by_table(unit_table)
+
+                potential_merges = []
+                for unit_id in shared_units:
+                    if self.get_unit_by_id(unit_id)[0] == unit_name and unit_id != unit_composite_id:
+                        potential_merges.append(unit_id)
+                
+                if len(potential_merges) == 0:
+                    self.rename_unit(unit_composite_id, unit_name)
+                    self.update_unit(unit_composite_id, unit_table)
+                else:
+                    self.query(Query("UPDATE {0} SET UnitCompositeID = (?) WHERE {0}ID = (?);".format(table_name), [potential_merges[0], table_id], 0))
+                    self.query(Query("DELETE FROM UnitComposite WHERE UnitCompositeID = (?);", [unit_composite_id], 0))
+                    self.query(Query("DELETE FROM UnitCompositeDetails WHERE UnitCompositeID = (?);", [unit_composite_id], 0))
+    
     #data sets
     def list_data_sets(self):
         return [tup[0] for tup in self.query(Query('SELECT DataSetID FROM DataSet', [], 1))[0]]
