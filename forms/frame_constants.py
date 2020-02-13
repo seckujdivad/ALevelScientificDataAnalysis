@@ -131,6 +131,7 @@ class ConstantsFrame(forms.SubFrame):
         selection = self._lb_constants.GetSelection()
         if selection != -1:
             self._datafile.query(sciplot.database.Query("DELETE FROM Constant WHERE ConstantID = (?);", [self._constant_ids[selection]], 0))
+            self._datafile.prune_unused_composite_units()
             self.refresh_constants_list()
 
         event.Skip()

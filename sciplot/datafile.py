@@ -165,6 +165,14 @@ class DataFile(Database):
                     self.query(Query("DELETE FROM UnitComposite WHERE UnitCompositeID = (?);", [unit_composite_id], 0))
                     self.query(Query("DELETE FROM UnitCompositeDetails WHERE UnitCompositeID = (?);", [unit_composite_id], 0))
     
+    def prune_unused_composite_units(self):
+        for composite_unit_id in self.query(Query("SELECT UnitCompositeID FROM UnitComposite", [], 1))[0]:
+            composite_unit_id = composite_unit_id[0]
+
+            if len(self.query(Query("SELECT DataSetID FROM DataSet WHERE UnitCompositeID = (?)", [composite_unit_id], 1))[0]) == 0 and len(self.query(Query("SELECT ConstantID FROM Constant WHERE UnitCompositeID = (?)", [composite_unit_id], 1))[0]) == 0:
+                self.query(Query("DELETE FROM UnitComposite WHERE UnitCompositeID = (?);", [composite_unit_id], 1))
+                self.query(Query("DELETE FROM UnitCompositeDetails WHERE UnitCompositeID = (?);", [composite_unit_id], 1))
+    
     #data sets
     def list_data_sets(self):
         return [tup[0] for tup in self.query(Query('SELECT DataSetID FROM DataSet', [], 1))[0]]
