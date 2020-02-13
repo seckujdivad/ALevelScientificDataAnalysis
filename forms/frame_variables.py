@@ -190,42 +190,13 @@ class VariablesFrame(forms.SubFrame):
                 self._datafile.query(sciplot.database.Query("UPDATE Variable SET Symbol = (?) WHERE ID = (?) AND Type = 0;", [data['symbol'], old_variable[2]], 0))
                 self._datafile.query(sciplot.database.Query("UPDATE DataSet SET Uncertainty = (?), UncIsPerc = (?) WHERE DataSetID = (?);", [data['unc'], data['uncisperc'], old_variable[2]], 0))
 
-                unit_composite_id = self._datafile.query(sciplot.database.Query("SELECT UnitCompositeID FROM DataSet WHERE DataSetID = (?);", [old_variable[2]], 2))[0][0]
-
                 units_table = []
                 for unit_string in data:
                     if unit_string.startswith('units.'):
                         if data[unit_string] != 0:
                             units_table.append((self._datafile.query(sciplot.database.Query("SELECT UnitID FROM Unit WHERE Symbol = (?);", [unit_string[6:]], 2))[0][0], float(data[unit_string])))
 
-                units_changed = False
-                if self._datafile.query(sciplot.database.Query("SELECT Symbol FROM UnitComposite WHERE UnitCompositeID = (?);", [unit_composite_id], 2))[0][0] != data['units']:
-                    units_changed = True
-                if set(self._datafile.get_unit_by_id(unit_composite_id)[1]) != set(units_table):
-                    units_changed = True
-
-                if units_changed: #merge/split/edit current composite units
-                    references = [tup[0] for tup in self._datafile.query(sciplot.database.Query("SELECT DataSetID FROM DataSet WHERE UnitCompositeID = (?);", [unit_composite_id], 1))[0]]
-
-                    if len(references) > 1:
-                        new_composite_id = self._datafile.create_unit(data['units'], units_table)
-                        self._datafile.query(sciplot.database.Query("UPDATE DataSet SET UnitCompositeID = (?) WHERE DataSetID = (?);", [new_composite_id, old_variable[2]], 0))
-
-                    else:
-                        shared_units = self._datafile.get_unit_id_by_table(units_table)
-
-                        potential_merges = []
-                        for unit_id in shared_units:
-                            if self._datafile.get_unit_by_id(unit_id)[0] == data['units'] and unit_id != unit_composite_id:
-                                potential_merges.append(unit_id)
-                        
-                        if len(potential_merges) == 0:
-                            self._datafile.rename_unit(unit_composite_id, data['units'])
-                            self._datafile.update_unit(unit_composite_id, units_table)
-                        else:
-                            self._datafile.query(sciplot.database.Query("UPDATE DataSet SET UnitCompositeID = (?) WHERE DataSetID = (?);", [potential_merges[0], old_variable[2]], 0))
-                            self._datafile.query(sciplot.database.Query("DELETE FROM UnitComposite WHERE UnitCompositeID = (?);", [unit_composite_id], 0))
-                            self._datafile.query(sciplot.database.Query("DELETE FROM UnitCompositeDetails WHERE UnitCompositeID = (?);", [unit_composite_id], 0))
+                self._datafile.update_units("DataSet", old_variable[2], data['units'], units_table)
 
             else:
                 data = self._prop_formula.GetPropertyValues(inc_attributes = False)
