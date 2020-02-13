@@ -209,6 +209,9 @@ class Datatable:
                                 raise ValueError("Invalid dataset processing step '{}' on dependency '{}'".format(dependency_data["processing"], dependency_data))
 
                             values_to_evaluate.remove(dependency_data)
+                    
+                    elif dependency_data["type"] == "graphical":
+                        raise NotImplementedError("Graphical attributes haven't been implemented in this part of the software yet")
         
         print(values_table)
         print(values_table['area'].value)
