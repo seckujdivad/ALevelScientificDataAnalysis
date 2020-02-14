@@ -1049,6 +1049,9 @@ def _eval_deps(deps: typing.List[typing.Tuple[str, str]], func_deps: typing.List
 def get_variable_names(full_name):
     full_name_split = full_name.split('.')
 
+    if len(full_name_split) == 1:
+        return full_name
+
     if full_name_split[-1] == "MEAN":
         return full_name[:-5]
     
