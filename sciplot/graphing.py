@@ -1,7 +1,5 @@
 import math
 
-import sciplot.datatable
-
 
 class FitLines:
     """
@@ -10,7 +8,7 @@ class FitLines:
     Args:
         datatable (Datatable): a datatable with exactly two columns that has already had .load called on it
     """
-    def __init__(self, datatable: sciplot.datatable.Datatable):
+    def __init__(self, datatable):
         self._datatable = datatable
 
         if len(self._datatable.as_columns()) != 2:

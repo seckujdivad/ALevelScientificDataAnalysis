@@ -4,6 +4,7 @@ import math
 import sciplot.functions as functions
 import sciplot.database as database
 import sciplot.datafile as datafile
+import sciplot.graphing as graphing
 
 
 class Datatable:
@@ -69,50 +70,50 @@ class Datatable:
             split_dep_name = dependency.split('.')
 
             #interpret name
-            if symbol == dependency: #constant, formula or dataset
-                if symbol in function_table: #formula
-                    current_dependency["type"] = "formula"
-                
-                elif dependency in constants_table: #constant
-                    current_dependency["type"] = "constant"
+            if symbol in function_table: #formula
+                current_dependency["type"] = "formula"
+            
+            elif dependency in constants_table: #constant
+                current_dependency["type"] = "constant"
 
-                else: #dataset
-                    current_dependency["type"] = "dataset"
-                    current_dependency["access mode"] = "same row"
-                    current_dependency["processing"] = None
+            elif len(split_dep_name) > 2: #graph attribute
+                current_dependency["type"] = "graphical"
+
+                if split_dep_name[0] in ["BEST", "WORST", "WORSTMIN", "WORSTMAX"]:
+                    current_dependency["fit line"] = split_dep_name[0].lower()
+
+                if split_dep_name[1] in ["GRAD", "GRADIENT", "SLOPE"]:
+                    current_dependency["subtype"] = "gradient"
+                elif split_dep_name[1] in ["INTERCEPT", "Y-INTERCEPT"]:
+                    current_dependency["subtype"] = "intercept"
+                
+                current_dependency["axis names"] = functions.get_variable_names(dependency, split_graphs = True)
+
+            elif split_dep_name[-1] in ["MEAN", "MAX", "MIN"]:
+                current_dependency["type"] = "value"
+
+                if split_dep_name[-1] == "MEAN":
+                    current_dependency["access mode"] = "single"
+                    current_dependency["processing"] = "mean"
+                
+                elif split_dep_name[-1] == "MAX":
+                    current_dependency["access mode"] = "single"
+                    current_dependency["processing"] = "max"
+                
+                elif split_dep_name[-1] == "MIN":
+                    current_dependency["access mode"] = "single"
+                    current_dependency["processing"] = "min"
+            
+                if current_dependency["symbol"] in function_table:
+                    current_dependency["subtype"] = "processed formula"
+                else:
                     current_dependency["subtype"] = None
             
-            else: #requires processing
-                if len(split_dep_name) > 2: #graph attribute
-                    if split_dep_name[0] in ["BEST", "WORST", "WORSTMIN", "WORSTMAX"]:
-                        current_dependency["fit line"] = split_dep_name[0].lower()
-
-                    if split_dep_name[1] in ["GRAD", "GRADIENT", "SLOPE"]:
-                        current_dependency["subtype"] = "gradient"
-                    elif split_dep_name[1] in ["INTERCEPT", "Y-INTERCEPT"]:
-                        current_dependency["subtype"] = "intercept"
-                    
-                    current_dependency["axis names"] = functions.get_variable_names(dependency)
-
-                else:
-                    current_dependency["type"] = "value"
-
-                    if split_dep_name[-1] == "MEAN":
-                        current_dependency["access mode"] = "single"
-                        current_dependency["processing"] = "mean"
-                    
-                    elif split_dep_name[-1] == "MAX":
-                        current_dependency["access mode"] = "single"
-                        current_dependency["processing"] = "max"
-                    
-                    elif split_dep_name[-1] == "MIN":
-                        current_dependency["access mode"] = "single"
-                        current_dependency["processing"] = "min"
-                
-                    if current_dependency["symbol"] in function_table:
-                        current_dependency["subtype"] = "processed formula"
-                    else:
-                        current_dependency["subtype"] = None
+            else: #dataset
+                current_dependency["type"] = "dataset"
+                current_dependency["access mode"] = "same row"
+                current_dependency["processing"] = None
+                current_dependency["subtype"] = None
 
             dependency_table[dependency] = current_dependency
         
@@ -136,13 +137,14 @@ class Datatable:
         values_to_evaluate = []
         for dependency_name in dependency_table:
             dependency_data = dependency_table[dependency_name]
-            if dependency_data["type"] == "value":
+            if dependency_data["type"] in ["value", "graphical"]:
                 values_to_evaluate.append(dependency_data)
 
         values_table = {}
         while len(values_to_evaluate) != 0:
             for dependency_name in dependency_table:
                 dependency_data = dependency_table[dependency_name]
+
                 if dependency_data in values_to_evaluate:
                     if dependency_data["type"] == "value":
                         values = []
@@ -150,7 +152,6 @@ class Datatable:
                             values = dataset_table[dependency_name]
 
                         else: #function
-                            ready_for_evaluation = True
                             func_dependencies = functions.evaluate_dependencies(dependency_data["symbol"], function_table)
 
                             #Notes on use of break in this loop:
@@ -208,7 +209,73 @@ class Datatable:
                             values_to_evaluate.remove(dependency_data)
                     
                     elif dependency_data["type"] == "graphical":
-                        raise NotImplementedError("Graphical attributes haven't been implemented in this part of the software yet")
+                        data_table = Datatable(self._datafile)
+                        variable_ids = [self._datafile.query(database.Query("SELECT VariableID FROM Variable WHERE Symbol = (?)", [symbol], 2))[0][0] for symbol in current_dependency["axis names"]]
+                        variable_ids.reverse() #change from yx to xy
+                        data_table.set_variables(variable_ids)
+                        data_table.load(constants_table)
+
+                        if len(data_table.as_columns()) != 2:
+                            raise ValueError('{} doesn\'t have exactly 2 columns'.format(dependency_name))
+                            
+                        if len(data_table.as_rows()) == 0:
+                            raise ValueError('{} is empty'.format(dependency_name))
+
+                        fit_lines = graphing.FitLines(data_table)
+
+                        value = None
+                        
+                        if dependency_data["fit line"] == "best":
+                            fit_lines.calculate_best_fit()
+                            if current_dependency["subtype"] == "gradient":
+                                value = fit_lines.fit_best_gradient
+                            else:
+                                value = fit_lines.fit_best_intercept
+                            
+                        else:
+                            fit_lines.calculate_worst_fits()
+
+                            if current_dependency["subtype"] == "gradient":
+                                if current_dependency["fit line"] == "worst":
+                                    value = fit_lines.fit_worst_gradient
+                                elif current_dependency["fit line"] == "worstmin":
+                                    value = fit_lines.fit_worst_min_gradient
+                                elif current_dependency["fit line"] == "worstmax":
+                                    value = fit_lines.fit_worst_max_gradient
+                                
+                            else:
+                                if current_dependency["fit line"] == "worst":
+                                    value = fit_lines.fit_worst_intercept
+                                elif current_dependency["fit line"] == "worstmin":
+                                    value = fit_lines.fit_worst_min_intercept
+                                elif current_dependency["fit line"] == "worstmax":
+                                    value = fit_lines.fit_worst_max_intercept
+                        
+                        values_table[dependency_name] = functions.Value(value)
+
+                        if current_dependency["subtype"] == "gradient":
+                            units_x = data_table.as_rows()[0][0].units
+                            units_y = data_table.as_rows()[0][1].units
+                            unit_dict_x = {key: 0 - value for key, value in units_x}
+                            unit_dict_y = {key: value for key, value in units_y}
+
+                            result = {}
+                            for unit_dict in [unit_dict_x, unit_dict_y]:
+                                for key in unit_dict:
+                                    if key in result:
+                                        result[key] += unit_dict[key]
+                                    else:
+                                        result[key] = unit_dict[key]
+
+                            values_table[dependency_name].units = [(key, result[key]) for key in result]
+
+                        else:
+                            values_table[dependency_name].units = data_table.as_rows()[0][1].units
+                        
+                        del fit_lines
+                        del data_table
+
+                        values_to_evaluate.remove(dependency_data)
 
         #evaluate all columns
         for variable_id, variable_symbol, variable_subid, variable_type in variable_data:
