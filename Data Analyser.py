@@ -7,6 +7,7 @@ import ctypes
 import sys
 import shutil
 import os
+import ntpath
 
 import forms
 import sciplot.database
@@ -172,6 +173,8 @@ class RootFrame(wx.Frame):
 
                     for frame in self._subframes:
                         self._subframes[frame].hook_file_opened()
+                    
+                    self._set_title_file(ntpath.basename(path))
 
         event.Skip()
     
@@ -204,6 +207,9 @@ class RootFrame(wx.Frame):
         
         else:
             wx.MessageBox("Currently open file is not temporary", "File not temporary", wx.ICON_ERROR | wx.OK)
+    
+    def _set_title_file(self, name):
+        self.SetTitle('Data Analyser: {}'.format(name))
 
 
 class App(wx.App):
