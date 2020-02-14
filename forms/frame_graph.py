@@ -258,9 +258,9 @@ class GraphFrame(forms.SubFrame):
         selection = self._lb_plots.GetSelection()
         if selection != -1:
             plot_id = self._plot_ids[selection]
-            x_axis_id, y_axis_id, x_axis_title, y_axis_title = self._datafile.query(sciplot.database.Query("SELECT VariableXID, VariableYID, VariableXTitle, VariableYTitle FROM Plot WHERE PlotID = (?)", [plot_id], 2))[0]
+            x_axis_id, y_axis_id, x_axis_title, y_axis_title, show_regression = self._datafile.query(sciplot.database.Query("SELECT VariableXID, VariableYID, VariableXTitle, VariableYTitle, ShowRegression FROM Plot WHERE PlotID = (?)", [plot_id], 2))[0]
 
-            lines, x_value, y_value = self.get_plot_lines(x_axis_id, y_axis_id)
+            lines, x_value, y_value = self.get_plot_lines(x_axis_id, y_axis_id, show_regression)
 
             x_unit_string = self._datafile.get_unit_string(x_value.units)
             if x_unit_string != '':
@@ -274,7 +274,7 @@ class GraphFrame(forms.SubFrame):
             gc = wx.lib.plot.PlotGraphics(lines, 'Plot of {} against {}'.format(y_axis_title, x_axis_title), x_axis_title, y_axis_title)
             self._plot_main.Draw(gc)
 
-    def get_plot_lines(self, x_axis_id, y_axis_id):
+    def get_plot_lines(self, x_axis_id, y_axis_id, show_regression = True):
         lines = []
 
         #get constants
@@ -305,7 +305,7 @@ class GraphFrame(forms.SubFrame):
         
         lines.append(wx.lib.plot.PolyMarker(data, colour = 'black', width = 1, marker = 'cross', size = 1))
 
-        if len(datatable.as_rows()) > 0:
+        if len(datatable.as_rows()) > 0 and show_regression:
             fit_lines = sciplot.graphing.FitLines(datatable)
             fit_lines.calculate_all()
 
@@ -325,6 +325,5 @@ class GraphFrame(forms.SubFrame):
                                [max_x, fit_lines.fit_best_intercept + (max_x * fit_lines.fit_best_gradient)]]
 
             lines.append(wx.lib.plot.PolyLine(best_fit_points, colour = 'green', width = 1))
-
 
         return lines, x_value, y_value
