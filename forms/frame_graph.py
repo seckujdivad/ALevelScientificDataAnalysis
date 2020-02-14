@@ -305,12 +305,26 @@ class GraphFrame(forms.SubFrame):
         
         lines.append(wx.lib.plot.PolyMarker(data, colour = 'black', width = 1, marker = 'cross', size = 1))
 
-        fit_lines = sciplot.graphing.FitLines(datatable)
-        fit_lines.calculate_all()
+        if len(datatable.as_rows()) > 0:
+            fit_lines = sciplot.graphing.FitLines(datatable)
+            fit_lines.calculate_all()
 
-        print(fit_lines.fit_best_gradient, fit_lines.fit_best_intercept)
+            #best fit
+            print(fit_lines.fit_best_gradient, fit_lines.fit_best_intercept)
 
-        lines.append(wx.lib.plot.PolyLine([[0, fit_lines.fit_best_intercept], [0.1, fit_lines.fit_best_gradient * 0.1 + fit_lines.fit_best_intercept]], colour = 'green', width = 1))
+            max_x = datatable.as_columns()[0][0].value + datatable.as_columns()[0][0].absolute_uncertainty
+            min_x = datatable.as_columns()[0][0].value - datatable.as_columns()[0][0].absolute_uncertainty
+            for value in datatable.as_columns()[0]:
+                if value.value + value.absolute_uncertainty > max_x:
+                    max_x = value.value + value.absolute_uncertainty
+
+                if value.value - value.absolute_uncertainty < min_x:
+                    min_x = value.value - value.absolute_uncertainty
+            
+            best_fit_points = [[min_x, fit_lines.fit_best_intercept + (min_x * fit_lines.fit_best_gradient)],
+                               [max_x, fit_lines.fit_best_intercept + (max_x * fit_lines.fit_best_gradient)]]
+
+            lines.append(wx.lib.plot.PolyLine(best_fit_points, colour = 'green', width = 1))
 
 
         return lines, x_value, y_value
