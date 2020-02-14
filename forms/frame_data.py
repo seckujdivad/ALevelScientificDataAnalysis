@@ -181,18 +181,10 @@ class DataFrame(forms.SubFrame):
                     new_col_string = variable_symbols[index]
                     value_obj = data_as_rows[0][index]
 
-                    unit_string = ""
-                    for unit_id, unit_power in value_obj.units:
-                        if unit_power != 0:
-                            unit_name = self._datafile.get_base_unit(unit_id)
-
-                            if unit_power == 1:
-                                unit_string += ' {}'.format(unit_name)
-                            else:
-                                unit_string += ' {}^{}'.format(unit_name, unit_power)
+                    unit_string = self._datafile.get_unit_string(value_obj.units)
                     
                     if unit_string != '':
-                        new_col_string += ':' + unit_string
+                        new_col_string += ': ' + unit_string
                         column_obj.SetTitle(new_col_string)
             
             #set column widths

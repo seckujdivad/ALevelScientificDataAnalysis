@@ -314,6 +314,19 @@ WHERE DataSet.DataSetID = (?)'''
 
     def remove_plot(self, plot_id: int):
         self.query(Query('DELETE FROM Plot WHERE PlotID = (?)', [plot_id], 0))
+    
+    def get_unit_string(self, unit_table: typing.List[typing.Tuple[int, float]]):
+        unit_string = ""
+        for unit_id, unit_power in unit_table:
+            if unit_power != 0:
+                unit_name = self.get_base_unit(unit_id)
+
+                if unit_power == 1:
+                    unit_string += ' {}'.format(unit_name)
+                else:
+                    unit_string += ' {}^{}'.format(unit_name, unit_power)
+        
+        return unit_string[1:]
 
 def create_blank_datafile(path):
     shutil.copyfile("resources/template.db", path)
