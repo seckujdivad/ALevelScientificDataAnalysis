@@ -188,9 +188,10 @@ class DataFrame(forms.SubFrame):
                         column_obj.SetTitle(new_col_string)
             
             #set column widths
-            col_width = (self._dvl_data.GetSize()[0] - 30) / len(self._dvl_columns)
-            for col in self._dvl_columns:
-                col.SetWidth(col_width)
+            if len(self._dvl_columns) > 0:
+                col_width = (self._dvl_data.GetSize()[0] - 30) / len(self._dvl_columns)
+                for col in self._dvl_columns:
+                    col.SetWidth(col_width)
     
     def _recreate_dvl_data(self):
         """
