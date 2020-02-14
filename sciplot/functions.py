@@ -1018,28 +1018,24 @@ def _chk_circular(tree: typing.List[str], function_names: typing.List[str], func
     
     return False
 
-def evaluate_dependencies(function_name: str, functions: typing.Dict[str, Function], step_into_processed_sets = True):
+def evaluate_dependencies(function_name: str, functions: typing.Dict[str, Function], step_into_processed_sets = True): #evaluate the dependencies of a given function
     return _eval_deps([], functions[function_name].evaluate_dependencies(), functions, step_into_processed_sets)
 
-def _eval_deps(deps: typing.List[typing.Tuple[str, str]], func_deps: typing.List[str], functions: typing.Dict[str, Function], step_into_processed_sets):
-    for name in func_deps:
-        if step_into_processed_sets:
+def _eval_deps(deps: typing.List[typing.Tuple[str, str]], func_deps: typing.List[str], functions: typing.Dict[str, Function], step_into_processed_sets): #evaluate a list of function dependencies
+    for name in func_deps: #for each dependency of this function
+        if step_into_processed_sets: #process name to get name dependency if required
             symbols = get_variable_names(name)
             if type(symbols) != list:
                 symbols = [symbols]
         else:
             symbols = [name]
         
-        for symbol in symbols:
-            if symbol in functions:
-                new_deps = [(get_variable_names(full_name), full_name) for full_name in functions[symbol].evaluate_dependencies()]
+        for symbol in symbols: #each dependency (normally one, but graphical dependencies have two)
+            if symbol in deps:
+                raise ValueError('Circular reference: {} referred in {}'.format(symbol, deps))
 
-                for dep, full_name in new_deps:
-                    if dep not in deps:
-                        deps.append((dep, full_name))
-                
-                if symbol != name: #processed formula
-                    deps.append((symbol, name))
+            if symbol in functions: #if function exists, process its dependencies
+                _eval_deps(deps, functions[symbol].evaluate_dependencies(), functions, step_into_processed_sets) #[(get_variable_names(full_name), full_name) for full_name in functions[symbol].evaluate_dependencies()]
             
             else:
                 deps.append((symbol, name))
