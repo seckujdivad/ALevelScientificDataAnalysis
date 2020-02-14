@@ -53,7 +53,7 @@ class Datatable:
 
             if variable_symbol not in function_table: #is a dataset
                 dependencies.append((variable_symbol, variable_symbol))
-
+        
         #get formula dependencies
         for variable_id, variable_symbol, variable_subid, variable_type in variable_data:
             if var_type_lookup[variable_type] == "formula":
@@ -121,7 +121,7 @@ class Datatable:
         for dependency_name in dependency_table:
             dependency_data = dependency_table[dependency_name]
             if dependency_data["type"] == "dataset" and dependency_data["subtype"] is None:
-                values_raw = self._datafile.query(database.Query("SELECT `Value`, DataSet.Uncertainty, DataSet.UncIsPerc, DataSet.UnitCompositeID FROM DataPoint INNER JOIN DataSet ON DataPoint.DataSetID = DataSet.DataSetID INNER JOIN `Variable` ON DataSet.DataSetID = Variable.ID WHERE Symbol = (?) AND Type = 0;", [dependency_data["symbol"]], 1))[0]
+                values_raw = self._datafile.query(database.Query("SELECT `Value`, DataSet.Uncertainty, DataSet.UncIsPerc, DataSet.UnitCompositeID FROM DataPoint INNER JOIN DataSet ON DataPoint.DataSetID = DataSet.DataSetID INNER JOIN `Variable` ON DataSet.DataSetID = Variable.ID WHERE Symbol = (?) AND Type = 0 ORDER BY DataPoint.DataPointID ASC;", [dependency_data["symbol"]], 1))[0]
                 
                 values = []
                 for value, unc, uncisperc, unit_id in values_raw:
