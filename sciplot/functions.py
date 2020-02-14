@@ -1043,7 +1043,11 @@ def _eval_deps(deps: typing.List[typing.Tuple[str, str]], func_deps: typing.List
                 raise ValueError('Circular reference: {} referred in {}'.format(symbol, deps))
 
             if symbol in functions: #if function exists, process its dependencies
-                _eval_deps(deps, functions[symbol].evaluate_dependencies(), functions, step_into_processed_sets) #[(get_variable_names(full_name), full_name) for full_name in functions[symbol].evaluate_dependencies()]
+                if symbol == name or step_into_processed_sets:
+                    _eval_deps(deps, functions[symbol].evaluate_dependencies(), functions, step_into_processed_sets)
+
+                if symbol != name:
+                    deps.append((symbol, name))
             
             else:
                 deps.append((symbol, name))

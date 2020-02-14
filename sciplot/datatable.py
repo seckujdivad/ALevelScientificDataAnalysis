@@ -70,7 +70,7 @@ class Datatable:
             split_dep_name = dependency.split('.')
 
             #interpret name
-            if symbol in function_table: #formula
+            if dependency in function_table: #formula
                 current_dependency["type"] = "formula"
             
             elif dependency in constants_table: #constant
