@@ -207,10 +207,11 @@ class Value:
             return self._uncertainty
         else:
             if self.value == 0:
-                if self._uncertainty > 0:
-                    return float("+inf")
-                else:
-                    return float("-inf")
+                return 0
+                #if self._uncertainty > 0:
+                #    return float("+inf")
+                #else:
+                #    return float("-inf")
             else:
                 return self._uncertainty / self.value
     
