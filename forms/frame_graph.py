@@ -5,6 +5,7 @@ import forms
 
 import sciplot.database
 import sciplot.datafile
+import sciplot.graphing
 
 
 class GraphFrame(forms.SubFrame):
@@ -303,5 +304,13 @@ class GraphFrame(forms.SubFrame):
             lines.append(wx.lib.plot.PolyLine([[x_value.value, y_value.value - y_value.absolute_uncertainty], [x_value.value, y_value.value + y_value.absolute_uncertainty]], colour = 'black', width = 1))
         
         lines.append(wx.lib.plot.PolyMarker(data, colour = 'black', width = 1, marker = 'cross', size = 1))
+
+        fit_lines = sciplot.graphing.FitLines(datatable)
+        fit_lines.calculate_all()
+
+        print(fit_lines.fit_best_gradient, fit_lines.fit_best_intercept)
+
+        lines.append(wx.lib.plot.PolyLine([[0, fit_lines.fit_best_intercept], [0.1, fit_lines.fit_best_gradient * 0.1 + fit_lines.fit_best_intercept]], colour = 'green', width = 1))
+
 
         return lines, x_value, y_value
