@@ -5,7 +5,14 @@ import sciplot.functions as functions
 import sciplot.database as database
 import sciplot.datafile as datafile
 
+
 class Datatable:
+    """
+    An object that evaluates multiple variables by ID and creates a table out of them ready for evaluation
+
+    Args:
+        datafile (Datafile): datafile to get variables from
+    """
     def __init__(self, datafile: datafile.DataFile):
         self._datafile = datafile
 
