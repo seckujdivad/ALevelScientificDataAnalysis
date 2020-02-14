@@ -259,7 +259,18 @@ class GraphFrame(forms.SubFrame):
             plot_id = self._plot_ids[selection]
             x_axis_id, y_axis_id, x_axis_title, y_axis_title = self._datafile.query(sciplot.database.Query("SELECT VariableXID, VariableYID, VariableXTitle, VariableYTitle FROM Plot WHERE PlotID = (?)", [plot_id], 2))[0]
 
-            gc = wx.lib.plot.PlotGraphics(self.get_plot_lines(x_axis_id, y_axis_id), 'Plot of {} against {}'.format(y_axis_title, x_axis_title), x_axis_title, y_axis_title)
+            lines, x_value, y_value = self.get_plot_lines(x_axis_id, y_axis_id)
+
+            x_unit_string = self._datafile.get_unit_string(x_value.units)
+            if x_unit_string != '':
+                x_axis_title += ' ({})'.format(x_unit_string)
+            
+            y_unit_string = self._datafile.get_unit_string(y_value.units)
+            if y_unit_string != '':
+                y_axis_title += ' ({})'.format(y_unit_string)
+
+            
+            gc = wx.lib.plot.PlotGraphics(lines, 'Plot of {} against {}'.format(y_axis_title, x_axis_title), x_axis_title, y_axis_title)
             self._plot_main.Draw(gc)
 
     def get_plot_lines(self, x_axis_id, y_axis_id):
@@ -293,4 +304,4 @@ class GraphFrame(forms.SubFrame):
         
         lines.append(wx.lib.plot.PolyMarker(data, colour = 'black', width = 1, marker = 'cross', size = 1))
 
-        return lines
+        return lines, x_value, y_value
