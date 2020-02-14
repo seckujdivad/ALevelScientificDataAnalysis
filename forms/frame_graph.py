@@ -263,6 +263,9 @@ class GraphFrame(forms.SubFrame):
             self._plot_main.Draw(gc)
 
     def get_plot_lines(self, x_axis_id, y_axis_id):
+        lines = []
+
+        #get constants
         constants_table = {}
         for composite_unit_id, constant_symbol, constant_value in self._datafile.query(sciplot.database.Query("SELECT UnitCompositeID, Symbol, Value FROM Constant;", [], 1))[0]:
             value = sciplot.functions.Value(constant_value)
@@ -270,11 +273,24 @@ class GraphFrame(forms.SubFrame):
                 value.units = self._datafile.get_unit_by_id(composite_unit_id)[1]
             constants_table[constant_symbol] = constant_value
 
+        #plot all values
         datatable = sciplot.datatable.Datatable(self._datafile)
         datatable.set_variables([x_axis_id, y_axis_id])
         datatable.load(constants_table)
-        data = [[value.value for value in row] for row in datatable.as_rows()]
-        
-        line = wx.lib.plot.PolyMarker(data, colour = 'black', width = 1, marker = 'cross')
 
-        return [line]
+        data = []
+        for x_value, y_value in datatable.as_rows():
+            #value
+            data_point = [x_value.value, y_value.value]
+            data.append(data_point)
+
+            #error bars
+            #x unc
+            lines.append(wx.lib.plot.PolyLine([[x_value.value - x_value.absolute_uncertainty, y_value.value], [x_value.value + x_value.absolute_uncertainty, y_value.value]], colour = 'black', width = 1))
+
+            #y unc
+            lines.append(wx.lib.plot.PolyLine([[x_value.value, y_value.value - y_value.absolute_uncertainty], [x_value.value, y_value.value + y_value.absolute_uncertainty]], colour = 'black', width = 1))
+        
+        lines.append(wx.lib.plot.PolyMarker(data, colour = 'black', width = 1, marker = 'cross', size = 1))
+
+        return lines
