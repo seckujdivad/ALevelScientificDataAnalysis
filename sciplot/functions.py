@@ -1103,4 +1103,15 @@ def _strip_brackets(string):
     return string
 
 def _remove_all_spaces(string):
-    return string.replace(' ', '')
+    output = ''
+    in_var = False
+    for char in string:
+        if char == '{' and not in_var:
+            in_var = True
+        elif char == '}' and in_var:
+            in_var = False
+        
+        if not (char == ' ' and not in_var):
+            output += char
+    
+    return output
