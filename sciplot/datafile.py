@@ -321,8 +321,9 @@ WHERE DataSet.DataSetID = (?)'''
             if unit_power != 0:
                 unit_name = self.get_base_unit(unit_id)
 
-                if unit_power.is_integer():
-                    unit_power = int(unit_power)
+                if type(unit_power) == float:
+                    if unit_power.is_integer():
+                        unit_power = int(unit_power)
 
                 if unit_power == 1:
                     unit_string += ' {}'.format(unit_name)
