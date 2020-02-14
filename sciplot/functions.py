@@ -1042,7 +1042,7 @@ def _eval_deps(deps: typing.List[typing.Tuple[str, str]], func_deps: typing.List
     
     return deps
 
-def get_variable_names(full_name):
+def get_variable_names(full_name, split_graphs = False):
     full_name_split = full_name.split('.')
 
     if len(full_name_split) == 1:
@@ -1061,17 +1061,19 @@ def get_variable_names(full_name):
         if full_name_split[1] not in ["GRAD", "GRADIENT", "SLOPE", "INTERCEPT", "Y-INTERCEPT"]:
             raise ValueError("Invalid formula dependency - not a graph attribute: {}".format(full_name))
         
-        #reconstruct string
-        dep_name_str = ""
-        for string in full_name_split[2:-1]:
-            dep_name_str += string + '.'
-        dep_name_str += full_name_split[-1]
+        if split_graphs: #reconstruct string
+            dep_name_str = ""
+            for string in full_name_split[2:-1]:
+                dep_name_str += string + '.'
+            dep_name_str += full_name_split[-1]
 
-        graph_names = dep_name_str.split('-')
-        if len(graph_names) == 2:
-            return graph_names
+            graph_names = dep_name_str.split('-')
+            if len(graph_names) == 2:
+                return graph_names
+            else:
+                raise ValueError("Invalid formula dependency - wrong number of variables (must be 2): {}".format(full_name))
         else:
-            raise ValueError("Invalid formula dependency - wrong number of variables (must be 2): {}".format(full_name))
+            return full_name
     
     else:
         return full_name
