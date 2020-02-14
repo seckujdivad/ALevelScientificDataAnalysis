@@ -600,6 +600,10 @@ class Add(IMathematicalFunction):
     def _evaluate_units(self, datatable: t_datatable, evaluated_subfuncs: typing.List[Value]):
         if evaluated_subfuncs[0].units == evaluated_subfuncs[1].units:
             return evaluated_subfuncs[0].units
+        elif evaluated_subfuncs[0].units == []:
+            return evaluated_subfuncs[1].units
+        elif evaluated_subfuncs[1].units == []:
+            return evaluated_subfuncs[0].units
         else:
             return []
 
@@ -616,6 +620,10 @@ class Subtract(IMathematicalFunction):
     
     def _evaluate_units(self, datatable: t_datatable, evaluated_subfuncs: typing.List[Value]):
         if evaluated_subfuncs[0].units == evaluated_subfuncs[1].units:
+            return evaluated_subfuncs[0].units
+        elif evaluated_subfuncs[0].units == []:
+            return evaluated_subfuncs[1].units
+        elif evaluated_subfuncs[1].units == []:
             return evaluated_subfuncs[0].units
         else:
             return []
