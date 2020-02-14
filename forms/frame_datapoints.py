@@ -45,6 +45,7 @@ class DataPointsFrame(forms.SubFrame):
 
         self._spn_value = wx.SpinCtrlDouble(self, wx.ID_ANY, min = -9999, max = 9999)
         self._spn_value.Bind(wx.EVT_SPINCTRLDOUBLE, self._bind_spn_value_updated)
+        self._spn_value.Bind(wx.EVT_TEXT, self._bind_spn_value_updated)
         self._gbs_main.Add(self._spn_value, wx.GBPosition(1, 0), wx.GBSpan(1, 2), wx.ALL | wx.EXPAND)
 
         #set sizer weights
