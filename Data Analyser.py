@@ -60,7 +60,7 @@ class RootFrame(wx.Frame):
         self._mb_cats = {}
         self._mb_subitems = {}
         self._mb_cats_internalonly = {}
-        for name in ['File']:
+        for name in ['File', 'Help']:
             self._mb_cats[name] = wx.Menu()
             self._mb_main.Append(self._mb_cats[name], name)
             self._mb_subitems[name] = []
@@ -68,7 +68,7 @@ class RootFrame(wx.Frame):
         self.SetMenuBar(self._mb_main)
 
         #add internal menu bar items
-        for cat, title, func in [('File', 'Open', self._choose_db), ('File', 'Save', self._commit_db), ('File', 'Save Temporary File', self._save_temp)]:
+        for cat, title, func in [('File', 'Open', self._choose_db), ('File', 'Save', self._commit_db), ('File', 'Save Temporary File', self._save_temp), ('Help', 'Quickstart', self._help_quickstart)]:
             menu_item = self._mb_cats[cat].Append(wx.ID_ANY, title)
             self.Bind(wx.EVT_MENU, func, menu_item)
             self._mb_subitems[cat].append(menu_item)
@@ -210,6 +210,14 @@ class RootFrame(wx.Frame):
     
     def _set_title_file(self, name):
         self.SetTitle('Data Analyser: {}'.format(name))
+    
+    def _help_quickstart(self, event): #show short explanation string
+        wx.MessageBox("""Wondering where to start?
+Try opening an example in user/examples to get a sense for how data can be processed.
+You can start using this program straight away, but make sure to save before closing.
+You will then be asked for a save location. Also, click on the "Variables" help to
+read about the variable system.""", "Quickstart guide", style = wx.ICON_NONE)
+        event.Skip()
 
 
 class App(wx.App):

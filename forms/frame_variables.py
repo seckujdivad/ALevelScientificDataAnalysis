@@ -92,6 +92,9 @@ class VariablesFrame(forms.SubFrame):
     
     def hook_frame_selected(self):
         self._centre_dividers()
+
+    def get_menu_items(self):
+        return [['Help', [["Variables", self._bind_toolbar_showhelp]]]]
     
     #ui binds
     def _bind_btn_new_formula_clicked(self, event):
@@ -136,6 +139,62 @@ class VariablesFrame(forms.SubFrame):
             self._datafile.query(sciplot.database.Query("UPDATE Variable SET Symbol = (?) WHERE VariableID = (?);", [prop.GetValue(), self._variable_data[selection][3]], 0))
 
             self.refresh_variable_list()
+    
+    def _bind_toolbar_showhelp(self, event):
+        wx.MessageBox("""The variables system is a very flexible data manipulation tool.
+There are two types of variables - data sets and functions. They can
+both be created from the Variables frame.
+
+Data sets:
+Data sets contain a finite number of data points, as well as having other data
+associated with them like units and uncertainty. Their attributes (units etc)
+can be changed from the Variables frame and values can be added or removed in
+the data points frame.
+
+Functions:
+Functions are mathematical expressions. They can take data sets or other
+functions by name as inputs and perform calculations. They respect BIDMAS (order
+of operations) and calculate the uncertainty and resulting units of any
+calculation based on the inputs.
+
+Function inputs:
+Functions take inputs in {curly brackets}. There are five types of input - data
+sets, other functions, constants, graphical operations and statistical operations.
+
+    Constants:
+    Constants are a single value set in the Constants frame.
+
+    Graphical operations:
+    Two other variables are graphed and data is gained from their fit lines. There
+    are four types of fit (BEST, WORST, WORSTMIN and WORSTMAX) and two line attributes
+    (GRADIENT and INTERCEPT). The y- and x-variables must have the same length (see
+    below).
+
+    They are written as {type}.{attribute}.{y}-{x}
+    e.g. 0-{BEST.GRADIENT.Voltage-Current}
+
+    Statistical operations:
+    There are three statistical operations (MEAN, MAX and MIN). They are written as
+    {variable}.{operation}.
+    e.g. {pi}*({r.MEAN}^2)
+
+    Statistical and graphical operations can't contain each other or themselves
+    directly, but they can contain a variable that depends on each other or
+    themselves.
+
+Function input lengths:
+All function inputs must either have 1 or the same length. If you imagine a table of
+inputs, it wouldn't make sense for one column to be longer than all the others. The
+length of a data set is always the number of points in it and the length of a function
+is the length of its inputs. Constants, statistical oeprations and graphical operations
+all have a single value, so they don't affect the length of the function. The function
+defaults to length 1.
+
+Functions containing a circular reference will not be evaluated.
+
+To see this system in action, try one of the examples in user/example.
+""", "Variables guide", style = wx.ICON_NONE)
+        event.Skip()
 
     #frame methods
     def selected_formula(self, var_id, var_symbol):
