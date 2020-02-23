@@ -148,6 +148,7 @@ class Datatable:
 
         #run passes of the dependency table looking for dependencies that can be evaluated until all have been evaluated
         values_table = {}
+        last_loop = len(values_to_evaluate)
         while len(values_to_evaluate) != 0:
             for dependency_name in dependency_table:
                 dependency_data = dependency_table[dependency_name]
@@ -283,6 +284,11 @@ class Datatable:
                         del data_table
 
                         values_to_evaluate.remove(dependency_data)
+
+            if last_loop == len(values_to_evaluate): #no more dependencies will be evaluateable - this state should never be achieved, but just in case this inexpensive catch is here
+                raise RuntimeError("No more dependencies can be evaluated - stuck on {} left in an infinite loop".format(last_loop))
+
+            last_loop = len(values_to_evaluate)
 
         #evaluate all columns
         for variable_id, variable_symbol, variable_subid, variable_type in variable_data:
