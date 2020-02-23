@@ -1010,27 +1010,24 @@ def check_circular_dependencies(function_name: str, functions: typing.Dict[str, 
     return _chk_circular([function_name], functions[function_name].evaluate_dependencies(), functions)
 
 def _chk_circular(tree: typing.List[str], function_names: typing.List[str], functions: typing.Dict[str, Function]):
-    for key in function_names:
-        if key in tree:
-            return True
+    for name in function_names:
+        key_components = get_variable_names(name, split_graphs = True)
+        if type(key_components) != list:
+            key_components = [key_components]
 
-        if key in functions:
-            tree.append(key)
-
-            dependencies = functions[key].evaluate_dependencies()
-
-            processed_deps = []
-            for dependency in dependencies:
-                deps = get_variable_names(dependency, split_graphs = True)
-                if type(deps) == list:
-                    processed_deps += deps
-                else:
-                    processed_deps.append(deps)
-
-            if _chk_circular(tree, processed_deps, functions):
+        for key in key_components:
+            if key in tree:
                 return True
 
-            tree.pop(len(tree) - 1)
+            if key in functions:
+                tree.append(key)
+
+                dependencies = functions[key].evaluate_dependencies()
+
+                if _chk_circular(tree, dependencies, functions):
+                    return True
+
+                tree.pop(len(tree) - 1)
     
     return False
 

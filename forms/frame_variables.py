@@ -263,11 +263,26 @@ To see this system in action, try one of the examples in user/example.""", "Vari
                 for expression, symbol in self._datafile.query(sciplot.database.Query("SELECT Expression, Symbol FROM Formula INNER JOIN Variable ON Variable.ID = Formula.FormulaID AND Type = 1;", [], 1))[0]:
                     func_lib[symbol] = sciplot.functions.Function(expression)
                 
-                func_lib[data['symbol']] = sciplot.functions.Function(data['formula'])
+                no_exception = True
+
+                try:
+                    func_lib[data['symbol']] = sciplot.functions.Function(data['formula'])
+                except Exception as e:
+                    wx.MessageBox('Couldn\'t build function tree\n{}\nChanges will not be saved'.format(str(e)), type(e).__name__, wx.ICON_ERROR | wx.OK)
+                    no_exception = False
                 
-                if sciplot.functions.check_circular_dependencies(data['symbol'], func_lib):
+                try:
+                    has_no_circ_dependencies = sciplot.functions.check_circular_dependencies(data['symbol'], func_lib)
+                except Exception as e:
+                    wx.MessageBox('Dependency error\n{}\nChanges will not be saved'.format(str(e)), type(e).__name__, wx.ICON_ERROR | wx.OK)
+                    no_exception = False
+                
+                if has_no_circ_dependencies and not no_exception:
                     wx.MessageBox("Circular dependency in your formula\nCheck the expression to make sure it doesn't refer to itself\nChanges will not be saved", "Circular dependency", wx.ICON_ERROR | wx.OK)
                 
+                elif not no_exception: #don't store, alert has already been shown
+                    pass
+
                 else:
                     self._datafile.query(sciplot.database.Query("UPDATE Variable SET Symbol = (?) WHERE ID = (?) AND Type = 1;", [data['symbol'], old_variable[2]], 0))
                     self._datafile.query(sciplot.database.Query("UPDATE Formula SET Expression = (?) WHERE FormulaID = (?);", [data['formula'], old_variable[2]], 0))
