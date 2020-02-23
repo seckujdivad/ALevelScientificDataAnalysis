@@ -192,8 +192,7 @@ defaults to length 1.
 
 Functions containing a circular reference will not be evaluated.
 
-To see this system in action, try one of the examples in user/example.
-""", "Variables guide", style = wx.ICON_NONE)
+To see this system in action, try one of the examples in user/example.""", "Variables guide", style = wx.ICON_NONE)
         event.Skip()
 
     #frame methods
