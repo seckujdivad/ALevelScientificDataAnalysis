@@ -262,17 +262,17 @@ class GraphFrame(forms.SubFrame):
 
             lines, x_value, y_value = self.get_plot_lines(x_axis_id, y_axis_id, show_regression)
 
-            x_unit_string = self._datafile.get_unit_string(x_value.units)
-            if x_unit_string != '':
-                x_axis_title += ' ({})'.format(x_unit_string)
-            
-            y_unit_string = self._datafile.get_unit_string(y_value.units)
-            if y_unit_string != '':
-                y_axis_title += ' ({})'.format(y_unit_string)
-
-            
-            gc = wx.lib.plot.PlotGraphics(lines, 'Plot of {} against {}'.format(y_axis_title, x_axis_title), x_axis_title, y_axis_title)
-            self._plot_main.Draw(gc)
+            if lines is not None:
+                x_unit_string = self._datafile.get_unit_string(x_value.units)
+                if x_unit_string != '':
+                    x_axis_title += ' ({})'.format(x_unit_string)
+                
+                y_unit_string = self._datafile.get_unit_string(y_value.units)
+                if y_unit_string != '':
+                    y_axis_title += ' ({})'.format(y_unit_string)
+                
+                gc = wx.lib.plot.PlotGraphics(lines, 'Plot of {} against {}'.format(y_axis_title, x_axis_title), x_axis_title, y_axis_title)
+                self._plot_main.Draw(gc)
 
     def get_plot_lines(self, x_axis_id, y_axis_id, show_regression = True):
         lines = []
@@ -288,53 +288,68 @@ class GraphFrame(forms.SubFrame):
         #plot all values
         datatable = sciplot.datatable.Datatable(self._datafile)
         datatable.set_variables([x_axis_id, y_axis_id])
-        datatable.load(constants_table)
+
+        no_exception = True
+        try:
+            datatable.load(constants_table)
         
-        err_lines = []
-
-        data = []
-        for x_value, y_value in datatable.as_rows():
-            #value
-            data_point = [x_value.value, y_value.value]
-            data.append(data_point)
-
-            #error bars
-            #x unc
-            err_lines.append(wx.lib.plot.PolyLine([[x_value.value - x_value.absolute_uncertainty, y_value.value], [x_value.value + x_value.absolute_uncertainty, y_value.value]], colour = 'black', width = 1))
-
-            #y unc
-            err_lines.append(wx.lib.plot.PolyLine([[x_value.value, y_value.value - y_value.absolute_uncertainty], [x_value.value, y_value.value + y_value.absolute_uncertainty]], colour = 'black', width = 1))
+        except Exception as e:
+            wx.MessageBox('Couldn\'t generate values for plotting\n{}'.format(str(e)), type(e).__name__, wx.ICON_ERROR | wx.OK)
+            no_exception = False
         
-        lines.append(wx.lib.plot.PolyMarker(data, colour = 'black', width = 1, marker = 'cross', size = 1, legend = 'Data points'))
+        if no_exception:
+            err_lines = []
 
-        if len(datatable.as_rows()) > 0 and show_regression:
-            fit_lines = sciplot.graphing.FitLines(datatable)
-            fit_lines.calculate_all()
+            data = []
+            for x_value, y_value in datatable.as_rows():
+                #value
+                data_point = [x_value.value, y_value.value]
+                data.append(data_point)
 
-            #fit lines
-            max_x = datatable.as_columns()[0][0].value + datatable.as_columns()[0][0].absolute_uncertainty
-            min_x = datatable.as_columns()[0][0].value - datatable.as_columns()[0][0].absolute_uncertainty
+                #error bars
+                #x unc
+                err_lines.append(wx.lib.plot.PolyLine([[x_value.value - x_value.absolute_uncertainty, y_value.value], [x_value.value + x_value.absolute_uncertainty, y_value.value]], colour = 'black', width = 1))
 
-            fit_lines = [(fit_lines.fit_best_gradient, fit_lines.fit_best_intercept, "green"),
-                         (fit_lines.fit_worst_max_gradient, fit_lines.fit_worst_max_intercept, "red"),
-                         (fit_lines.fit_worst_min_gradient, fit_lines.fit_worst_min_intercept, "red")]
+                #y unc
+                err_lines.append(wx.lib.plot.PolyLine([[x_value.value, y_value.value - y_value.absolute_uncertainty], [x_value.value, y_value.value + y_value.absolute_uncertainty]], colour = 'black', width = 1))
+            
+            lines.append(wx.lib.plot.PolyMarker(data, colour = 'black', width = 1, marker = 'cross', size = 1, legend = 'Data points'))
 
-            for gradient, intercept, colour in fit_lines:
-                if gradient is not None and intercept is not None:
-                    for value in datatable.as_columns()[0]:
-                        if value.value + value.absolute_uncertainty > max_x:
-                            max_x = value.value + value.absolute_uncertainty
+            if len(datatable.as_rows()) > 0 and show_regression:
+                fit_lines = sciplot.graphing.FitLines(datatable)
+                fit_lines.calculate_all()
 
-                        if value.value - value.absolute_uncertainty < min_x:
-                            min_x = value.value - value.absolute_uncertainty
-                    
-                    best_fit_points = [[min_x, intercept + (min_x * gradient)],
-                                    [max_x, intercept + (max_x * gradient)]]
+                #fit lines
+                max_x = datatable.as_columns()[0][0].value + datatable.as_columns()[0][0].absolute_uncertainty
+                min_x = datatable.as_columns()[0][0].value - datatable.as_columns()[0][0].absolute_uncertainty
 
-                    lines.append(wx.lib.plot.PolyLine(best_fit_points, colour = colour, width = 1))
+                fit_lines_data = [(fit_lines.fit_best_gradient, fit_lines.fit_best_intercept, "green")]
 
-        #put error bar lines last
-        for line in err_lines:
-            lines.append(line)
+                if None not in [fit_lines.fit_worst_max_gradient, fit_lines.fit_worst_max_intercept]:
+                    fit_lines_data.append((fit_lines.fit_worst_max_gradient, fit_lines.fit_worst_max_intercept, "red"))
+                
+                if None not in [fit_lines.fit_worst_min_gradient, fit_lines.fit_worst_min_intercept]:
+                    fit_lines_data.append((fit_lines.fit_worst_min_gradient, fit_lines.fit_worst_min_intercept, "red"))
 
-        return lines, x_value, y_value
+                for gradient, intercept, colour in fit_lines_data:
+                    if gradient is not None and intercept is not None:
+                        for value in datatable.as_columns()[0]:
+                            if value.value + value.absolute_uncertainty > max_x:
+                                max_x = value.value + value.absolute_uncertainty
+
+                            if value.value - value.absolute_uncertainty < min_x:
+                                min_x = value.value - value.absolute_uncertainty
+                        
+                        best_fit_points = [[min_x, intercept + (min_x * gradient)],
+                                        [max_x, intercept + (max_x * gradient)]]
+
+                        lines.append(wx.lib.plot.PolyLine(best_fit_points, colour = colour, width = 1))
+
+            #put error bar lines last
+            for line in err_lines:
+                lines.append(line)
+
+            return lines, x_value, y_value
+        
+        else:
+            return None, None, None
