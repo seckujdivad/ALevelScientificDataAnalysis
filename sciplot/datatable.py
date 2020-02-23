@@ -19,8 +19,6 @@ class Datatable:
         self._datafile = datafile
 
         self._variable_ids: typing.List[int] = []
-        self._variable_types: typing.List[int] = []
-        self._functions: typing.Dict[str, functions.Function] = {}
         self._value_table: typing.Dict[int, typing.List[sciplot.Value]] = {}
     
     def set_variables(self, variable_ids: typing.List[int]):
