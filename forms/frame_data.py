@@ -151,47 +151,54 @@ class DataFrame(forms.SubFrame):
                 constants_table[constant_symbol] = constant_value
         
             #load all data from the datafile into memory
-            datatable.load(constants_table)
-
-            #load transposed data
-            data_as_rows = datatable.as_rows()
+            no_exception = True
+            try:
+                datatable.load(constants_table)
             
-            #put data into table
-            for row in data_as_rows:
-                formatted_row = []
-                for i in range(len(row)):
-                    value, exponent = row[i].format(format_strings[i])
-                    
-                    if exponent is None:
-                        formatted_row.append(value)
-                    else:
-                        if exponent < 0:
-                            sign = '-'
+            except Exception as e:
+                wx.MessageBox('Couldn\'t generate table\n{}'.format(str(e)), type(e).__name__, wx.ICON_ERROR | wx.OK)
+                no_exception = False
+
+            if no_exception:
+                #load transposed data
+                data_as_rows = datatable.as_rows()
+                
+                #put data into table
+                for row in data_as_rows:
+                    formatted_row = []
+                    for i in range(len(row)):
+                        value, exponent = row[i].format(format_strings[i])
+                        
+                        if exponent is None:
+                            formatted_row.append(value)
                         else:
-                            sign = '+'
+                            if exponent < 0:
+                                sign = '-'
+                            else:
+                                sign = '+'
 
-                        formatted_row.append('{}E{}{}'.format(value, sign, exponent))
+                            formatted_row.append('{}E{}{}'.format(value, sign, exponent))
 
-                self._dvl_data.AppendItem(formatted_row)
-            
-            #set column titles
-            if len(data_as_rows) > 0:
-                for index in range(len(data_as_rows[0])):
-                    column_obj = self._dvl_columns[index]
-                    new_col_string = variable_symbols[index]
-                    value_obj = data_as_rows[0][index]
+                    self._dvl_data.AppendItem(formatted_row)
+                
+                #set column titles
+                if len(data_as_rows) > 0:
+                    for index in range(len(data_as_rows[0])):
+                        column_obj = self._dvl_columns[index]
+                        new_col_string = variable_symbols[index]
+                        value_obj = data_as_rows[0][index]
 
-                    unit_string = self._datafile.get_unit_string(value_obj.units)
-                    
-                    if unit_string != '':
-                        new_col_string += ': ' + unit_string
-                        column_obj.SetTitle(new_col_string)
-            
-            #set column widths
-            if len(self._dvl_columns) > 0:
-                col_width = (self._dvl_data.GetSize()[0] - 30) / len(self._dvl_columns)
-                for col in self._dvl_columns:
-                    col.SetWidth(col_width)
+                        unit_string = self._datafile.get_unit_string(value_obj.units)
+                        
+                        if unit_string != '':
+                            new_col_string += ': ' + unit_string
+                            column_obj.SetTitle(new_col_string)
+                
+                #set column widths
+                if len(self._dvl_columns) > 0:
+                    col_width = (self._dvl_data.GetSize()[0] - 30) / len(self._dvl_columns)
+                    for col in self._dvl_columns:
+                        col.SetWidth(col_width)
     
     def _recreate_dvl_data(self):
         """
