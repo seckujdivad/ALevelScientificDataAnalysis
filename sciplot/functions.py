@@ -159,7 +159,7 @@ class IMathematicalFunction:
                     start, end = start_index + match.start(), start_index + match.end()
                     matches.append([{'start': start, 'end': end}, operator])
         
-        if len(matches) == 0:
+        if len(matches) == 0: #if there are no operators at all, it is likely a float or variable
             is_float = True
             items = []
             for char in string:
@@ -176,7 +176,7 @@ class IMathematicalFunction:
                 raise ValueError('No valid operators found in "{}"'.format(string))
         
         else:
-            #find operators that overlap and remove them first
+            #find operators that overlap and remove them first (e.g. sin and asin)
             has_overlap = True
             while has_overlap:
                 to_remove = None
@@ -188,19 +188,19 @@ class IMathematicalFunction:
                                 to_remove = other_match
 
                             elif (((match[0]['start'] <= other_match[0]['start']) and (match[0]['end'] <= other_match[0]['end']) and (match[0]['end'] >= other_match[0]['start']))
-                                 or ((match[0]['end'] >= other_match[0]['end']) and (match[0]['start'] >= other_match[0]['start']) and (match[0]['start'] <= other_match[0]['end']))):
-                                match_len = match[0]['end'] - match[0]['start']
+                                 or ((match[0]['end'] >= other_match[0]['end']) and (match[0]['start'] >= other_match[0]['start']) and (match[0]['start'] <= other_match[0]['end']))): #overlap check
+                                match_len = match[0]['end'] - match[0]['start'] #compare lengths
                                 other_match_len = other_match[0]['end'] - other_match[0]['start']
 
-                                if match_len > other_match_len:
+                                if match_len > other_match_len: #longer match takes precedence (all matches are compared twice (once each way), so the single comparison here is fine)
                                     to_remove = other_match
-                                elif match_len == other_match_len:
+                                elif match_len == other_match_len: #this is not a condition that should occur with the default operators, but this system is very flexible
                                     raise ValueError('Two operators of equal length {} are competing for the same match in expression "{}" - "{}": ({}, {}), "{}": ({}, {}). This conflict can\'t be resolved without changing the expression or modifying the capture expressions at the bottom of the functions module to avoid triggering both conditions.'.format(match_len, string, match[1]['name'], match[0]['start'], match[0]['end'], other_match[1]['name'], other_match[0]['start'], other_match[0]['end']))
 
                 if to_remove is None:
                     has_overlap = False
                 else:
-                    matches.remove(to_remove)
+                    matches.remove(to_remove) #remove reported overlapping matches
 
             #find highest priority operator and process that first
             operator = matches[0]
@@ -241,7 +241,7 @@ class IMathematicalFunction:
                     items.append(Variable(item[1:len(item) - 1]))
                 
                 else:
-                    items.append(item) #further evaluation needed
+                    items.append(item) #further evaluation needed (will happen recursively)
 
             return operator[1]['class'](*items)
     
@@ -791,9 +791,18 @@ operator_register = [
 
 #tree operations
 def check_circular_dependencies(function_name: str, functions: typing.Dict[str, Function]):
+    """
+    Performs a depth-first search of a function's dependencies to determine if, in one branch, the same function appears twice (signifying a cycle that can't be evaluated)
+
+    Returns:
+        (bool): True if there are circular dependencies, False if there are none
+    """
     return _chk_circular([function_name], functions[function_name].evaluate_dependencies(), functions)
 
 def _chk_circular(tree: typing.List[str], function_names: typing.List[str], functions: typing.Dict[str, Function]):
+    """
+    Recursive part of circular dependency checker
+    """
     for name in function_names:
         key_components = get_variable_names(name, split_graphs = True)
         if type(key_components) != list:
@@ -815,10 +824,27 @@ def _chk_circular(tree: typing.List[str], function_names: typing.List[str], func
     
     return False
 
-def evaluate_dependencies(function_name: str, functions: typing.Dict[str, Function], step_into_processed_sets = True, split_graphs = False): #evaluate the dependencies of a given function
+def evaluate_dependencies(function_name: str, functions: typing.Dict[str, Function], step_into_processed_sets = True, split_graphs = False):
+    """
+    Performs a depth-first search of the given function to get all the dependencies
+
+    Args:
+        function_name (str): name of the function (must occur in functions)
+        functions (dict of str, Function): function objects by name
+    
+    Kwargs:
+        step_into_processed_sets (bool): chooses whether variables like a.MEAN should be considered as being variable a or variable a.MEAN
+        split_graphs (bool): same as above, but for things like BEST.GRADIENT.a-b. Note that it has no effect if the previous is False
+    
+    Returns:
+        list of tuple of (str, str): names of dependencies. Normally, they are identical. However, if the second is something like a.MEAN, the first will be a (if the appropriate kwargs are enabled)
+    """
     return _eval_deps([], functions[function_name].evaluate_dependencies(), functions, step_into_processed_sets, split_graphs)
 
-def _eval_deps(deps: typing.List[typing.Tuple[str, str]], func_deps: typing.List[str], functions: typing.Dict[str, Function], step_into_processed_sets, split_graphs): #evaluate a list of function dependencies
+def _eval_deps(deps: typing.List[typing.Tuple[str, str]], func_deps: typing.List[str], functions: typing.Dict[str, Function], step_into_processed_sets, split_graphs):
+    """
+    Evaluate a list of function dependencies. Recursive 'body' of evaluate_dependencies
+    """
     for name in func_deps: #for each dependency of this function
         if step_into_processed_sets: #process name to get name dependency if required
             symbols = get_variable_names(name, split_graphs)
@@ -843,7 +869,20 @@ def _eval_deps(deps: typing.List[typing.Tuple[str, str]], func_deps: typing.List
     
     return deps
 
-def get_variable_names(full_name, split_graphs = False):
+def get_variable_names(full_name: str, split_graphs = False):
+    """
+    Get the name of a variable from a processed variable like a.MEAN
+    
+    Args:
+        full_name (str): name to be split
+    
+    Kwargs:
+        split_graphs (bool): determines whether graph attributes like BEST.GRADIENT.a-b should be left alone or split to a, b
+
+    Returns:
+        (str): a single string that is the base name of the variable that is processed (e.g. has its mean calculated)
+        or (list of 2 str): the two variables that make up each axis of a graph
+    """
     full_name_split = full_name.split('.')
 
     if len(full_name_split) == 1:
@@ -880,6 +919,9 @@ def get_variable_names(full_name, split_graphs = False):
         return full_name
 
 def evaluate_tree(function_name: str, functions: typing.Dict[str, Function], data_table = {}):
+    """
+    Recursively evaluates a function and its tree of dependencies (depth first). Doesn't check for cycles or existing dependencies.
+    """
     data_table = data_table.copy()
 
     dependencies = functions[function_name].evaluate_dependencies()
