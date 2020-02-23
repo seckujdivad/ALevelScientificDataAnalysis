@@ -22,9 +22,16 @@ class Datatable:
         self._value_table: typing.Dict[int, typing.List[sciplot.Value]] = {}
     
     def set_variables(self, variable_ids: typing.List[int]):
+        """
+        Set the variable ids of the columns to be used in calls to load.
+        The order they are given is the order they will be given in in as_rows and as_columns
+        """
         self._variable_ids = variable_ids.copy()
 
     def load(self, constants_table: typing.Dict[str, sciplot.Value]):
+        """
+        Load the variables given in set_variables into memory where they can be retrieved using as_rows and as_columns
+        """
         constants_table = constants_table.copy()
 
         var_type_lookup = ["dataset", "formula"]
@@ -43,7 +50,7 @@ class Datatable:
         for dataset_symbol, variable_id in self._datafile.query(database.Query("SELECT Symbol, VariableID FROM Variable WHERE Type = 0", [], 1))[0]:
             dataset_names_ids[dataset_symbol] = variable_id
         
-        dependencies = []
+        dependencies = [] #get names of all dependencies (things that need to be evaluated before the final variables can be evaluated)
 
         #get data on all columns
         variable_data = []
@@ -61,7 +68,7 @@ class Datatable:
                     if dependency_info not in dependencies:
                         dependencies.append(dependency_info)
         
-        #process dependencies
+        #process dependencies so that they can be retrieved and evaluated in the correct order
         dependency_table: typing.Dict[str, typing.Dict[str, object]] = {}
         for symbol, dependency in dependencies:
             current_dependency = {"symbol": symbol}
@@ -139,6 +146,7 @@ class Datatable:
             if dependency_data["type"] in ["value", "graphical"]:
                 values_to_evaluate.append(dependency_data)
 
+        #run passes of the dependency table looking for dependencies that can be evaluated until all have been evaluated
         values_table = {}
         while len(values_to_evaluate) != 0:
             for dependency_name in dependency_table:
