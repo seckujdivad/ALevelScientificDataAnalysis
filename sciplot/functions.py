@@ -1019,20 +1019,28 @@ def _chk_circular(tree: typing.List[str], function_names: typing.List[str], func
 
             dependencies = functions[key].evaluate_dependencies()
 
-            if _chk_circular(tree, dependencies, functions):
+            processed_deps = []
+            for dependency in dependencies:
+                deps = get_variable_names(dependency, split_graphs = True)
+                if type(deps) == list:
+                    processed_deps += deps
+                else:
+                    processed_deps.append(deps)
+
+            if _chk_circular(tree, processed_deps, functions):
                 return True
 
             tree.pop(len(tree) - 1)
     
     return False
 
-def evaluate_dependencies(function_name: str, functions: typing.Dict[str, Function], step_into_processed_sets = True): #evaluate the dependencies of a given function
-    return _eval_deps([], functions[function_name].evaluate_dependencies(), functions, step_into_processed_sets)
+def evaluate_dependencies(function_name: str, functions: typing.Dict[str, Function], step_into_processed_sets = True, split_graphs = False): #evaluate the dependencies of a given function
+    return _eval_deps([], functions[function_name].evaluate_dependencies(), functions, step_into_processed_sets, split_graphs)
 
-def _eval_deps(deps: typing.List[typing.Tuple[str, str]], func_deps: typing.List[str], functions: typing.Dict[str, Function], step_into_processed_sets): #evaluate a list of function dependencies
+def _eval_deps(deps: typing.List[typing.Tuple[str, str]], func_deps: typing.List[str], functions: typing.Dict[str, Function], step_into_processed_sets, split_graphs): #evaluate a list of function dependencies
     for name in func_deps: #for each dependency of this function
         if step_into_processed_sets: #process name to get name dependency if required
-            symbols = get_variable_names(name)
+            symbols = get_variable_names(name, split_graphs)
             if type(symbols) != list:
                 symbols = [symbols]
         else:
@@ -1044,7 +1052,7 @@ def _eval_deps(deps: typing.List[typing.Tuple[str, str]], func_deps: typing.List
 
             if symbol in functions: #if function exists, process its dependencies
                 if symbol == name or step_into_processed_sets:
-                    _eval_deps(deps, functions[symbol].evaluate_dependencies(), functions, step_into_processed_sets)
+                    _eval_deps(deps, functions[symbol].evaluate_dependencies(), functions, step_into_processed_sets, split_graphs)
 
                 if symbol != name:
                     deps.append((symbol, name))
