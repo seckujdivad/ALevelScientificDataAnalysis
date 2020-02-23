@@ -1,6 +1,7 @@
 import typing
 import math
 
+import sciplot
 import sciplot.functions as functions
 import sciplot.database as database
 import sciplot.datafile as datafile
@@ -20,12 +21,12 @@ class Datatable:
         self._variable_ids: typing.List[int] = []
         self._variable_types: typing.List[int] = []
         self._functions: typing.Dict[str, functions.Function] = {}
-        self._value_table: typing.Dict[int, typing.List[functions.Value]] = {}
+        self._value_table: typing.Dict[int, typing.List[sciplot.Value]] = {}
     
     def set_variables(self, variable_ids: typing.List[int]):
         self._variable_ids = variable_ids.copy()
 
-    def load(self, constants_table: typing.Dict[str, functions.Value]):
+    def load(self, constants_table: typing.Dict[str, sciplot.Value]):
         constants_table = constants_table.copy()
 
         var_type_lookup = ["dataset", "formula"]
@@ -118,7 +119,7 @@ class Datatable:
             dependency_table[dependency] = current_dependency
         
         #get dataset dependency values
-        dataset_table: typing.Dict[str, typing.List[functions.Value]] = {}
+        dataset_table: typing.Dict[str, typing.List[sciplot.Value]] = {}
         for dependency_name in dependency_table:
             dependency_data = dependency_table[dependency_name]
             if dependency_data["type"] == "dataset" and dependency_data["subtype"] is None:
@@ -195,13 +196,13 @@ class Datatable:
                         
                         if len(values) != 0:
                             if dependency_data["processing"] == "max":
-                                new_value = functions.Value(max([value.value for value in values]), values[0].absolute_uncertainty, False, values[0].units)
+                                new_value = sciplot.Value(max([value.value for value in values]), values[0].absolute_uncertainty, False, values[0].units)
                                 values_table[dependency_name] = new_value
                             elif dependency_data["processing"] == "min":
-                                new_value = functions.Value(min([value.value for value in values]), values[0].absolute_uncertainty, False, values[0].units)
+                                new_value = sciplot.Value(min([value.value for value in values]), values[0].absolute_uncertainty, False, values[0].units)
                                 values_table[dependency_name] = new_value
                             elif dependency_data["processing"] == "mean":
-                                new_value = functions.Value(sum([value.value for value in values]) / len(values), values[0].percentage_uncertainty / math.sqrt(len(values)), True, values[0].units)
+                                new_value = sciplot.Value(sum([value.value for value in values]) / len(values), values[0].percentage_uncertainty / math.sqrt(len(values)), True, values[0].units)
                                 values_table[dependency_name] = new_value
                             else:
                                 raise ValueError("Invalid dataset processing step '{}' on dependency '{}'".format(dependency_data["processing"], dependency_data))
@@ -251,7 +252,7 @@ class Datatable:
                                 elif current_dependency["fit line"] == "worstmax":
                                     value = fit_lines.fit_worst_max_intercept
                         
-                        values_table[dependency_name] = functions.Value(value)
+                        values_table[dependency_name] = sciplot.Value(value)
 
                         if current_dependency["subtype"] == "gradient":
                             units_x = data_table.as_rows()[0][0].units

@@ -7,6 +7,7 @@ up1 = os.path.abspath('../')
 sys.path.insert(0, up1)
 
 import sciplot.functions as functions #pylint: disable=import-error
+from sciplot import Value
 
 sys.path.pop(0)
 
@@ -220,23 +221,23 @@ class TestFunction(unittest.TestCase):
                       'j': functions.Function('{g}*2')}
         self.assertEqual(functions.evaluate_dependencies('c', func_table), [('mass', 'mass.MEAN'), ('g', 'g')])
 
-    generic_datatable = {'g': functions.Value(9.81, 0.01, False, [(1, 1), (2, 1), (3, -2)]),
-                         'volume': functions.Value(532, 0.1, True, [(2, 3)]),
-                         'mass': functions.Value(25, 1, False, [(1, 1)])}
+    generic_datatable = {'g': Value(9.81, 0.01, False, [(1, 1), (2, 1), (3, -2)]),
+                         'volume': Value(532, 0.1, True, [(2, 3)]),
+                         'mass': Value(25, 1, False, [(1, 1)])}
 
 
 class TestVariable(unittest.TestCase):
     def format_value(self, formatstring, value):
-        return functions.Value(value).format(formatstring)
+        return Value(value).format(formatstring)
     
     def format_scientific(self, value, uncertainty):
-        return functions.Value(value, uncertainty, uncertainty_is_percentage = False).format_scientific()
+        return Value(value, uncertainty, uncertainty_is_percentage = False).format_scientific()
 
     def test_perctoabs(self):
-        self.assertEqual(functions.Value(100, 0.1, True).absolute_uncertainty, 10)
+        self.assertEqual(Value(100, 0.1, True).absolute_uncertainty, 10)
     
     def test_abstoperc(self):
-        self.assertEqual(functions.Value(100, 15, False).percentage_uncertainty, 0.15)
+        self.assertEqual(Value(100, 15, False).percentage_uncertainty, 0.15)
     
     def test_format_sigfig(self):
         self.assertEqual(self.format_value('00#', 0.0002579), ('0.00026', None))
