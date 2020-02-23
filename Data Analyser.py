@@ -25,6 +25,9 @@ class RootFrame(wx.Frame):
         self.SetSize(800, 600)
         self.SetMinSize(wx.Size(500, 400))
 
+        #a dictionary for sharing data between frames
+        #in theory, it could be used for any data
+        #however, it is only used for sharing the file object between the frames (so they don't have their own separate connections)
         self.subframe_share = {
             'file': None,
             'file is temp': True
@@ -60,7 +63,7 @@ class RootFrame(wx.Frame):
         self._mb_cats = {}
         self._mb_subitems = {}
         self._mb_cats_internalonly = {}
-        for name in ['File', 'Help']:
+        for name in ['File', 'Help']: #add menu bar categories
             self._mb_cats[name] = wx.Menu()
             self._mb_main.Append(self._mb_cats[name], name)
             self._mb_subitems[name] = []
@@ -123,9 +126,9 @@ class RootFrame(wx.Frame):
 
         self.Centre(wx.BOTH)
 
-        self.set_form("data", True)
+        self.set_form("data", True) #choose the data form when the program first opens
     
-    def set_form(self, form, override = False):
+    def set_form(self, form, override = False): #choose a form (tab from the title bar at the top of the window)
         if override or self._current_frame != form:
             if self._subframes[form].toolbar_index == -1:
                 raise Exception("This form hasn't been connected to a SimpleBook")
@@ -143,8 +146,8 @@ class RootFrame(wx.Frame):
         self.set_form(name)
         event.Skip()
     
-    def _choose_db(self, event):
-        if self.subframe_share['file'] is not None and not self.subframe_share['file is temp']:
+    def _choose_db(self, event): #open a file
+        if self.subframe_share['file'] is not None and not self.subframe_share['file is temp']: #save file (if the open file is not temporary)
             commit_changes = wx.MessageBox("Commit changes to open file?", "Action required", wx.ICON_QUESTION | wx.OK | wx.CANCEL)
 
             if commit_changes == wx.OK:
@@ -190,7 +193,7 @@ class RootFrame(wx.Frame):
             self.subframe_share['file'].commit()
             self.subframe_share['file'].close()
     
-    def _save_temp(self, event):
+    def _save_temp(self, event): #if the file open is temporary, ask the user for a name and move it to the location
         if self.subframe_share['file is temp']:
             with wx.FileDialog(self, "Save DataFile", wildcard = "DataFile (*.db)|*.db", defaultDir = sys.path[0], style = wx.FD_SAVE) as file_dialog:
                 if file_dialog.ShowModal() == wx.ID_CANCEL:
@@ -208,7 +211,7 @@ class RootFrame(wx.Frame):
         else:
             wx.MessageBox("Currently open file is not temporary", "File not temporary", wx.ICON_ERROR | wx.OK)
     
-    def _set_title_file(self, name):
+    def _set_title_file(self, name): #set title of window to contain the file name
         self.SetTitle('Data Analyser: {}'.format(name))
     
     def _help_quickstart(self, event): #show short explanation string
