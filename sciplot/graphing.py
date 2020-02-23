@@ -69,9 +69,9 @@ class FitLines:
     def calculate_worst_fits(self):
         x_values, y_values = self._datatable.as_columns()
 
-        potential_fit_lines: typing.List[typing.Tuple[float, float]] = []
+        potential_fit_lines: typing.List[typing.Tuple[float, float]] = [] #gradient, intercept of all fit lines that go through all points
 
-        for switch in [(a, b, c, d) for a in [1, -1] for b in [1, -1] for c in [1, -1] for d in [1, -1]]: #compute cartesian product
+        for switch in [(a, b, c, d) for a in [1, -1] for b in [1, -1] for c in [1, -1] for d in [1, -1]]: #compute cartesian product of the sets (1, -1) and (1, -1) to get the edges of the value (limited by its uncertainty)
             for i in range(len(x_values)):
                 for j in range(len(x_values)):
                     if i != j:
@@ -88,13 +88,13 @@ class FitLines:
                         if self._check_line(gradient, intercept, x_values, y_values):
                             potential_fit_lines.append((gradient, intercept))
         
-        if len(potential_fit_lines) == 0:
+        if len(potential_fit_lines) == 0: #there are no possible fit lines
             self.fit_worst_max_gradient = None
             self.fit_worst_max_intercept = None
             self.fit_worst_min_gradient = None
             self.fit_worst_min_intercept = None
 
-        else:
+        else: #find the worst minimum and maximum
             max_index = 0
             min_index = 0
             for i in range(len(potential_fit_lines)):
@@ -106,13 +106,13 @@ class FitLines:
             self.fit_worst_max_gradient, self.fit_worst_max_intercept = potential_fit_lines[max_index]
             self.fit_worst_min_gradient, self.fit_worst_min_intercept = potential_fit_lines[min_index]
 
-    def _check_line(self, gradient, intercept, x_values, y_values):
+    def _check_line(self, gradient, intercept, x_values, y_values): #make sure a line goes through all the points
         for i in range(len(x_values)):
             if not self._line_covers_value(gradient, intercept, x_values[i], y_values[i]):
                 return False
         return True
 
-    def _line_covers_value(self, gradient, intercept, x_value, y_value):
+    def _line_covers_value(self, gradient, intercept, x_value, y_value): #line, at some point, goes through the box produced by a value and its uncertainty
         return self._line_covers_value_axes(gradient, intercept, x_value, y_value) or self._line_covers_value_axes(gradient, intercept, y_value, x_value)
     
     def _line_covers_value_axes(self, gradient, intercept, x_value, y_value):
