@@ -36,6 +36,12 @@ class FitLines:
         x_values = [value.value for value in self._datatable.as_columns()[0]]
         y_values = [value.value for value in self._datatable.as_columns()[1]]
 
+        if len(x_values) != len(y_values):
+            raise ValueError("The data to calculate a fit line for has uneven length: x = {}, y = {}".format(len(x_values), len(y_values)))
+        
+        if len(x_values) < 2:
+            raise ValueError("At least two value pairs are needed to calculate a fit line (only {} pair(s) exist)".format(len(x_values)))
+
         #calculate means of x and y
         x_mean = sum(x_values) / len(x_values)
         y_mean = sum(y_values) / len(y_values)
@@ -43,6 +49,12 @@ class FitLines:
         #calculate diffsquares and diffs
         diffsquare_x = sum([pow(value - x_mean, 2) for value in x_values])
         diffsquare_y = sum([pow(value - y_mean, 2) for value in y_values])
+
+        if diffsquare_x == 0:
+            raise ValueError("Can\'t calculate a fit line for data where all x values are the same")
+
+        if diffsquare_y == 0:
+            raise ValueError("Can\'t calculate a fit line for data where all y values are the same")
 
         #calculate standard deviations
         stdev_x = math.sqrt(diffsquare_x / (len(x_values) - 1))
