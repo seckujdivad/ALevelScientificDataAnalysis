@@ -172,7 +172,7 @@ class Datatable:
                             function_inputs = {}
                             function_input_table = {}
                             dataset_length = -1 #datasets must all be the same length to be properly evaluated
-                            for func_dependency_symbol, func_dependency in func_dependencies:
+                            for func_dependency_symbol, func_dependency in func_dependencies: #gather all dependencies
                                 if func_dependency in values_to_evaluate:
                                     break #a dependency is yet to be completed, stop compiling dependencies
 
@@ -188,8 +188,8 @@ class Datatable:
                                     elif func_dependency in dataset_table:
                                         function_inputs[func_dependency] = dataset_table[func_dependency]
 
-                                        if dataset_length == -1:
-                                            dataset_length = len(dataset_table[func_dependency])
+                                        if dataset_length == -1: #no dataset length has yet been encountered - all other data sets must be of this length
+                                            dataset_length = len(dataset_table[func_dependency]) #length mismatch, exit
                                         elif len(dataset_table[func_dependency]) != dataset_length:
                                             raise ValueError("Dataset '{}' length ({}) differs from length of other datasets ({}), in function '{}' evaluation".format(func_dependency, len(dataset_table[func_dependency]), dataset_length, dependency_name))
 
@@ -201,7 +201,7 @@ class Datatable:
                                     
                                     values.append(functions.evaluate_tree(dependency_data["symbol"], function_table, function_input_table))
                         
-                        if len(values) != 0:
+                        if len(values) != 0: #calculate statistical operation
                             if dependency_data["processing"] == "max":
                                 new_value = sciplot.Value(max([value.value for value in values]), values[0].absolute_uncertainty, False, values[0].units)
                                 values_table[dependency_name] = new_value
@@ -216,13 +216,14 @@ class Datatable:
 
                             values_to_evaluate.remove(dependency_data)
                     
-                    elif dependency_data["type"] == "graphical":
-                        data_table = Datatable(self._datafile)
+                    elif dependency_data["type"] == "graphical": #use graphing submodule
+                        data_table = Datatable(self._datafile) #load table to be graphed (recursive process)
                         variable_ids = [self._datafile.query(database.Query("SELECT VariableID FROM Variable WHERE Symbol = (?)", [symbol], 2))[0][0] for symbol in current_dependency["axis names"]]
                         variable_ids.reverse() #change from yx to xy
                         data_table.set_variables(variable_ids)
                         data_table.load(constants_table)
 
+                        #check graphing inputs
                         if len(data_table.as_columns()) != 2:
                             raise ValueError('{} doesn\'t have exactly 2 columns'.format(dependency_name))
                             
@@ -233,6 +234,7 @@ class Datatable:
 
                         value = None
                         
+                        #get correct fit line and attribute
                         if dependency_data["fit line"] == "best":
                             fit_lines.calculate_best_fit()
                             if current_dependency["subtype"] == "gradient":
@@ -259,9 +261,11 @@ class Datatable:
                                 elif current_dependency["fit line"] == "worstmax":
                                     value = fit_lines.fit_worst_max_intercept
                         
+                        #store value in Value object
                         values_table[dependency_name] = sciplot.Value(value)
 
-                        if current_dependency["subtype"] == "gradient":
+                        #get correct units
+                        if current_dependency["subtype"] == "gradient": #divide the two units - subtract x powers from y powers
                             units_x = data_table.as_rows()[0][0].units
                             units_y = data_table.as_rows()[0][1].units
                             unit_dict_x = {key: 0 - value for key, value in units_x}
@@ -277,9 +281,10 @@ class Datatable:
 
                             values_table[dependency_name].units = [(key, result[key]) for key in result]
 
-                        else:
+                        else: #y intercept has units of y axis
                             values_table[dependency_name].units = data_table.as_rows()[0][1].units
                         
+                        #don't leave these two large objects for the garbage collector, get rid of them as soon as possible to reduce risk of memory errors
                         del fit_lines
                         del data_table
 
@@ -298,7 +303,7 @@ class Datatable:
                 function_input_table = {}
 
                 func_dependencies = functions.evaluate_dependencies(variable_symbol, function_table, step_into_processed_sets = False)
-                for func_dependency_symbol, func_dependency in func_dependencies:
+                for func_dependency_symbol, func_dependency in func_dependencies: #produce a table of the correct inputs
                     if func_dependency in constants_table:
                         function_inputs[func_dependency] = constants_table[func_dependency]
                         function_input_table[func_dependency] = constants_table[func_dependency]
@@ -317,14 +322,14 @@ class Datatable:
                 
                 self._value_table[variable_id] = []
 
-                for i in range(max(dataset_length, 1)):
+                for i in range(max(dataset_length, 1)): #if dataset length is -1 (no inputs have a length) default to one row
                     for key in function_inputs:
                         if type(function_inputs[key]) == list:
                             function_input_table[key] = function_inputs[key][i]
                     
                     self._value_table[variable_id].append(functions.evaluate_tree(variable_symbol, function_table, function_input_table))
             
-            else:
+            else: #datasets have all already been fetched
                 self._value_table[variable_id] = dataset_table[variable_symbol]
         
         #check column lengths to make sure they all match
@@ -360,7 +365,7 @@ class Datatable:
         else:
             return []
 
-    def as_columns(self):
+    def as_columns(self): #matches internal layout, simply return
         result = []
 
         for variable_id in self._variable_ids:
