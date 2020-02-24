@@ -1,3 +1,6 @@
+import os
+import sys
+
 from sciplot.database import *
 
 
@@ -14,6 +17,7 @@ class DataFile(Database):
         query = Query("BEGIN", [], 1)
         self.query(query)
     
+    ##ddl
     #management
     def create_rollback(self):
         queries = [Query("COMMIT", [], 0), Query("BEGIN", [], 0)]
@@ -23,6 +27,44 @@ class DataFile(Database):
         query = Query("ROLLBACK", [], 1)
         self.query(query)
     
+    #tables
+    def tables_are_valid(self):
+        """
+        Make sure that the database contains the correct tables
+        """
+        #load ddl for required tables from disk
+        ddl_queries: typing.Dict[str, str] = {}
+        for name in os.listdir(os.path.join(sys.path[0], "resources", "ddl")):
+            if name.endswith('.sql'):
+                with open(os.path.join(sys.path[0], "resources", "ddl", name), 'r') as file:
+                    ddl_queries[name[:-4]] = file.read()
+
+        #get names of all tables
+        table_names = [tup[0] for tup in self.query(Query('SELECT name FROM sqlite_master WHERE type = "table" and name NOT LIKE "sqlite_%"', [], 1))[0]]
+
+        for table_name in ddl_queries:
+            if table_name not in table_names:
+                return False
+            
+            sql_ddl = self.query(Query("SELECT sql FROM sqlite_master WHERE name = (?);", [table_name], 2))[0][0]
+
+            if sql_ddl != ddl_queries[table_name]: #definitions don't match, exit
+                return False
+
+        return True #all tests passed
+    
+    def initialise_tables(self):
+        #load ddl for required tables from disk
+        ddl_queries: typing.Dict[str, str] = {}
+        for name in os.listdir(os.path.join(sys.path[0], "resources", "ddl")):
+            if name.endswith('.sql'):
+                with open(os.path.join(sys.path[0], "resources", "ddl", name), 'r') as file:
+                    ddl_queries[name[:-4]] = file.read()
+        
+        for name in ddl_queries:
+            self.query(Query(ddl_queries[name], [], 0))
+    
+    ##dml
     #metadata
     def get_metadata(self, key: str):
         result = self.query(Query('SELECT Value FROM Metadata WHERE Key = (?)', [key], 2))
@@ -331,6 +373,3 @@ WHERE DataSet.DataSetID = (?)'''
                     unit_string += ' {}^{}'.format(unit_name, unit_power)
         
         return unit_string[1:]
-
-def create_blank_datafile(path):
-    shutil.copyfile("resources/template.db", path)

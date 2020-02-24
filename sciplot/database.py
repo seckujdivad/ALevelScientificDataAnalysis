@@ -93,7 +93,7 @@ class Database:
             for query in queries:
                 if query.fetchmode != -1: #blank interrupt, skip this query
                     try:
-                        for line in query.query.splitlines():
+                        for line in [query.query]:#.splitlines():
                             cursor = self._connection.execute(line, query.arguments)
 
                             if query.fetchmode == 1: #mode: fetch all

@@ -34,8 +34,11 @@ class RootFrame(wx.Frame):
         }
 
         #make temp datafile
-        sciplot.datafile.create_blank_datafile("user/temp.db")
+        #sciplot.datafile.create_blank_datafile("user/temp.db")
+        if os.path.isfile(os.path.join('user', 'temp.db')):
+            os.remove(os.path.join('user', 'temp.db'))
         self.subframe_share['file'] = sciplot.datafile.DataFile("user/temp.db")
+        self.subframe_share['file'].initialise_tables()
 
         #set icon
         icon = wx.Icon()
@@ -173,11 +176,15 @@ class RootFrame(wx.Frame):
                     path = file_dialog.GetPath()
                     
                     self.subframe_share['file'] = sciplot.datafile.DataFile(path)
-
-                    for frame in self._subframes:
-                        self._subframes[frame].hook_file_opened()
                     
-                    self._set_title_file(ntpath.basename(path))
+                    if self.subframe_share['file'].tables_are_valid():
+                        for frame in self._subframes:
+                            self._subframes[frame].hook_file_opened()
+                    
+                        self._set_title_file(ntpath.basename(path))
+                    
+                    else:
+                        wx.MessageBox("This database doesn't contain the correct tables", "Invalid file", wx.ICON_ERROR | wx.OK)                    
 
         event.Skip()
     
@@ -203,8 +210,10 @@ class RootFrame(wx.Frame):
                     path = file_dialog.GetPath()
                     self.subframe_share['file'].commit()
                     self.subframe_share['file'].close()
+
                     shutil.copyfile("user/temp.db", path)
                     os.remove("user/temp.db")
+
                     self.subframe_share['file'] = sciplot.datafile.DataFile(path)
                     self.subframe_share['file is temp'] = False
         
