@@ -70,9 +70,9 @@ class GraphFrame(forms.SubFrame):
 
         self._plot_main = wx.lib.plot.plotcanvas.PlotCanvas(self, wx.ID_ANY)
         self._plot_main.enableAxes = True
-        self._plot_main.enableAntiAliasing = True
+        self._plot_main.enableAntiAliasing = True #smoother fit lines
         self._plot_main.enableDrag = True
-        self._plot_main.useScientificNotation = True
+        self._plot_main.useScientificNotation = True #exponential form on axes
         self._plot_main.Bind(wx.EVT_MOUSEWHEEL, self._bind_graph_scroll)
         self._gbs_main.Add(self._plot_main, wx.GBPosition(0, 2), wx.GBSpan(6, 1), wx.ALL | wx.EXPAND)
 
@@ -98,8 +98,9 @@ class GraphFrame(forms.SubFrame):
         if rotation > 0:
             zoom = 0.9
         else:
-            zoom = 1.1
+            zoom = 1 / 0.9
         
+        #zoom based on the centre of the screen
         centre = (self._plot_main.xCurrentRange[0] + (self._plot_main.xCurrentRange[1] - self._plot_main.xCurrentRange[0]) / 2,
                   self._plot_main.yCurrentRange[0] + (self._plot_main.yCurrentRange[1] - self._plot_main.yCurrentRange[0]) / 2)
 
@@ -263,6 +264,7 @@ class GraphFrame(forms.SubFrame):
             lines, x_value, y_value = self.get_plot_lines(x_axis_id, y_axis_id, show_regression)
 
             if lines is not None:
+                #add units to axis titles
                 x_unit_string = self._datafile.get_unit_string(x_value.units)
                 if x_unit_string != '':
                     x_axis_title += ' ({})'.format(x_unit_string)
@@ -332,7 +334,7 @@ class GraphFrame(forms.SubFrame):
                     fit_lines_data.append((fit_lines.fit_worst_min_gradient, fit_lines.fit_worst_min_intercept, "red"))
 
                 for gradient, intercept, colour in fit_lines_data:
-                    if gradient is not None and intercept is not None:
+                    if gradient is not None and intercept is not None: #construct lines and uncertainty bars
                         for value in datatable.as_columns()[0]:
                             if value.value + value.absolute_uncertainty > max_x:
                                 max_x = value.value + value.absolute_uncertainty
