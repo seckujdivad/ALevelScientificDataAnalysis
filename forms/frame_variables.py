@@ -72,7 +72,7 @@ class VariablesFrame(forms.SubFrame):
     
     #root frame hooks
     def hook_file_opened(self):
-        self._prop_dataset.Freeze()
+        self._prop_dataset.Freeze() #block rendering
         self._prop_dataset.Clear()
 
         self._prop_dataset.Append(wx.propgrid.StringProperty('Symbol', 'symbol', 'name'))
@@ -82,10 +82,10 @@ class VariablesFrame(forms.SubFrame):
         
         units_prop = self._prop_dataset.Append(wx.propgrid.StringProperty('Units', 'units'))
 
-        for unit_name in self._datafile.query(sciplot.database.Query('SELECT Symbol FROM Unit;', [], 1))[0]:
+        for unit_name in self._datafile.query(sciplot.database.Query('SELECT Symbol FROM Unit;', [], 1))[0]: #load in si units
             self._prop_dataset.AppendIn(units_prop, wx.propgrid.FloatProperty(unit_name[0], unit_name[0], 0))
         
-        self._prop_dataset.Thaw()
+        self._prop_dataset.Thaw() #unblock rendering
 
         self.refresh_variable_list()
         self._centre_dividers()
@@ -140,7 +140,7 @@ class VariablesFrame(forms.SubFrame):
 
             self.refresh_variable_list()
     
-    def _bind_toolbar_showhelp(self, event):
+    def _bind_toolbar_showhelp(self, event): #lengthy explanation of core feature accessible from the toolbar
         wx.MessageBox("""The variables system is a very flexible data manipulation tool.
 There are two types of variables - data sets and functions. They can
 both be created from the Variables frame.
@@ -226,7 +226,7 @@ To see this system in action, try one of the examples in user/example.""", "Vari
 
         unit_powers = {key: value for key, value in unit_powers_raw} #change from tuple pairs to dictionary
 
-        for name in data:
+        for name in data: #load unit data into property page
             if name.startswith('units.'):
                 if name[6:] in unit_powers:
                     data[name] = unit_powers[name[6:]]
@@ -248,7 +248,7 @@ To see this system in action, try one of the examples in user/example.""", "Vari
                 self._datafile.query(sciplot.database.Query("UPDATE Variable SET Symbol = (?) WHERE ID = (?) AND Type = 0;", [data['symbol'], old_variable[2]], 0))
                 self._datafile.query(sciplot.database.Query("UPDATE DataSet SET Uncertainty = (?), UncIsPerc = (?) WHERE DataSetID = (?);", [data['unc'], data['uncisperc'], old_variable[2]], 0))
 
-                units_table = []
+                units_table = [] #prepare units for storage in database
                 for unit_string in data:
                     if unit_string.startswith('units.'):
                         if data[unit_string] != 0:
