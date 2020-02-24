@@ -1,0 +1,6 @@
+CREATE TABLE "DataPoint" (
+	"DataPointID"	INTEGER NOT NULL,
+	"DataSetID"	INTEGER NOT NULL,
+	"Value"	REAL,
+	PRIMARY KEY("DataPointID")
+)

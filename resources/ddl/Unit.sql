@@ -1,0 +1,5 @@
+CREATE TABLE "Unit" (
+	"UnitID"	INTEGER NOT NULL,
+	"Symbol"	TEXT,
+	PRIMARY KEY("UnitID")
+)
