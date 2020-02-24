@@ -44,6 +44,14 @@ class Datatable:
             func.pre_evaluate(constants_table) #optimise functions
             function_table[name] = func
             function_var_table[variable_id] = func
+
+        #check for circular dependencies
+        #they should be checked for at submission time, but it is conceivable that there is some unknown submission/modification order
+        #that could slip one by
+        #also, the database could be maliciously crafted
+        for function_name in function_table:
+            if sciplot.functions.check_circular_dependencies(function_name, function_table):
+                raise RuntimeError("Function '{}' has circular dependencies. Cancelling load".format(function_name))
         
         #get all datasets from the database
         dataset_names_ids: typing.Dict[str, int] = {}
