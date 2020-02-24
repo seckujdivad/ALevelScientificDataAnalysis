@@ -93,17 +93,20 @@ class Database:
             for query in queries:
                 if query.fetchmode != -1: #blank interrupt, skip this query
                     try:
-                        for line in [query.query]:#.splitlines():
-                            cursor = self._connection.execute(line, query.arguments)
+                        for line in query.query.split(';'):
+                            if line != '':
+                                line += ';'
+                                
+                                cursor = self._connection.execute(line, query.arguments)
 
-                            if query.fetchmode == 1: #mode: fetch all
-                                return_values.append((0, cursor.fetchall()))
+                                if query.fetchmode == 1: #mode: fetch all
+                                    return_values.append((0, cursor.fetchall()))
 
-                            elif query.fetchmode == 2: #mode: fetch one
-                                return_values.append((0, cursor.fetchone()))
+                                elif query.fetchmode == 2: #mode: fetch one
+                                    return_values.append((0, cursor.fetchone()))
 
-                            elif query.fetchmode == 3: #mode: fetch many rows (unused)
-                                return_values.append((0, cursor.fetchmany()))
+                                elif query.fetchmode == 3: #mode: fetch many rows (unused)
+                                    return_values.append((0, cursor.fetchmany()))
                     
                     except Exception as e:
                         if query.fetchmode == 0: #rethrow the exception: there is no thread to throw it in other than this one
