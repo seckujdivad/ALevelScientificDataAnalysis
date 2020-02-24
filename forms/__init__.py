@@ -6,6 +6,11 @@ import sciplot.database
 
 
 class SubFrame(wx.Panel):
+    """
+    Base class for the frames in the UI that are accessed through the bar at the top of the window
+
+    Provides a few utility methods and attributes, as well as specifying default values for all of the attributes and methods that need to exist, but might not need implementing by each frame
+    """
     def __init__(self, parent, root_frame):
         super().__init__(parent, wx.ID_ANY)
 
@@ -19,7 +24,7 @@ class SubFrame(wx.Panel):
 
         self.subframe_share = self.root_frame.subframe_share
 
-        self._datafile: sciplot.database.DataFile = self._datafile
+        self._datafile: sciplot.datafile.DataFile = self._datafile
     
     def get_menu_items(self):
         """
