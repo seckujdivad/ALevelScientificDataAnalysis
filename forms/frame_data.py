@@ -145,7 +145,7 @@ class DataFrame(forms.SubFrame):
             #load constants for the datatable
             constants_table = {}
             for composite_unit_id, constant_symbol, constant_value in self._datafile.query(sciplot.database.Query("SELECT UnitCompositeID, Symbol, Value FROM Constant;", [], 1))[0]:
-                value = sciplot.functions.Value(constant_value)
+                value = sciplot.functions.Value(constant_value) #make a value object so that the data can be formatted with the format strings
                 if composite_unit_id != None:
                     value.units = self._datafile.get_unit_by_id(composite_unit_id)[1]
                 constants_table[constant_symbol] = constant_value
@@ -169,9 +169,9 @@ class DataFrame(forms.SubFrame):
                     for i in range(len(row)):
                         value, exponent = row[i].format(format_strings[i])
                         
-                        if exponent is None:
+                        if exponent is None: #not in exponential form, just display the value
                             formatted_row.append(value)
-                        else:
+                        else: #exponential form, display correctly
                             if exponent < 0:
                                 sign = '-'
                             else:
@@ -179,7 +179,7 @@ class DataFrame(forms.SubFrame):
 
                             formatted_row.append('{}E{}{}'.format(value, sign, exponent))
 
-                    self._dvl_data.AppendItem(formatted_row)
+                    self._dvl_data.AppendItem(formatted_row) #add row to table
                 
                 #set column titles
                 if len(data_as_rows) > 0:
@@ -190,7 +190,7 @@ class DataFrame(forms.SubFrame):
 
                         unit_string = self._datafile.get_unit_string(value_obj.units)
                         
-                        if unit_string != '':
+                        if unit_string != '': #add si units to title, if there are any
                             new_col_string += ': ' + unit_string
                             column_obj.SetTitle(new_col_string)
                 
