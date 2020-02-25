@@ -216,6 +216,7 @@ class DataFrame(forms.SubFrame):
     
     def refresh_column_list(self):
         selection = self._ckl_columns.GetSelection()
+        checked_items = self._ckl_columns.GetCheckedItems()
 
         self._ckl_columns.Clear()
         self._columns.clear()
@@ -227,6 +228,7 @@ class DataFrame(forms.SubFrame):
         
         if selection != -1:
             self._ckl_columns.SetSelection(selection)
+        self._ckl_columns.SetCheckedItems(checked_items)
     
     def refresh_table_list(self):
         selection = self._lb_tables.GetSelection()
