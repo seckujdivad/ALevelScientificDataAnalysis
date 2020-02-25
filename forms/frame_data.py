@@ -172,8 +172,8 @@ class DataFrame(forms.SubFrame):
                         if exponent is None: #not in exponential form, just display the value
                             formatted_row.append(value)
                         else: #exponential form, display correctly
-                            if exponent < 0:
-                                sign = '-'
+                            if int(exponent) < 0:
+                                sign = ''
                             else:
                                 sign = '+'
 
