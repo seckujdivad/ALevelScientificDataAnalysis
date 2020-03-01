@@ -691,98 +691,98 @@ operator_register = [
     {
         "name": "sine",
         "class": Sin,
-        "expression": re.compile('[s][i][n]'),
+        "expression": re.compile('sin'),
         "priority": 0,
         "default values": ["1"]
     },
     {
         "name": "cosine",
         "class": Cos,
-        "expression": re.compile('[c][o][s]'),
+        "expression": re.compile('cos'),
         "priority": 0,
         "default values": ["1"]
     },
     {
         "name": "tangent",
         "class": Tan,
-        "expression": re.compile('[t][a][n]'),
+        "expression": re.compile('tan'),
         "priority": 0,
         "default values": ["1"]
     },
     {
         "name": "arcsine",
         "class": ArcSin,
-        "expression": re.compile('[a][s][i][n]'),
+        "expression": re.compile('asin'),
         "priority": 0,
         "default values": ["1"]
     },
     {
         "name": "arccosine",
         "class": ArcCos,
-        "expression": re.compile('[a][c][o][s]'),
+        "expression": re.compile('acos'),
         "priority": 0,
         "default values": ["1"]
     },
     {
         "name": "arctangent",
         "class": ArcTan,
-        "expression": re.compile('[a][t][a][n]'),
+        "expression": re.compile('atan'),
         "priority": 0,
         "default values": ["1"]
     },
     {
         "name": "arcsine verbose",
         "class": ArcSin,
-        "expression": re.compile('[a][r][c][s][i][n]'),
+        "expression": re.compile('arcsin'),
         "priority": 0,
         "default values": ["1"]
     },
     {
         "name": "arccosine verbose",
         "class": ArcCos,
-        "expression": re.compile('[a][r][c][c][o][s]'),
+        "expression": re.compile('arccos'),
         "priority": 0,
         "default values": ["1"]
     },
     {
         "name": "arctangent verbose",
         "class": ArcTan,
-        "expression": re.compile('[a][r][c][t][a][n]'),
+        "expression": re.compile('arctan'),
         "priority": 0,
         "default values": ["1"]
     },
     {
         "name": "radians to degrees",
         "class": Deg,
-        "expression": re.compile('[d][e][g]'),
+        "expression": re.compile('deg'),
         "priority": 0,
         "default values": ["1"]
     },
     {
         "name": "degrees to radians",
         "class": Rad,
-        "expression": re.compile('[r][a][d]'),
+        "expression": re.compile('rad'),
         "priority": 0,
         "default values": ["1"]
     },
     {
         "name": "absolute value",
         "class": Absolute,
-        "expression": re.compile('[a][b][s]'),
+        "expression": re.compile('abs'),
         "priority": 0,
         "default values": ["1"]
     },
     {
         "name": "natural logarithm",
         "class": NatLog,
-        "expression": re.compile('[l][n]'),
+        "expression": re.compile('ln'),
         "priority": 0,
         "default values": ["1"]
     },
     {
         "name": "base 10 logarithm",
         "class": BaseTenLog,
-        "expression": re.compile('[l][o][g]'),
+        "expression": re.compile('log'),
         "priority": 0,
         "default values": ["1"]
     }
