@@ -1,7 +1,7 @@
 CREATE TABLE "Variable" (
-	"VariableID"	INTEGER,
-	"Type"	INTEGER,
-	"ID"	INTEGER,
+	"VariableID"	INTEGER NOT NULL,
+	"Type"	INTEGER NOT NULL,
+	"ID"	INTEGER NOT NULL,
 	"Symbol"	TEXT,
 	PRIMARY KEY("VariableID")
 )
