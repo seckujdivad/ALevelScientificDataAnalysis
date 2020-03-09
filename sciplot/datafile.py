@@ -63,6 +63,11 @@ class DataFile(Database):
         
         for name in ddl_queries:
             self.query(Query(ddl_queries[name], [], 0))
+
+        queries = []
+        for name in ["s", "m", "kg", "A", "K", "mol", "cd"]:
+            queries.append(Query("INSERT INTO Unit (Symbol) VALUES ((?))", [name], 0))
+        self.query(queries)
     
     ##dml
     #metadata
