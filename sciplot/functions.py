@@ -655,11 +655,11 @@ class BaseTenLog(IMathematicalFunction):
 #lookup for all operators: variable and float aren't registered as they end each branch so they are detected differently
 operator_register = [
     {
-        "name": "addition",
+        "name": "addition", #makes error messages more helpful
         "class": Add,
-        "expression": re.compile('[+]'),
-        "priority": 4,
-        "default values": ["0"]
+        "expression": re.compile('[+]'), #regular expression for picking the operator out of expressions
+        "priority": 4, #order of operations (BIDMAS) - lower numbers take priority
+        "default values": ["0"] #+1 is missing an lvalue. the default value 0 is provided so +1 becomes 0+1, which is valid
     },
     {
         "name": "subtraction",
