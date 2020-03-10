@@ -186,7 +186,7 @@ Function input lengths:
 All function inputs must either have 1 or the same length. If you imagine a table of
 inputs, it wouldn't make sense for one column to be longer than all the others. The
 length of a data set is always the number of points in it and the length of a function
-is the length of its inputs. Constants, statistical oeprations and graphical operations
+is the length of its inputs. Constants, statistical operations and graphical operations
 all have a single value, so they don't affect the length of the function. The function
 defaults to length 1.
 
