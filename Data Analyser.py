@@ -15,8 +15,8 @@ import sciplot.datafile
 
 
 class RootFrame(wx.Frame):
-    def __init__(self, parent, app):
-        super().__init__(parent, wx.ID_ANY, title = "Data Analyser")
+    def __init__(self, app):
+        super().__init__(None, wx.ID_ANY, title = "Data Analyser")
 
         self.app = app
 
@@ -238,7 +238,7 @@ class App(wx.App):
 
         ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("davidjuckes.sciplot")
 
-        self.frame_root = RootFrame(None, self)
+        self.frame_root = RootFrame(self)
         self.frame_root.Show(True)
 
         self.MainLoop()
