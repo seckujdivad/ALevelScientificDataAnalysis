@@ -32,6 +32,7 @@ class Value:
             
 
             Appending e will give it as an exponent (5x10^3) where the multiplier (5) has the format string applied to it
+                0.0e: 4321 -> 4.3 exponent 3
 
         Args:
             formatstring (str): string to format with
