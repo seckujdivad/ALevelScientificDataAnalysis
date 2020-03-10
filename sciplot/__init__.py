@@ -29,7 +29,6 @@ class Value:
                 *00.0: 1.256 -> 01.3, 1 -> 01.0, -1.2 -> -01.2, 512.53 -> 512.5
                 *.*:   won't change the string
                 *:     won't change the string
-            
 
             Appending e will give it as an exponent (5x10^3) where the multiplier (5) has the format string applied to it
                 0.0e: 4321 -> 4.3 exponent 3
