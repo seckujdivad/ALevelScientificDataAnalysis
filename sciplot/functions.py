@@ -324,7 +324,7 @@ class Function(IMathematicalFunction):
 #sub functions
 # leaves
 class Float(IMathematicalFunction):
-    def __init__(self, item0: str, uncertainty: typing.Union[float, str, Value] = 0):
+    def __init__(self, item0: str):
         super().__init__(autoparse = False)
 
         self._value: Value = None
@@ -335,8 +335,6 @@ class Float(IMathematicalFunction):
             self._value = item0
         else:
             raise TypeError('item0 must be of type float, str or Value, not {} (contents {})'.format(type(item0), item0))
-
-        self._uncertainty = uncertainty
     
     def evaluate(self, datatable: t_datatable):
         return self._value
