@@ -152,14 +152,11 @@ class DataFile(Database):
         unitcomposite_ids = [tup[0] for tup in self.query(Query("SELECT UnitCompositeID FROM UnitComposite;", [], 1))[0]]
 
         matches = []
-        i = 0
-        while i < len(unitcomposite_ids):
+        for i in range(len(unitcomposite_ids)):
             scan_units = self.query(Query("SELECT UnitCompositeDetails.UnitID, UnitCompositeDetails.Power FROM UnitComposite INNER JOIN UnitCompositeDetails ON UnitCompositeDetails.UnitCompositeID = UnitComposite.UnitCompositeID WHERE UnitComposite.UnitCompositeID = (?);", [unitcomposite_ids[i]], 1))[0]
             
             if set(scan_units) == set(unit_table):
                 matches.append(unitcomposite_ids[i])
-
-            i += 1
 
         return matches
     
