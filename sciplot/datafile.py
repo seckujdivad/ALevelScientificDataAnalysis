@@ -24,8 +24,8 @@ class DataFile(Database):
         self.query(queries)
 
     def goto_rollback(self):
-        query = Query("ROLLBACK", [], 1)
-        self.query(query)
+        queries = [Query("ROLLBACK", [], 1), Query("BEGIN", [], 1)]
+        self.query(queries)
     
     #tables
     def tables_are_valid(self):
