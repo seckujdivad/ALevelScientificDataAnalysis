@@ -73,14 +73,28 @@ class TestFunction(unittest.TestCase):
         self.assertEqual(default.evaluate(datatable).value, optimised.evaluate(datatable).value)
     
     def test_pre_eval_reduces_complexity(self):
-        expr = '1 + (3 * 2 * {g}) + {k}'
+        exprs = [('1 + (3 * 2 * {g}) + {k}', True),
+                 ('1+1', False),
+                 ('{g}', False)]
+        
+        for expr, notequal in exprs:
+            before, after = self.compare_complexities(expr)
+            
+            if notequal:
+                self.assertGreater(before, after)
+            else:
+                self.assertEqual(before, after)
+
+    
+    def compare_complexities(self, expr):
         constants = self.convert_datatable({'g': 9.81})
         datatable = self.convert_datatable({'k': 50})
         datatable.update(constants)
         default = functions.Function(expr)
         optimised = functions.Function(expr)
         optimised.pre_evaluate(constants)
-        self.assertLess(optimised.num_nodes(), default.num_nodes())
+
+        return default.num_nodes(), optimised.num_nodes()
     
     def convert_datatable(self, datatable): #convert to new style
         result = {}
