@@ -251,7 +251,7 @@ class Datatable:
                                 value = fit_lines.fit_best_intercept
                             
                         else:
-                            fit_lines.calculate_worst_fits()
+                            fit_lines.calculate_all()
 
                             if current_dependency["subtype"] == "gradient":
                                 if current_dependency["fit line"] == "worst":
