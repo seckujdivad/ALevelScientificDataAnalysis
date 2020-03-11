@@ -31,7 +31,7 @@ class FitLines:
         self.calculate_best_fit()
         self.calculate_worst_fits()
 
-    def calculate_best_fit(self): #https://www.dummies.com/education/math/statistics/how-to-calculate-a-regression-line/
+    def calculate_best_fit(self):
         #get raw values
         x_values = [value.value for value in self._datatable.as_columns()[0]]
         y_values = [value.value for value in self._datatable.as_columns()[1]]
@@ -60,7 +60,7 @@ class FitLines:
         stdev_x = math.sqrt(diffsquare_x / (len(x_values) - 1))
         stdev_y = math.sqrt(diffsquare_y / (len(y_values) - 1))
 
-        #calculate sample pearson correlation coefficient https://en.wikipedia.org/wiki/Pearson_correlation_coefficient
+        #calculate sample pearson correlation coefficient
         correl = sum([(x_values[i] - x_mean) * (y_values[i] - y_mean) for i in range(len(x_values))]) / (math.sqrt(diffsquare_x) * math.sqrt(diffsquare_y))
 
         self.fit_best_gradient = correl * (stdev_y / stdev_x)
