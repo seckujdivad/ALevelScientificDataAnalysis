@@ -211,6 +211,13 @@ class TestFunction(unittest.TestCase):
             raise Exception('An exception wasn\'t thrown when it should\'ve been')
         except ValueError: #appropriate exception was thrown
             pass
+    
+    def test_characters(self):
+        try:
+            functions.Function('a1').evaluate({})
+            raise Exception('An exception wasn\'t thrown when it should\'ve been')
+        except ValueError: #appropriate exception was thrown
+            pass
 
     def test_dependencies(self):
         self.assertEqual(functions.Function('{m}-{c}').evaluate_dependencies(), ['m', 'c'])
