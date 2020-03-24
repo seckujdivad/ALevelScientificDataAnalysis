@@ -187,6 +187,9 @@ class Database:
             return self.query([query]) #don't duplicate functionality, just make another call with a corrected data format
         
     def commit(self, wait: bool = True):
+        """
+        Commit transaction to the database and open a new one
+        """
         self.query([Query('COMMIT;', [], int(wait)),
                     Query('BEGIN;', [], int(wait))])
     
