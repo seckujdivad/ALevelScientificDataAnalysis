@@ -20,7 +20,6 @@ class Value:
     def format(self, formatstring, value = None):
         """
         Format this value (or another) using the formatstring
-        
 
         Format strings:
             ends with #: number of zeroes is number of significant figures (00#: 12345 -> 12000)
@@ -185,6 +184,9 @@ class Value:
         return multiplier, exponent, uncertainty
     
     def upwards_round(self, num: float):
+        """
+        Rounds the given number using the rounding type used by this Value
+        """
         if self._round_use_internal:
             return round(num)
         else:
