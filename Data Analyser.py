@@ -189,7 +189,10 @@ class RootFrame(wx.Frame):
         event.Skip()
     
     def _commit_db(self, event):
-        if self.subframe_share['file'] is None:
+        if self.subframe_share['file is temp']:
+            self._save_temp(event)
+
+        elif self.subframe_share['file'] is None:
             wx.MessageBox("Can't save open file when there is no file open", "No file open", wx.ICON_ERROR | wx.OK)
         
         else:
