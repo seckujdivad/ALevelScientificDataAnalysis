@@ -11,6 +11,15 @@ t_datatable = typing.Dict[str, Value] #composite type hint
 
 #interface defining all functions
 class IMathematicalFunction:
+    """
+    Abstract base class for mathematical functions
+
+    Args:
+        *args (list of IMathematicalFunction or str): functions immediately below this function in the tree
+    
+    Kwargs:
+        autoparse (bool) = True: whether or not strings in args should be processed and turned into new IMathematicalFunctions
+    """
     def __init__(self, *args: typing.List[typing.Union[object, str]], autoparse: bool = True):
         self._subfuncs = []
         
@@ -24,6 +33,7 @@ class IMathematicalFunction:
     def evaluate(self, datatable: t_datatable):
         """
         Evaluate this function using the variables provided in datatable. Recursively evaluates the whole function tree.
+        To change the evaluation method, you should override _evaluate_value, _evaluate_uncertainty and _evaluate_units
 
         Args:
             datatable (dict of str: Value): all the values to be substituted into variables (defined {variable})
@@ -37,6 +47,8 @@ class IMathematicalFunction:
         uncertainty, uncertainty_is_percentage = self._evaluate_uncertainty(datatable, evaluated_subfuncs)
 
         units = self._evaluate_units(datatable, evaluated_subfuncs)
+
+        #remove units with a power of 0
         to_remove = []
         for i in range(len(units)):
             if units[i][1] == 0:
@@ -79,6 +91,8 @@ class IMathematicalFunction:
         """
         Calculates the resulting units of the Value object to be returned by evaluate
 
+        Inheriting classes must override this with a function that follows dimensional analysis rules for that particular operator
+
         Args:
             datatable (dict of str: Value): values to be substituted into variables
         
@@ -101,7 +115,7 @@ class IMathematicalFunction:
         string = _strip_brackets(string)
         string = _remove_all_spaces(string)
 
-        #look for valid places for operators to be
+        #look for valid places for operators to be in the string (not inside brackets or variables)
         search_regions = []
         current_segment = ''
         start_index = 0
@@ -149,7 +163,7 @@ class IMathematicalFunction:
             raise ValueError('In expression "{}": {} bracket(s) were not closed'.format(string, bracket_level))
             
         if is_variable:
-            raise ValueError('In expression "{}": a variable was not closed with } before the end of the expression'.format(string))
+            raise ValueError('In expression "{}": a variable was opened with "{{" but not closed with "}}" before the end of the expression'.format(string))
         
         #find locations of operators in the string
         matches = []
@@ -173,10 +187,10 @@ class IMathematicalFunction:
                 return Variable(string[1:len(string) - 1])
 
             else:
-                raise ValueError('No valid operators found in "{}"'.format(string))
+                raise ValueError('No valid operators found in "{}"'.format(string)) #not a float, variable or expression with operators
         
         else:
-            #find operators that overlap and remove them first (e.g. sin and asin)
+            #find operators that overlap and remove them first, longer operators take precedence (e.g. in sin and asin, asin takes priority)
             has_overlap = True
             while has_overlap:
                 to_remove = None
@@ -194,7 +208,7 @@ class IMathematicalFunction:
 
                                 if match_len > other_match_len: #longer match takes precedence (all matches are compared twice (once each way), so the single comparison here is fine)
                                     to_remove = other_match
-                                elif match_len == other_match_len: #this is not a condition that should occur with the default operators, but this system is very flexible
+                                elif match_len == other_match_len: #this is not a condition that should occur with the default operators, but this system is very flexible so operators that trigger this could be added
                                     raise ValueError('Two operators of equal length {} are competing for the same match in expression "{}" - "{}": ({}, {}), "{}": ({}, {}). This conflict can\'t be resolved without changing the expression or modifying the capture expressions at the bottom of the functions module to avoid triggering both conditions.'.format(match_len, string, match[1]['name'], match[0]['start'], match[0]['end'], other_match[1]['name'], other_match[0]['start'], other_match[0]['end']))
 
                 if to_remove is None:
@@ -202,7 +216,7 @@ class IMathematicalFunction:
                 else:
                     matches.remove(to_remove) #remove reported overlapping matches
 
-            #find highest priority operator and process that first
+            #find highest priority operator and process that first (BIDMAS)
             operator = matches[0]
             for match in matches:
                 if match[1]['priority'] > operator[1]['priority']:
@@ -226,7 +240,7 @@ class IMathematicalFunction:
                         raise ValueError('In expression "{}": operand {} was not supplied for operator "{}" and a default value couldn\'t be found'.format(string, i, operator[1]['name']))
 
             #check for variable or float
-            items = []
+            items = [] #items (string or IMathematicalFunction) beneath the operator node that will be created
             for item in raw_items:
                 #check for float
                 is_float = True
@@ -243,7 +257,7 @@ class IMathematicalFunction:
                 else:
                     items.append(item) #further evaluation needed (will happen recursively)
 
-            return operator[1]['class'](*items)
+            return operator[1]['class'](*items) #construct the next section of the tree
     
     def is_static(self, constants: t_datatable): #to be overridden by leaves
         """
@@ -310,6 +324,8 @@ class IMathematicalFunction:
         return result
 
 
+#The classes below all inherit from IMathematicalFunction. I haven't provided docstrings as they keep the functionality described in the docstrings of IMathematicalFunction
+
 #root - other classes should interact with this
 class Function(IMathematicalFunction):
     def __init__(self, string: str):
@@ -337,7 +353,7 @@ class Float(IMathematicalFunction):
             raise TypeError('item0 must be of type float, str or Value, not {} (contents {})'.format(type(item0), item0))
     
     def evaluate(self, datatable: t_datatable):
-        return self._value
+        return self._value #the value is just the stored vlaue
     
     def is_static(self, constants: t_datatable):
         return True
@@ -346,26 +362,26 @@ class Float(IMathematicalFunction):
         return 1
     
     def evaluate_dependencies(self):
-        return []
+        return [] #a float has no dependencies
 
 
 class Variable(IMathematicalFunction):
     def __init__(self, item0: str):
         super().__init__(autoparse = False)
 
-        self._name = item0
+        self._name = item0 #store the symbol of this variable
     
     def evaluate(self, datatable: t_datatable):
-        return datatable[self._name]
+        return datatable[self._name] #return the value from the datatable provided
     
     def is_static(self, constants: t_datatable):
-        return self._name in constants
+        return self._name in constants #if the variable is a constant, it is static. if not, it can't be
     
     def num_nodes(self, include_branches = True):
         return 1
     
     def evaluate_dependencies(self):
-        return [self._name]
+        return [self._name] #the only dependency is the name of the variable
 
 
 # branches
@@ -792,6 +808,10 @@ def check_circular_dependencies(function_name: str, functions: typing.Dict[str, 
     """
     Performs a depth-first search of a function's dependencies to determine if, in one branch, the same function appears twice (signifying a cycle that can't be evaluated)
 
+    Args:
+        function_name (str): name of the function, must exist in functions
+        functions (list of Function): all functions that exist in the "system of functions" constructed as Function objects
+
     Returns:
         (bool): True if there are circular dependencies, False if there are none
     """
@@ -799,18 +819,18 @@ def check_circular_dependencies(function_name: str, functions: typing.Dict[str, 
 
 def _chk_circular(tree: typing.List[str], function_names: typing.List[str], functions: typing.Dict[str, Function]):
     """
-    Recursive part of circular dependency checker
+    Recursive part of circular dependency checker. Not meant for use by anything other than check_circular_dependencies
     """
     for name in function_names:
-        key_components = get_variable_names(name, split_graphs = True)
-        if type(key_components) != list:
+        key_components = get_variable_names(name, split_graphs = True) #get dependencies, not variable name (variable name could be a processed data set like "a.MEAN", in which case we want "a")
+        if type(key_components) != list: #make into a list if it isn't already
             key_components = [key_components]
 
         for key in key_components:
-            if key in tree:
+            if key in tree: #if the key appears in tree, we have seen it twice on this depth-first search. therefore, it is circular as this defines our state
                 return True
 
-            if key in functions:
+            if key in functions: #process dependencies of the function if it is one
                 tree.append(key)
 
                 dependencies = functions[key].evaluate_dependencies()
@@ -818,7 +838,7 @@ def _chk_circular(tree: typing.List[str], function_names: typing.List[str], func
                 if _chk_circular(tree, dependencies, functions):
                     return True
 
-                tree.pop(len(tree) - 1)
+                tree.pop(len(tree) - 1) #remove from depth first search history
     
     return False
 
@@ -841,7 +861,7 @@ def evaluate_dependencies(function_name: str, functions: typing.Dict[str, Functi
 
 def _eval_deps(deps: typing.List[typing.Tuple[str, str]], func_deps: typing.List[str], functions: typing.Dict[str, Function], step_into_processed_sets, split_graphs):
     """
-    Evaluate a list of function dependencies. Recursive 'body' of evaluate_dependencies
+    Evaluate a list of function dependencies. Recursive 'body' of evaluate_dependencies, not meant for use anywhere else
     """
     for name in func_deps: #for each dependency of this function
         if step_into_processed_sets: #process name to get name dependency if required
@@ -919,32 +939,60 @@ def get_variable_names(full_name: str, split_graphs = False):
 def evaluate_tree(function_name: str, functions: typing.Dict[str, Function], data_table = {}):
     """
     Recursively evaluates a function and its tree of dependencies (depth first). Doesn't check for cycles or existing dependencies.
+
+    Args:
+        function_name (str): name of the function, must exist in functions
+        functions (dict of str: Function): all of the existing functions
+    
+    Kwargs:
+        data_table (dict of str: Value): values to be substituted into variables when evaluating the functions
+    
+    Returns:
+        (Value): the result of the function specified by function_name
     """
     data_table = data_table.copy()
 
     dependencies = functions[function_name].evaluate_dependencies()
 
-    local_data_table = {}
-    for dependency in dependencies:
-        if dependency in data_table:
+    local_data_table = {} #populate this with the values that are the dependencies of this function
+    for dependency in dependencies: #evaluate direct dependencies
+        if dependency in data_table: #dependency doesn't need evaluating
             local_data_table[dependency] = data_table[dependency]
         
         else:
-            result = evaluate_tree(dependency, functions, data_table)
+            result = evaluate_tree(dependency, functions, data_table) #evaluate function as its result is a dependency
             local_data_table[dependency] = result
             data_table[dependency] = result
     
-    return functions[function_name].evaluate(local_data_table)
+    return functions[function_name].evaluate(local_data_table) #evaluate this function with the generated data table and return
 
 
 #utility functions
-def _strip_brackets(string):
+def _strip_brackets(string: str):
+    """
+    Strips leading and trailing bracket pairs from a string
+
+    Args:
+        string (str): string to strip
+    
+    Returns:
+        (str): the stripped string
+    """
     while string.startswith('(') and string.endswith(')'):
         string = string[1:-1]
     
     return string
 
-def _remove_all_spaces(string):
+def _remove_all_spaces(string: str):
+    """
+    Removes spaces from a string. Doesn't remove strings from variables (enclosed in {})
+
+    Args:
+        string (str): string to remove spaces from
+    
+    Returns:
+        (str): the string with spaces removed
+    """
     output = ''
     in_var = False
     for char in string:
