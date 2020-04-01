@@ -62,6 +62,10 @@ class SubFrame(wx.Panel):
         Method called by root frame when this frame is unselected. Should be overwritten by inheriting class
         """
     
+    #ui binds
+    #These methods all start _bind_ and are only meant to be bound to UI events. They aren't meant to form any part of a public API
+    #They are added by the inheriting class
+    
     #properties
     @property
     def _datafile(self): #_datafile getter
