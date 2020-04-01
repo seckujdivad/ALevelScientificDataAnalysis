@@ -325,9 +325,15 @@ class GraphFrame(forms.SubFrame):
                 fit_lines = sciplot.graphing.FitLines(datatable)
                 fit_lines.calculate_all()
 
-                #fit lines
-                max_x = datatable.as_columns()[0][0].value + datatable.as_columns()[0][0].absolute_uncertainty
-                min_x = datatable.as_columns()[0][0].value - datatable.as_columns()[0][0].absolute_uncertainty
+                #get ranges to plot over
+                max_x = datatable.as_columns()[0][0].value
+                min_x = datatable.as_columns()[0][0].value
+                for value in datatable.as_columns()[0]:
+                    if value.value + value.absolute_uncertainty > max_x:
+                        max_x = value.value + value.absolute_uncertainty
+
+                    if value.value - value.absolute_uncertainty < min_x:
+                        min_x = value.value - value.absolute_uncertainty
 
                 fit_lines_data = [(fit_lines.fit_best_gradient, fit_lines.fit_best_intercept, "green")]
 
@@ -339,13 +345,6 @@ class GraphFrame(forms.SubFrame):
 
                 for gradient, intercept, colour in fit_lines_data:
                     if gradient is not None and intercept is not None: #construct lines and uncertainty bars
-                        for value in datatable.as_columns()[0]:
-                            if value.value + value.absolute_uncertainty > max_x:
-                                max_x = value.value + value.absolute_uncertainty
-
-                            if value.value - value.absolute_uncertainty < min_x:
-                                min_x = value.value - value.absolute_uncertainty
-                        
                         best_fit_points = [[min_x, intercept + (min_x * gradient)],
                                         [max_x, intercept + (max_x * gradient)]]
 
