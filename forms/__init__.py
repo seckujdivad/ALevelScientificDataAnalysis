@@ -17,16 +17,21 @@ class SubFrame(wx.Panel):
         self.root_frame = root_frame
         self.parent = parent
 
-        self.identifier = 'null'
-        self.styling_name = '<blank>'
-        self.styling_icon = wx.Bitmap('resources/toolbar/blank.bmp')
-        self.toolbar_index = -1
+        self.identifier = 'null' #identifier used internally to differentiate between frames
+        self.styling_name = '<blank>' #name of the frame to be displayed to the user when they hover over it
+        self.styling_icon = wx.Bitmap('resources/toolbar/blank.bmp') #icon to be displayed to the user in the bar at the top of the window
+        self.toolbar_index = -1 #position of the window in the bar at the top of the window, set by the root frame
 
-        self.subframe_share = self.root_frame.subframe_share
+        self.subframe_share = self.root_frame.subframe_share #dictionary containing data to be shared between frames
 
-        self._datafile: sciplot.datafile.DataFile = self._datafile
+        self._datafile: sciplot.datafile.DataFile = self._datafile #property that gives the frame methods easy access to the database
+
+        #A repeated piece of code from classes inheriting from this one is the sizer being created
+        #The sizer is a grid that defines how GUI elements are arranged and resized in the window
+        #There are multiple different types and configurations depending on the type of GUI you want
+        #to create, so I have left constructing one to the inheriting classes
     
-    def get_menu_items(self):
+    def get_menu_items(self): #this method is to be queried by the root frame when it is creating the menu bar at the top of the screen and needs options to put in it
         """
         Get custom menu items to display on menubar
 
@@ -41,7 +46,7 @@ class SubFrame(wx.Panel):
         """
         return []
     
-    #hooks
+    #hooks - these are called by the root frame when an event happens
     def hook_file_opened(self):
         """
         Method called by root frame when a file is opened. Should be overwritten by inheriting class
@@ -59,14 +64,14 @@ class SubFrame(wx.Panel):
     
     #properties
     @property
-    def _datafile(self):
+    def _datafile(self): #_datafile getter
         if 'file' in self.subframe_share:
             return self.subframe_share['file']
         else:
             return None
     
     @_datafile.setter
-    def _datafile(self, value):
+    def _datafile(self, value): #_datafile setter
         self.subframe_share['file'] = value
 
 
@@ -78,4 +83,4 @@ import forms.frame_datapoints
 import forms.frame_constants
 
 
-manifest: typing.List[SubFrame] = [forms.frame_data.DataFrame, forms.frame_variables.VariablesFrame, forms.frame_datapoints.DataPointsFrame, forms.frame_graph.GraphFrame, forms.frame_constants.ConstantsFrame]
+manifest: typing.List[SubFrame] = [forms.frame_data.DataFrame, forms.frame_variables.VariablesFrame, forms.frame_datapoints.DataPointsFrame, forms.frame_graph.GraphFrame, forms.frame_constants.ConstantsFrame] #list of frames to be included in the bar at the top of the window
