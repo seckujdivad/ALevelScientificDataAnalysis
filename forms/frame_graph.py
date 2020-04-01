@@ -160,6 +160,8 @@ class GraphFrame(forms.SubFrame):
             var_id = self._variable_ids[var_selection]
             self._datafile.query(sciplot.database.Query("UPDATE Plot SET VariableXID = (?) WHERE PlotID = (?);", [var_id, plot_id], 0))
 
+            self.refresh_plot()
+
         event.Skip()
 
     def _bind_lb_plot_y_new_selection(self, event):
@@ -169,6 +171,8 @@ class GraphFrame(forms.SubFrame):
             plot_id = self._plot_ids[plot_selection]
             var_id = self._variable_ids[var_selection]
             self._datafile.query(sciplot.database.Query("UPDATE Plot SET VariableYID = (?) WHERE PlotID = (?);", [var_id, plot_id], 0))
+
+            self.refresh_plot()
 
         event.Skip()
     
