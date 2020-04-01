@@ -5,6 +5,9 @@ import sciplot.database
 
 
 class ConstantsFrame(forms.SubFrame):
+    """
+    UI frame for editing constants and their units
+    """
     def __init__(self, parent, root_frame):
         super().__init__(parent, root_frame)
 
@@ -18,12 +21,12 @@ class ConstantsFrame(forms.SubFrame):
         self._gbs_main.SetFlexibleDirection(wx.BOTH)
         self._gbs_main.SetNonFlexibleGrowMode(wx.FLEX_GROWMODE_SPECIFIED)
 
-        self._constant_ids = []
-        self._constant_symbols = []
-        self._unit_ids = []
-        self._base_unit_data = []
-        self._unit_table = {}
-        self._old_constant_selection = None
+        self._constant_ids = [] #primary keys of the loaded constants
+        self._constant_symbols = [] #symbols of the loaded constants aligned with _constant_ids
+        self._unit_ids = [] #unit composite primary keys of the loaded constants aligned with _constant_ids
+        self._base_unit_data = [] #tuples containing the primary keys and symbols of the SI base units
+        self._unit_table = {} #stores units for the selected constant in the format key: unit symbol, value: unit power
+        self._old_constant_selection = None #index of previous constant selection in _constant_ids
 
         #create elements
         self._lb_constants = wx.ListBox(self, wx.ID_ANY)
@@ -109,18 +112,21 @@ class ConstantsFrame(forms.SubFrame):
         event.Skip()
 
     def _bind_btn_add_new_clicked(self, event):
+        #write data from previously selected constant to the database
         self.store_spin_value(old = True)
         self.store_power_value(old = True)
 
         unit_id = self._datafile.create_unit(None, [(1, 1)])
         constant_id = self._datafile.query([sciplot.database.Query("INSERT INTO Constant (Symbol, UnitCompositeID, Value) VALUES ((?), (?), 0)", [self._entry_name.GetValue(), unit_id], 0),
-                                            sciplot.database.Query("SELECT last_insert_rowid();", [], 2)])[0][0]
+                                            sciplot.database.Query("SELECT last_insert_rowid();", [], 2)])[0][0] #add a new constant to the database
         
-        self._datafile.update_units("Constant", constant_id, None, [])
+        self._datafile.update_units("Constant", constant_id, None, []) #give the new constant blank units
 
+        #put default values into ui
         self._spn_value.SetValue(0)
         self._spn_power.SetValue(0)
 
+        #update constant list to show new constant
         self.refresh_constants_list()
         self._unit_table = {}
         self.refresh_unit_selection()
@@ -131,7 +137,7 @@ class ConstantsFrame(forms.SubFrame):
         selection = self._lb_constants.GetSelection()
         if selection != -1:
             self._datafile.query(sciplot.database.Query("DELETE FROM Constant WHERE ConstantID = (?);", [self._constant_ids[selection]], 0))
-            self._datafile.prune_unused_composite_units()
+            self._datafile.prune_unused_composite_units() #remove units of the deleted constant from the database
             self.refresh_constants_list()
 
         event.Skip()
@@ -154,13 +160,16 @@ class ConstantsFrame(forms.SubFrame):
 
     #frame methods
     def refresh_constants_list(self):
+        """
+        Updates the list of constants from the database
+        """
         selection = self._lb_constants.GetSelection()
 
         self._lb_constants.Clear()
         self._constant_ids.clear()
         self._unit_ids.clear()
         self._constant_symbols.clear()
-        for constant_id, constant_symbol, constant_unit_id in self._datafile.query(sciplot.database.Query("SELECT ConstantID, Symbol, UnitCompositeID FROM Constant;", [], 1))[0]:
+        for constant_id, constant_symbol, constant_unit_id in self._datafile.query(sciplot.database.Query("SELECT ConstantID, Symbol, UnitCompositeID FROM Constant;", [], 1))[0]: #unpack values into memory
             self._lb_constants.Append(constant_symbol)
             self._constant_symbols.append(constant_symbol)
             self._constant_ids.append(constant_id)
@@ -170,6 +179,9 @@ class ConstantsFrame(forms.SubFrame):
             self._lb_constants.SetSelection(selection)
     
     def store_spin_value(self, old = False):
+        """
+        Stores the value of the selected constant in the database
+        """
         if old == True:
             if self._old_constant_selection is None:
                 selection = -1
@@ -178,17 +190,20 @@ class ConstantsFrame(forms.SubFrame):
         else:
             selection = self._lb_constants.GetSelection()
 
-        if selection != -1:
+        if selection != -1: #there is a value selected, so store it in the database
             value = self._spn_value.GetValue()
             self._datafile.query(sciplot.database.Query("UPDATE Constant SET `Value` = (?)  WHERE ConstantID = (?);", [value, self._constant_ids[selection]], 0))
     
     def refresh_units_list(self):
+        """
+        Updates the list of base SI units from the database
+        """
         selection = self._lb_units.GetSelection()
 
         self._base_unit_data.clear()
         self._lb_units.Clear()
 
-        for unit_id, unit_symbol in self._datafile.query(sciplot.database.Query("SELECT UnitID, Symbol FROM Unit;", [], 1))[0]:
+        for unit_id, unit_symbol in self._datafile.query(sciplot.database.Query("SELECT UnitID, Symbol FROM Unit;", [], 1))[0]: #get units from database
             self._base_unit_data.append((unit_id, unit_symbol))
             self._lb_units.Append(unit_symbol)
 
@@ -196,6 +211,9 @@ class ConstantsFrame(forms.SubFrame):
             self._lb_units.SetSelection(selection)
     
     def refresh_unit_selection(self):
+        """
+        Updates the power in the spin box of the selected base SI unit for the constant
+        """
         selection = self._lb_units.GetSelection()
         if selection != -1:
             unit_id, unit_symbol = self._base_unit_data[selection]
@@ -209,6 +227,9 @@ class ConstantsFrame(forms.SubFrame):
             self._spn_power.SetValue(0)
     
     def store_power_value(self, old = False):
+        """
+        Stores the new power in the spin box for the selected base SI unit in the database for the selected constant
+        """
         if old == True:
             if self._old_constant_selection is None:
                 constant_selection = -1
@@ -219,7 +240,7 @@ class ConstantsFrame(forms.SubFrame):
 
         unit_selection = self._lb_units.GetSelection()
         
-        if constant_selection != -1 and unit_selection != -1:
+        if constant_selection != -1 and unit_selection != -1: #a unit and a constant is selected, so the power needs storing
             value = self._spn_power.GetValue()
             unit_id, unit_symbol = self._base_unit_data[unit_selection]
             self._unit_table[unit_symbol] = value
