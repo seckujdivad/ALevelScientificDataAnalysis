@@ -1,6 +1,9 @@
 import math
 import typing
 
+import sciplot
+import sciplot.datatable
+
 
 class FitLines:
     """
@@ -10,7 +13,7 @@ class FitLines:
         datatable (Datatable): a datatable with exactly two columns that has already had .load called on it
     """
     def __init__(self, datatable):
-        self._datatable = datatable
+        self._datatable: sciplot.datatable.Datatable = datatable
 
         if len(self._datatable.as_columns()) != 2:
             raise ValueError("Datatable must have exactly 2 columns, not {}".format(len(self._datatable.as_columns())))
@@ -28,10 +31,16 @@ class FitLines:
         self.fit_worst_min_intercept = None
     
     def calculate_all(self):
+        """
+        Calculate lines of best and worst fit
+        """
         self.calculate_best_fit()
         self.calculate_worst_fits()
 
     def calculate_best_fit(self):
+        """
+        Calculate equation of the best fit line
+        """
         #get raw values
         x_values = [value.value for value in self._datatable.as_columns()[0]]
         y_values = [value.value for value in self._datatable.as_columns()[1]]
@@ -67,11 +76,14 @@ class FitLines:
         self.fit_best_intercept = y_mean - (x_mean * self.fit_best_gradient)
 
     def calculate_worst_fits(self):
+        """
+        Calculate equations of the two worst fit lines
+        """
         x_values, y_values = self._datatable.as_columns()
 
         potential_fit_lines: typing.List[typing.Tuple[float, float]] = [] #gradient, intercept of all fit lines that go through all points
 
-        for switch in [(a, b, c, d) for a in [1, -1] for b in [1, -1] for c in [1, -1] for d in [1, -1]]: #compute cartesian product of the sets (1, -1) and (1, -1) to get the edges of the value (limited by its uncertainty)
+        for switch in [(a, b, c, d) for a in [1, -1] for b in [1, -1] for c in [1, -1] for d in [1, -1]]: #compute cartesian product of the sets (1, -1) and (1, -1) to get the four corners of the value (limited by its uncertainty)
             for i in range(len(x_values)):
                 for j in range(len(x_values)):
                     if (i != j) and (x_values[i] != x_values[j]): #dont generate a line for two identical points
@@ -94,7 +106,7 @@ class FitLines:
             self.fit_worst_min_gradient = None
             self.fit_worst_min_intercept = None
 
-        else: #find the worst minimum and maximum
+        else: #find the worst minimum and maximum (worst = most extreme gradients)
             max_index = 0
             min_index = 0
             for i in range(len(potential_fit_lines)):
@@ -106,21 +118,59 @@ class FitLines:
             self.fit_worst_max_gradient, self.fit_worst_max_intercept = potential_fit_lines[max_index]
             self.fit_worst_min_gradient, self.fit_worst_min_intercept = potential_fit_lines[min_index]
 
-    def _check_line(self, gradient, intercept, x_values, y_values): #make sure a line goes through all the points
+    def _check_line(self, gradient: float, intercept: float, x_values: typing.List[sciplot.Value], y_values: typing.List[sciplot.Value]):
+        """
+        Make sure a line goes through all of the points in a data set
+
+        Args:
+            gradient (float): gradient of line to check
+            intercept (float): y-intercept of line to check
+            x_values (list of Value): x-axis values
+            y_values (list of Value): y-axis values corresponding to the x-axis values of the same index
+        
+        Returns:
+            (bool): whether the line goes through all the values
+        """
         for i in range(len(x_values)):
             if not self._line_covers_value(gradient, intercept, x_values[i], y_values[i]):
                 return False
         return True
 
-    def _line_covers_value(self, gradient, intercept, x_value, y_value): #line, at some point, goes through the box produced by a value and its uncertainty
+    def _line_covers_value(self, gradient, intercept, x_value, y_value):
+        """
+        Checks whether or not a line, at some point, goes through the box produced by a value and its uncertainty
+
+        Args:
+            gradient (float): gradient of line to check
+            intercept (float): y-intercept of line to check
+            x_value Value): x value
+            y_value (Value): y value
+        
+        Returns:
+            (bool): whether the line goes through the value
+        """
         return self._line_covers_value_axes(gradient, intercept, x_value, y_value) or self._line_covers_value_axes(gradient, intercept, y_value, x_value)
     
     def _line_covers_value_axes(self, gradient, intercept, x_value, y_value):
+        """
+        Whether the line goes through the maximum or minimum x border of the value
+        For internal use only
+
+         Args:
+            gradient (float): gradient of line to check
+            intercept (float): y-intercept of line to check
+            x_value Value): x value
+            y_value (Value): y value
+        
+        Returns:
+            (bool): whether the line goes through the x border
+        """
         min_x = x_value.value - x_value.absolute_uncertainty
         max_x = x_value.value + x_value.absolute_uncertainty
         min_y = y_value.value - y_value.absolute_uncertainty
         max_y = y_value.value + y_value.absolute_uncertainty
 
+        #check if the y value is in the range (ie inside the box) at the minimum or maximum x border
         touches_min_x = min_y <= (intercept + (gradient * min_x)) <= max_y
         touches_max_x = min_y <= (intercept + (gradient * max_x)) <= max_y
 
