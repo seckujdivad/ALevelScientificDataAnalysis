@@ -7,6 +7,9 @@ import sciplot.database
 
 
 class DataPointsFrame(forms.SubFrame):
+    """
+    UI frame for displaying and editing individual values in data sets
+    """
     def __init__(self, parent, root_frame):
         super().__init__(parent, root_frame)
 
@@ -21,8 +24,8 @@ class DataPointsFrame(forms.SubFrame):
         self._gbs_main.SetNonFlexibleGrowMode(wx.FLEX_GROWMODE_SPECIFIED)
 
         #create elements
-        self._data_sets = []
-        self._data_points = []
+        self._data_sets = [] #list of tuples containing the data set IDs and their symbols
+        self._data_points = [] #list of tuples containing the data point IDs and their values
         self._data_point_current = None #self._data_points index
         self._data_set_id = None #data set ID
 
@@ -90,49 +93,61 @@ class DataPointsFrame(forms.SubFrame):
     
     def _bind_btn_add_new_clicked(self, event):
         if self._data_set_id is not None:
-            self._datafile.query(sciplot.database.Query("INSERT INTO DataPoint (DataSetID, Value) VALUES ((?), (?));", [self._data_set_id, 0], 0))
+            self._datafile.query(sciplot.database.Query("INSERT INTO DataPoint (DataSetID, Value) VALUES ((?), (?));", [self._data_set_id, 0], 0)) #add new data point to the database
             self.refresh_data_points()
 
         event.Skip()
     
     def _bind_btn_remove_clicked(self, event):
-        if self._data_point_current is not None and self._data_set_id is not None:
-            self._datafile.query(sciplot.database.Query("DELETE FROM DataPoint WHERE DataSetID = (?) AND DataPointID = (?);", [self._data_set_id, self._data_points[self._data_point_current][0]], 0))
+        if self._data_point_current is not None and self._data_set_id is not None: #a data point is selected, so remove it
+            self._datafile.query(sciplot.database.Query("DELETE FROM DataPoint WHERE DataSetID = (?) AND DataPointID = (?);", [self._data_set_id, self._data_points[self._data_point_current][0]], 0)) #remove the selected data point
             self.refresh_data_points()
 
             selection = self._dvl_datapoints.GetSelectedRow()
             self._spn_value.SetValue(self._data_points[self._data_point_current][1])
 
-            self._datafile.prune_unused_composite_units()
+            self._datafile.prune_unused_composite_units() #clean the database of unused units
 
         event.Skip()
 
     #frame methods
     def refresh_dataset_list(self):
-        self._data_sets = self._datafile.query(sciplot.database.Query("SELECT DataSetID, Symbol FROM DataSet INNER JOIN Variable ON ID = DataSetID AND TYPE = 0;", [], 1))[0]
+        """
+        Update the list of data sets from the database
+        """
+        self._data_sets = self._datafile.query(sciplot.database.Query("SELECT DataSetID, Symbol FROM DataSet INNER JOIN Variable ON ID = DataSetID AND TYPE = 0;", [], 1))[0] #get all data sets from the database
         self._lb_datasets.Clear()
-        for data_set_id, symbol in self._data_sets:
+        for data_set_id, symbol in self._data_sets: #add data set data to the UI
             self._lb_datasets.Append(symbol)
 
     def resize_datapoint_columns(self):
+        """
+        The DataViewListControl has only one column. This method expands that column so that it fills the control
+        """
         width = self._dvl_datapoints.GetSize()[0]
-        self._dvc_col.SetWidth(width - 30)
+        self._dvc_col.SetWidth(width - 30) #subtract from the width to account for the scrollbar, window border etc
     
     def refresh_data_points(self):
+        """
+        Update the list of data points and their values for the currently selected data set
+        """
         selection = self._lb_datasets.GetSelection()
         if selection != -1:
             self._data_set_id = self._data_sets[selection][0]
 
-            self._data_points = [[tup[0], tup[1]] for tup in self._datafile.query(sciplot.database.Query("SELECT DataPointID, Value FROM DataPoint WHERE DataSetID = (?);", [self._data_set_id], 1))[0]]
+            self._data_points = [[tup[0], tup[1]] for tup in self._datafile.query(sciplot.database.Query("SELECT DataPointID, Value FROM DataPoint WHERE DataSetID = (?);", [self._data_set_id], 1))[0]] #get all data points from the database
             
             self._dvl_datapoints.DeleteAllItems()
             for data_point_id, value in self._data_points:
-                self._dvl_datapoints.AppendItem([value])
+                self._dvl_datapoints.AppendItem([value]) #DVL requires that you append a list containing a value for each column, but we only have one column
         
         else:
             self._data_point_current = None
     
     def write_current_data_point(self):
+        """
+        Update the stored value of the currently selected data point in the database to match the value inputted by the user
+        """
         selection = self._dvl_datapoints.GetSelectedRow()
 
         if self._data_point_current is not None and self._data_set_id is not None:
