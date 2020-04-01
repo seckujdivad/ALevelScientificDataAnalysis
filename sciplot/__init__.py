@@ -91,11 +91,20 @@ class Value:
 
                     return_string += '0' * chars_to_add
             
-            else:
+            else: #standard mode (*.*, 00.* etc)
                 return_string = str(value)
 
+                #pre_decimal: format string pre decimal place
+                #post_decimal: format string post decimal place
+                #pre_return: digits before the decimal place in formatted form
+                #post_return: digits after the decimal place in formatted form
+                #pre_capped: whether or not the number of digits before the decimal place is capped
+                #post_capped: whether or not the number of digits after the decimal place is capped
+                #pre_size: number of digits to cap to before the deicmal place
+                #post_size: number of digits to cap to after the deicmal place
+
                 #split format string around decimal place
-                if formatstring.find('.') == -1:
+                if formatstring.find('.') == -1: #no decimal place
                     pre_decimal = formatstring
                     post_decimal = ''
                 else:
@@ -130,18 +139,19 @@ class Value:
                     pre_return = return_string[:return_pivot]
                     post_return = return_string[return_pivot + 1:]
                 
-                if pre_size > len(pre_return):
+                if pre_size > len(pre_return): #pre_return is too short, pad with zeroes
                     pre_return = ('0' * (pre_size - len(pre_return))) + pre_return
-                elif (pre_size < len(pre_return)) and pre_capped:
+                elif (pre_size < len(pre_return)) and pre_capped: #pre_return is too long, remove leading digits
                     pre_return = pre_return[0 - len(pre_return) + pre_size:]
                 
-                if post_decimal == '':
+                if post_decimal == '': #nothing should be added after the decimal place
                     post_return = ''
-                elif post_size > len(post_return):
+
+                elif post_size > len(post_return): #post_return is too short, pad with zeroes
                     post_return += '0' * (post_size - len(post_return))
+
                 elif (post_size < len(post_return)) and post_capped:
-                    leading_zeroes = 0
-                    
+                    leading_zeroes = 0 #get the number of leading zeroes as these aren't preserved by the rounding and they are significant (as this is after the decimal place)
                     for i in range(len(post_return)):
                         char = post_return[i]
                         if char == '0':
@@ -154,11 +164,13 @@ class Value:
                         if self.upwards_round(int(post_return[j]) / 10) == 0:
                             check_round_up = False
                     
+                    #remove a leading zero if the number will round up (and add another digit to the front)
                     if i < len(post_return) - 2 and post_return[i] == '9' and check_round_up:
                         leading_zeroes -= 1
                     
-                    post_return = '0' * leading_zeroes + str(int(self.upwards_round(int(post_return) / pow(10, len(post_return) - post_size))))
+                    post_return = '0' * leading_zeroes + str(int(self.upwards_round(int(post_return) / pow(10, len(post_return) - post_size)))) #add leading zeroes and round
                 
+                #combine pre_return and post_return
                 if post_return == '':
                     return_string = pre_return
                 elif pre_return == '':
@@ -208,7 +220,7 @@ class Value:
             return self._uncertainty
         else:
             if self.value == 0:
-                return 0
+                return 0 #python supports representations of infinity, but these were causing bugs in wxWidgets which wasn't designed with this in mind, so I have disabled this for simplicity
                 #if self._uncertainty > 0:
                 #    return float("+inf")
                 #else:
