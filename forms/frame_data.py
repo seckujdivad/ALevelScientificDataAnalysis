@@ -9,6 +9,9 @@ import sciplot.datatable
 
 
 class DataFrame(forms.SubFrame):
+    """
+    UI frame for displaying and creating tables
+    """
     def __init__(self, parent, root_frame):
         super().__init__(parent, root_frame)
 
@@ -27,10 +30,10 @@ class DataFrame(forms.SubFrame):
         self._dvl_data = None
         self._recreate_dvl_data()
 
-        self._tables = []
-        self._columns = []
+        self._tables = [] #list of tuples containing the primary key of each table and its title
+        self._columns = [] #list of tuples containing the primary key of each variable and its symbol
 
-        self._column_selected_previous = -1
+        self._column_selected_previous = -1 #index of the previously selected column (for when the selection changes and old values need storing)
 
         self._lb_tables = wx.ListBox(self, wx.ID_ANY)
         self._lb_tables.Bind(wx.EVT_LISTBOX, self._bind_lb_tables_new_selection)
@@ -85,7 +88,7 @@ class DataFrame(forms.SubFrame):
     
     #ui binds
     def _bind_btn_add_clicked(self, event):
-        self._datafile.query(sciplot.database.Query("INSERT INTO `Table` (Title) VALUES ((?));", [self._entry_newtable.GetValue()], 0))
+        self._datafile.query(sciplot.database.Query("INSERT INTO `Table` (Title) VALUES ((?));", [self._entry_newtable.GetValue()], 0)) #add new table to database
         self._entry_newtable.SetValue("")
         self.refresh_table_list()
         event.Skip()
@@ -96,7 +99,7 @@ class DataFrame(forms.SubFrame):
             table_id = self._tables[selection_index][0]
 
             self._datafile.query([sciplot.database.Query("DELETE FROM `Table` WHERE TableID = (?);", [table_id], 0),
-                                               sciplot.database.Query("DELETE FROM TableColumn WHERE TableID = (?);", [table_id], 0)])
+                                               sciplot.database.Query("DELETE FROM TableColumn WHERE TableID = (?);", [table_id], 0)]) #remove table from database
 
             self.refresh_table_list()
 
@@ -120,6 +123,9 @@ class DataFrame(forms.SubFrame):
 
     #frame methods
     def refresh_table(self):
+        """
+        Updates table columns and contents in the UI
+        """
         selection_index = self._lb_tables.GetSelection()
         if selection_index != -1:
             table_id = self._tables[selection_index][0]
@@ -156,7 +162,7 @@ class DataFrame(forms.SubFrame):
                 datatable.load(constants_table)
             
             except Exception as e:
-                wx.MessageBox('Couldn\'t generate table\n{}'.format(str(e)), type(e).__name__, wx.ICON_ERROR | wx.OK)
+                wx.MessageBox('Couldn\'t generate table\n{}'.format(str(e)), type(e).__name__, wx.ICON_ERROR | wx.OK) #display error message for the user
                 no_exception = False
 
             if no_exception:
@@ -203,40 +209,46 @@ class DataFrame(forms.SubFrame):
     def _recreate_dvl_data(self):
         """
         DataViewListCtrls aren't dynamic and won't allow new columns to be added once data has been added (even if the table is empty).
-        I have got around this by destroying it and recreating it whenever a new column needs to be added,
-        If I see a way around this I will remove this method.
+        I have got around this by destroying it and recreating it whenever a new column needs to be added. This is not how I'd prefer
+        to implement it, but it is a limitation of this UI control.
         """
-        if self._dvl_data is not None:
+        if self._dvl_data is not None: #destroy the old control object if it had been created
             self._dvl_data.Destroy()
             self._dvl_columns = []
         
-        self._dvl_data = wx.dataview.DataViewListCtrl(self, wx.ID_ANY)
-        self._gbs_main.Add(self._dvl_data, wx.GBPosition(0, 0), wx.GBSpan(3, 1), wx.ALL | wx.EXPAND)
-        self.Layout()
+        self._dvl_data = wx.dataview.DataViewListCtrl(self, wx.ID_ANY) #make a new control object
+        self._gbs_main.Add(self._dvl_data, wx.GBPosition(0, 0), wx.GBSpan(3, 1), wx.ALL | wx.EXPAND) #add the new control to the sizer
+        self.Layout() #update the layout of the window to account for the new control
     
     def refresh_column_list(self):
-        selection = self._ckl_columns.GetSelection()
+        """
+        Updates the list of variables that can be used as columns from the database
+        """
+        selection = self._ckl_columns.GetSelection() #store the index of the selected column so it can be reselected after the column is refreshed
         checked_items = self._ckl_columns.GetCheckedItems()
 
-        self._ckl_columns.Clear()
+        self._ckl_columns.Clear() #clear UI ready for the updated column list
         self._columns.clear()
 
-        variables = self._datafile.query(sciplot.database.Query("SELECT Symbol, VariableID FROM Variable", [], 1))[0]
+        variables = self._datafile.query(sciplot.database.Query("SELECT Symbol, VariableID FROM Variable", [], 1))[0] #get all variables from database
         for variable_str, variable_id in variables:
-            self._ckl_columns.Append(variable_str)
+            self._ckl_columns.Append(variable_str) #add to the list of columns
             self._columns.append((variable_id, variable_str))
         
-        if selection != -1:
+        if selection != -1: #reselect selections that were unselected when all of the elements were removed
             self._ckl_columns.SetSelection(selection)
         self._ckl_columns.SetCheckedItems(checked_items)
     
     def refresh_table_list(self):
-        selection = self._lb_tables.GetSelection()
+        """
+        Updates the list of tables from the database
+        """
+        selection = self._lb_tables.GetSelection() #preserve table selection
 
         self._tables.clear()
         self._lb_tables.Clear()
 
-        tables = self._datafile.query(sciplot.database.Query("SELECT TableID, Title FROM `Table`", [], 1))[0]
+        tables = self._datafile.query(sciplot.database.Query("SELECT TableID, Title FROM `Table`", [], 1))[0] #get all tables from the database
         for table_id, table_title in tables:
             self._lb_tables.Append(table_title)
             self._tables.append((table_id, table_title))
@@ -245,6 +257,9 @@ class DataFrame(forms.SubFrame):
             self._lb_tables.SetSelection(selection)
     
     def _column_selection_change(self):
+        """
+        Updates the selected columns in the selected table in the database
+        """
         selection_index = self._lb_tables.GetSelection()
         if selection_index != -1:
             table_id = self._tables[selection_index][0]
@@ -264,16 +279,19 @@ class DataFrame(forms.SubFrame):
             
             queries = []
             for variable_id in to_add:
-                queries.append(sciplot.database.Query("INSERT INTO TableColumn (TableID, VariableID, FormatPattern) VALUES ((?), (?), (?));", [table_id, variable_id, "*.*"], 0))
+                queries.append(sciplot.database.Query("INSERT INTO TableColumn (TableID, VariableID, FormatPattern) VALUES ((?), (?), (?));", [table_id, variable_id, "*.*"], 0)) #add new column to table with a generic format string
             
             for variable_id in to_remove:
-                queries.append(sciplot.database.Query("DELETE FROM TableColumn WHERE VariableID = (?);", [variable_id], 0))
+                queries.append(sciplot.database.Query("DELETE FROM TableColumn WHERE VariableID = (?);", [variable_id], 0)) #remove unselected column from the database
             
             self._datafile.query(queries)
 
-            self.refresh_table()
+            self.refresh_table() #update table to reflect the changed columns
     
     def _table_selected(self):
+        """
+        Updates the selected columns and displayed table from the database to reflect the newly selected table
+        """
         selection_index = self._lb_tables.GetSelection()
         if selection_index != -1:
             table_id = self._tables[selection_index][0]
@@ -292,6 +310,9 @@ class DataFrame(forms.SubFrame):
             self.refresh_table()
     
     def _column_selected(self):
+        """
+        Updates the format string that corresponds to the newly selected column from the database
+        """
         #get selections from ui
         selection_index = self._ckl_columns.GetSelection()
         table_selection_index = self._lb_tables.GetSelection()
@@ -318,6 +339,9 @@ class DataFrame(forms.SubFrame):
             self._column_selected_previous = self._ckl_columns.GetSelection()
     
     def _refresh_table(self):
+        """
+        Refresh method that refreshes the whole UI
+        """
         self._column_selected()
         self._table_selected()
         self._column_selection_change()
