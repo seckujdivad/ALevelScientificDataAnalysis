@@ -74,7 +74,7 @@ class FitLines:
         for switch in [(a, b, c, d) for a in [1, -1] for b in [1, -1] for c in [1, -1] for d in [1, -1]]: #compute cartesian product of the sets (1, -1) and (1, -1) to get the edges of the value (limited by its uncertainty)
             for i in range(len(x_values)):
                 for j in range(len(x_values)):
-                    if i != j:
+                    if (i != j) and (x_values[i] != x_values[j]): #dont generate a line for two identical points
                         first_value_x = x_values[i]
                         first_value_y = y_values[i]
                         second_value_x = x_values[j]
