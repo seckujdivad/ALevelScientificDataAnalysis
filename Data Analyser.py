@@ -94,7 +94,7 @@ class RootFrame(wx.Frame):
             new_frame = FrameType(self._bk_sub, self)
             self._subframes[new_frame.identifier] = new_frame
             self._tlbr_panelswitch_tools[new_frame.identifier] = self._tlbr_panelswitch.AddTool(wx.ID_ANY, new_frame.styling_name, new_frame.styling_icon)
-            self._tlbr_panelswitch_tools[new_frame.identifier].SetLongHelp(new_frame.styling_name)
+            self._tlbr_panelswitch_tools[new_frame.identifier].SetLongHelp(new_frame.styling_name) #set the hover tooltip on the toolbar button to be the name of the frame that the toolbar button will switch to
 
             self.Bind(wx.EVT_TOOL, functools.partial(self.toolbar_form_clicked, new_frame.identifier), self._tlbr_panelswitch_tools[new_frame.identifier])
             self._bk_sub.ShowNewPage(new_frame)
@@ -107,7 +107,7 @@ class RootFrame(wx.Frame):
             for name, items in menu_items:
                 for title, func in items:
                     if self._mb_cats_internalonly[name]:
-                        self._mb_cats[name].AppendSeparator()
+                        self._mb_cats[name].AppendSeparator() #this is the start of the menu items provided by the external frames, add a separator to show this
                         self._mb_cats_internalonly[name] = False
 
                     menu_item = self._mb_cats[name].Append(wx.ID_ANY, title)
@@ -119,7 +119,7 @@ class RootFrame(wx.Frame):
             
             i += 1
 
-        #controls have been added, make toolbar static
+        #controls have all been added, make toolbar static
         self._tlbr_panelswitch.Realize()
         self._gbs_main.Add(self._tlbr_panelswitch, wx.GBPosition(0, 0), wx.GBSpan(1, 1), wx.ALL | wx.EXPAND, 0)
 
@@ -142,7 +142,7 @@ class RootFrame(wx.Frame):
             self._bk_sub.SetSelection(self._subframes[form].toolbar_index)
             self._sb_main.PopStatusText()
             self._subframes[form].hook_frame_selected()
-            self._sb_main.PushStatusText(self._subframes[form].styling_name + '  ')
+            self._sb_main.PushStatusText(self._subframes[form].styling_name + '  ') #the status bar has strange behaviour when you add a status text that is the same as the last one, this avoids that
             self._current_frame = form
     
     def toolbar_form_clicked(self, name, event):
@@ -159,13 +159,13 @@ class RootFrame(wx.Frame):
         else:
             commit_changes = wx.OK
 
-        if commit_changes != wx.CANCEL:
+        if commit_changes != wx.CANCEL: #user didn't back out of opening a new database, prompt them for the database path
             with wx.FileDialog(self, "Open DataFile", wildcard = "DataFile (*.db)|*.db", defaultDir = sys.path[0], style = wx.FD_OPEN | wx.FD_FILE_MUST_EXIST) as file_dialog:
-                if file_dialog.ShowModal() == wx.ID_CANCEL:
+                if file_dialog.ShowModal() == wx.ID_CANCEL: #user clicked cancel, stick with current database
                     pass
 
                 else:
-                    if self.subframe_share['file is temp']:
+                    if self.subframe_share['file is temp']: #delete the old unnecessary temporary file if it exists
                         if self.subframe_share['file'] is not None:
                             self.subframe_share['file'].close()
                         os.remove("user/temp.db")
@@ -173,9 +173,9 @@ class RootFrame(wx.Frame):
 
                     path = file_dialog.GetPath()
                     
-                    self.subframe_share['file'] = sciplot.datafile.DataFile(path)
+                    self.subframe_share['file'] = sciplot.datafile.DataFile(path) #open the new database
                     
-                    if self.subframe_share['file'].tables_are_valid():
+                    if self.subframe_share['file'].tables_are_valid(): #check the database to make sure that the tables are valid
                         for frame in self._subframes:
                             self._subframes[frame].hook_file_opened()
                     
@@ -209,13 +209,13 @@ class RootFrame(wx.Frame):
 
                 else:
                     path = file_dialog.GetPath()
-                    self.subframe_share['file'].commit()
+                    self.subframe_share['file'].commit() #close the database so it can be moved safely
                     self.subframe_share['file'].close()
 
-                    shutil.copyfile("user/temp.db", path)
-                    os.remove("user/temp.db")
+                    shutil.copyfile("user/temp.db", path) #move the temporary file to its new location
+                    os.remove("user/temp.db") #remove old temporary file
 
-                    self.subframe_share['file'] = sciplot.datafile.DataFile(path)
+                    self.subframe_share['file'] = sciplot.datafile.DataFile(path) #open the database again
                     self.subframe_share['file is temp'] = False
         
         else:
@@ -237,7 +237,8 @@ class App(wx.App):
     def __init__(self):
         super().__init__()
 
-        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("davidjuckes.sciplot")
+        #see https://docs.microsoft.com/en-us/windows/win32/api/shobjidl_core/nf-shobjidl_core-setcurrentprocessexplicitappusermodelid
+        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("davidjuckes.sciplot") #sets the AppUserModelID for this process
 
         self.frame_root = RootFrame(self)
         self.frame_root.Show(True)
