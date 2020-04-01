@@ -113,7 +113,7 @@ class Database:
                                     return_values.append((0, cursor.fetchmany()))
                     
                     except Exception as e:
-                        self._connection.execute("ROLLBACK;") #reset erroneous transaction
+                        self._connection.execute("ROLLBACK;") #roll back after bad transaction
                         self._connection.execute("BEGIN;")
 
                         if query.fetchmode == 0: #rethrow the exception: there is no thread to throw it in other than this one
