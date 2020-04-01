@@ -39,20 +39,19 @@ class TestDatabase(unittest.TestCase):
     
     def test_write(self):
         with self.create_db() as db:
-            q0 = database.Query('BEGIN;', [], 0)
             q1 = database.Query('INSERT INTO TestTable ("Value", "String") VALUES (55, "Hello World!");', [], 0)
             q2 = database.Query('SELECT "Value", "String" FROM TestTable WHERE "Value" = 55;', [], 1)
             q3 = database.Query('ROLLBACK;', [], 0)
-            result = db.query([q0, q1, q2, q3])
+            result = db.query([q1, q2, q3])
             self.assertEqual(result, [[(55, "Hello World!")]])
     
     def test_multiline(self):
         with self.create_db() as db:
-            query = database.Query('''BEGIN;
+            query = database.Query('''
             INSERT INTO TestTable ("Value", "String") VALUES (55, "Hello World!");
             SELECT "Value", "String" FROM TestTable WHERE "Value" = 55;
             ROLLBACK;''', [], 1)
-            self.assertEqual(db.query(query), [[], [], [(55, "Hello World!")], []])
+            self.assertEqual(db.query(query), [[], [(55, "Hello World!")], []])
     
     def test_bad_query(self):
         with self.create_db() as db:

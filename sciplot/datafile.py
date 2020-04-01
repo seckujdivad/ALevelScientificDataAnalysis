@@ -13,9 +13,6 @@ class DataFile(Database):
     """
     def __init__(self, path: str):
         super().__init__(path)
-
-        query = Query("BEGIN", [], 1)
-        self.query(query)
     
     ##ddl
     #management

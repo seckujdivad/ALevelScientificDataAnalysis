@@ -69,6 +69,10 @@ class Database:
         self._creation_event.wait()
         if self._creation_exception is not None:
             raise type(self._creation_exception)(str(self._creation_exception))
+        
+        #open a new transaction
+        query = Query("BEGIN", [], 1)
+        self.query(query)
     
     def _queryd(self, path: str, pipe: multiprocessing.connection.PipeConnection):
         """
@@ -109,6 +113,9 @@ class Database:
                                     return_values.append((0, cursor.fetchmany()))
                     
                     except Exception as e:
+                        self._connection.execute("ROLLBACK;") #reset erroneous transaction
+                        self._connection.execute("BEGIN;")
+
                         if query.fetchmode == 0: #rethrow the exception: there is no thread to throw it in other than this one
                             raise type(e)(str(e))
                         
