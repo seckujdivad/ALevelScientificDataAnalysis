@@ -62,7 +62,7 @@ class DataFile(Database):
             self.query(Query(ddl_queries[name], [], 0))
 
         queries = []
-        for name in ["s", "m", "kg", "A", "K", "mol", "cd"]:
+        for name in ["s", "m", "kg", "A", "K", "mol", "cd"]: #add base SI units to new database
             queries.append(Query("INSERT INTO Unit (Symbol) VALUES ((?))", [name], 0))
         self.query(queries)
     
@@ -172,7 +172,7 @@ class DataFile(Database):
 
         unit_composite_id = self.query(Query("SELECT UnitCompositeID FROM {0} WHERE {0}ID = (?);".format(table_name), [table_id], 2))[0][0]
 
-        #remove 0 powers
+        #remove powers of 0
         for tup in unit_table:
             if tup[1] == 0:
                 unit_table.remove(tup)
@@ -206,7 +206,7 @@ class DataFile(Database):
                     self.query(Query("DELETE FROM UnitComposite WHERE UnitCompositeID = (?);", [unit_composite_id], 0))
                     self.query(Query("DELETE FROM UnitCompositeDetails WHERE UnitCompositeID = (?);", [unit_composite_id], 0))
     
-    def prune_unused_composite_units(self):
+    def prune_unused_composite_units(self): #remove composite units that aren't attached to a data set or constant
         for composite_unit_id in self.query(Query("SELECT UnitCompositeID FROM UnitComposite", [], 1))[0]:
             composite_unit_id = composite_unit_id[0]
 
@@ -356,7 +356,7 @@ WHERE DataSet.DataSetID = (?)'''
     def remove_plot(self, plot_id: int):
         self.query(Query('DELETE FROM Plot WHERE PlotID = (?)', [plot_id], 0))
     
-    def get_unit_string(self, unit_table: typing.List[typing.Tuple[int, float]]):
+    def get_unit_string(self, unit_table: typing.List[typing.Tuple[int, float]]): #format unit table containing a tuple of primary keys and powers in a human-readable way
         unit_string = ""
         for unit_id, unit_power in unit_table:
             if unit_power != 0:
