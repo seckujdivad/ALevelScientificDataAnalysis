@@ -155,8 +155,6 @@ class RootFrame(wx.Frame):
 
             if commit_changes == wx.OK:
                 self.subframe_share['file'].commit()
-                self.subframe_share['file'].close()
-                self.subframe_share['file'] = None
 
         else:
             commit_changes = wx.OK
