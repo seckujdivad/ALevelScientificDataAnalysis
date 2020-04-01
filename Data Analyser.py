@@ -74,7 +74,7 @@ class RootFrame(wx.Frame):
         self.SetMenuBar(self._mb_main)
 
         #add internal menu bar items
-        for cat, title, func in [('File', 'Open', self._choose_db), ('File', 'Save', self._commit_db), ('File', 'Save Temporary File', self._save_temp), ('Help', 'Quickstart', self._help_quickstart)]:
+        for cat, title, func in [('File', 'Open', self._choose_db), ('File', 'Save', self._commit_db), ('File', 'Save As (temporary files)', self._save_temp), ('Help', 'Quickstart', self._help_quickstart)]:
             menu_item = self._mb_cats[cat].Append(wx.ID_ANY, title)
             self.Bind(wx.EVT_MENU, func, menu_item)
             self._mb_subitems[cat].append(menu_item)
