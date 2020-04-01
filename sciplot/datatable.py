@@ -25,12 +25,18 @@ class Datatable:
         """
         Set the variable ids of the columns to be used in calls to load.
         The order they are given is the order they will be given in in as_rows and as_columns
+
+        Args:
+            variable_ids (list of int): list of variable primary keys
         """
         self._variable_ids = variable_ids.copy()
 
     def load(self, constants_table: typing.Dict[str, sciplot.Value]):
         """
         Load the variables given in set_variables into memory where they can be retrieved using as_rows and as_columns
+
+        Args:
+            constants_table (dict of str: sciplot.Value): table containing constant values and their symbols for use while evaluating functions
         """
         constants_table = constants_table.copy()
 
@@ -103,7 +109,7 @@ class Datatable:
                 
                 current_dependency["axis names"] = functions.get_variable_names(dependency, split_graphs = True)
 
-            elif split_dep_name[-1] in ["MEAN", "MAX", "MIN"]:
+            elif split_dep_name[-1] in ["MEAN", "MAX", "MIN"]: #processed data set
                 current_dependency["type"] = "value"
 
                 if split_dep_name[-1] == "MEAN":
@@ -118,7 +124,7 @@ class Datatable:
                     current_dependency["access mode"] = "single"
                     current_dependency["processing"] = "min"
             
-                if current_dependency["symbol"] in function_table:
+                if current_dependency["symbol"] in function_table: #processed data set is actually a formula, not a data set
                     current_dependency["subtype"] = "processed formula"
                 else:
                     current_dependency["subtype"] = None
@@ -147,7 +153,7 @@ class Datatable:
         
                 dataset_table[dependency_name] = values
         
-        #process averages, maxes, mins
+        #pick out averages, maxes, mins and graphical data for processing
         values_to_evaluate = []
         for dependency_name in dependency_table:
             dependency_data = dependency_table[dependency_name]
@@ -307,8 +313,8 @@ class Datatable:
         for variable_id, variable_symbol, variable_subid, variable_type in variable_data:
             if var_type_lookup[variable_type] == "formula":
                 dataset_length = -1
-                function_inputs = {}
-                function_input_table = {}
+                function_inputs = {} #inputs for the function, stored as values or lists of values
+                function_input_table = {} #inputs for the function containing a specific row (samples from function_inputs)
 
                 func_dependencies = functions.evaluate_dependencies(variable_symbol, function_table, step_into_processed_sets = False)
                 for func_dependency_symbol, func_dependency in func_dependencies: #produce a table of the correct inputs
@@ -323,7 +329,7 @@ class Datatable:
                     elif func_dependency in dataset_table:
                         function_inputs[func_dependency] = dataset_table[func_dependency]
 
-                        if dataset_length == -1:
+                        if dataset_length == -1: #has no length (e.g. a formula, give it the length of its dependency)
                             dataset_length = len(dataset_table[func_dependency])
                         elif len(dataset_table[func_dependency]) != dataset_length:
                             raise ValueError("Dataset '{}' length ({}) differs from length of other datasets ({}), in function '{}' evaluation".format(func_dependency, len(dataset_table[func_dependency]), dataset_length, dependency_name))
@@ -350,6 +356,12 @@ class Datatable:
                 raise ValueError("Column length mismatch: {} is of length {}, but length {} is required".format(key, len(self._value_table[key]), length))
 
     def as_rows(self):
+        """
+        Get the variables table (after calling load()) as a list of lists where each list is a table row
+
+        Returns:
+            (list of list of Value)
+        """
         if len(self._value_table) > 0: #transpose row-column layout
             result = []
             row = []
@@ -374,6 +386,12 @@ class Datatable:
             return []
 
     def as_columns(self): #matches internal layout, simply return
+        """
+        Get the variables table (after calling load()) as a list of lists where each list is a table column
+
+        Returns:
+            (list of list of Value)
+        """
         result = []
 
         for variable_id in self._variable_ids:
