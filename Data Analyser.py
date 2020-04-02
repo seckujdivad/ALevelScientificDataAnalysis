@@ -15,6 +15,9 @@ import sciplot.datafile
 
 
 class RootFrame(wx.Frame):
+    """
+    This is the UI class that represents the application window
+    """
     def __init__(self, app):
         super().__init__(None, wx.ID_ANY, title = "Data Analyser")
 
@@ -96,7 +99,7 @@ class RootFrame(wx.Frame):
             self._tlbr_panelswitch_tools[new_frame.identifier] = self._tlbr_panelswitch.AddTool(wx.ID_ANY, new_frame.styling_name, new_frame.styling_icon)
             self._tlbr_panelswitch_tools[new_frame.identifier].SetLongHelp(new_frame.styling_name) #set the hover tooltip on the toolbar button to be the name of the frame that the toolbar button will switch to
 
-            self.Bind(wx.EVT_TOOL, functools.partial(self.toolbar_form_clicked, new_frame.identifier), self._tlbr_panelswitch_tools[new_frame.identifier])
+            self.Bind(wx.EVT_TOOL, functools.partial(self._toolbar_form_clicked, new_frame.identifier), self._tlbr_panelswitch_tools[new_frame.identifier])
             self._bk_sub.ShowNewPage(new_frame)
             new_frame.hook_file_opened()
 
@@ -131,7 +134,16 @@ class RootFrame(wx.Frame):
 
         self.set_form("data", True) #choose the data form when the program first opens
     
-    def set_form(self, form, override = False): #choose a form (tab from the title bar at the top of the window)
+    def set_form(self, form: str, override: bool = False):
+        """
+        Set the currently displayed form using its internal identifier
+
+        Args:
+            form (str): the form to be displayed
+        
+        Kwargs:
+            override (bool): when true, the form will be redisplayed even if it is currently selected
+        """
         if override or self._current_frame != form:
             if self._subframes[form].toolbar_index == -1:
                 raise Exception("This form hasn't been connected to a SimpleBook")
@@ -145,11 +157,17 @@ class RootFrame(wx.Frame):
             self._sb_main.PushStatusText(self._subframes[form].styling_name + '  ') #the status bar has strange behaviour when you add a status text that is the same as the last one, this avoids that
             self._current_frame = form
     
-    def toolbar_form_clicked(self, name, event):
+    def _toolbar_form_clicked(self, name, event):
+        """
+        Internal UI method called when a new form is chosen from the toolbar
+        """
         self.set_form(name)
         event.Skip()
     
     def _choose_db(self, event): #open a file
+        """
+        Internal UI method called when the user tries to open a new file
+        """
         if self.subframe_share['file'] is not None and not self.subframe_share['file is temp']: #save file (if the open file is not temporary)
             commit_changes = wx.MessageBox("Commit changes to open file?", "Action required", wx.ICON_QUESTION | wx.OK | wx.CANCEL)
 
@@ -187,6 +205,9 @@ class RootFrame(wx.Frame):
         event.Skip()
     
     def _commit_db(self, event):
+        """
+        Internal UI method called when the user tries to save the currently open file
+        """
         if self.subframe_share['file is temp']:
             self._save_temp(event)
 
@@ -197,11 +218,17 @@ class RootFrame(wx.Frame):
             self.subframe_share['file'].commit()
     
     def on_window_close(self):
+        """
+        Internal UI method called when the user closes the window
+        """
         if self.subframe_share['file'] is not None:
             self.subframe_share['file'].commit()
             self.subframe_share['file'].close()
     
     def _save_temp(self, event): #if the file open is temporary, ask the user for a name and move it to the location
+        """
+        Internal UI method called when the user wants to save the temporary file in a permanent location
+        """
         if self.subframe_share['file is temp']:
             with wx.FileDialog(self, "Save DataFile", wildcard = "DataFile (*.db)|*.db", defaultDir = sys.path[0], style = wx.FD_SAVE) as file_dialog:
                 if file_dialog.ShowModal() == wx.ID_CANCEL:
@@ -221,7 +248,13 @@ class RootFrame(wx.Frame):
         else:
             wx.MessageBox("Currently open file is not temporary", "File not temporary", wx.ICON_ERROR | wx.OK)
     
-    def _set_title_file(self, name): #set title of window to contain the file name
+    def _set_title_file(self, name: str):
+        """
+        Sets title of window to contain the file name
+
+        Args:
+            name (str): file name to put in the window title
+        """
         self.SetTitle('Data Analyser: {}'.format(name))
     
     def _help_quickstart(self, event): #show short explanation string
@@ -234,6 +267,9 @@ read about the variable system.""", "Quickstart guide", style = wx.ICON_NONE)
 
 
 class App(wx.App):
+    """
+    This class represents the application itself. It doesn't represent anything in the UI
+    """
     def __init__(self):
         super().__init__()
 
@@ -248,5 +284,5 @@ class App(wx.App):
         self.frame_root.on_window_close()
 
 
-if __name__ == '__main__':
+if __name__ == '__main__': #import guard
     App()
