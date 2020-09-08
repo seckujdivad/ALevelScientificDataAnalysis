@@ -152,6 +152,7 @@ class GraphFrame(forms.SubFrame):
         selection = self._lb_plots.GetSelection()
         if selection != -1:
             self._datafile.query(sciplot.database.Query("UPDATE Plot SET ShowRegression = (?) WHERE PlotID = (?);", [int(self._chk_show_regression.GetValue()), self._plot_ids[selection]], 0)) #update the database with the new regression setting for this graph
+            self.refresh_plot()
         
         event.Skip()
     
