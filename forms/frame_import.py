@@ -1,6 +1,9 @@
 import wx
 import wx.dataview
+
 import csv
+import sys
+import typing
 
 import forms
 
@@ -13,7 +16,7 @@ class ImportFrame(forms.SubFrame):
         super().__init__(parent, root_frame)
 
         #toolbar
-        self.identifier = 'import'
+        self.identifier = "import"
         self.styling_name = 'Import'
         self.styling_icon = wx.Bitmap('resources/toolbar/constants.bmp') #TODO: replace when a proper icon is made
 
@@ -23,11 +26,18 @@ class ImportFrame(forms.SubFrame):
         self._gbs_main.SetNonFlexibleGrowMode(wx.FLEX_GROWMODE_SPECIFIED)
 
         #create elements
-        self._btn_choose_file = wx.Button(self, wx.ID_ANY, "Import CSV")
-        self._gbs_main.Add(self._btn_choose_file, wx.GBPosition(0, 0), wx.GBSpan(1, 1), wx.ALL | wx.EXPAND)
+        self._imported_data: typing.List[typing.List] = []
+
+        self._btn_choose_csv = wx.Button(self, wx.ID_ANY, "Import CSV")
+        self._btn_choose_csv.Bind(wx.EVT_BUTTON, self._bind_btn_choose_csv_clicked)
+        self._gbs_main.Add(self._btn_choose_csv, wx.GBPosition(0, 0), wx.GBSpan(1, 1), wx.ALL | wx.EXPAND)
 
         self._dvl_data: wx.dataview.DataViewListCtrl = None #DataViewListCtrls can't have their columns dynamically changed, so this is deferred to a method (more about this in forms.frame_data.py)
         self._recreate_dvl_data()
+
+        self._chk_titles_are_included = wx.CheckBox(self, wx.ID_ANY, "Data contains column titles")
+        self._chk_titles_are_included.Bind(wx.EVT_CHECKBOX, self._bind_chk_titles_are_included_clicked)
+        self._gbs_main.Add(self._chk_titles_are_included, wx.GBPosition(2, 0), wx.GBSpan(1, 1), wx.ALL | wx.EXPAND)
 
         #set sizer weights
         for i in [0]:
@@ -52,7 +62,24 @@ class ImportFrame(forms.SubFrame):
         pass
 
     #ui binds
-    def _bind_btn_choose_file_clicked(self, event):
+    def _bind_btn_choose_csv_clicked(self, event):
+        with wx.FileDialog(self, "Open CSV", wildcard = "CSV (*.csv)|*.csv", defaultDir = sys.path[0], style = wx.FD_OPEN | wx.FD_FILE_MUST_EXIST) as file_dialog:
+            if file_dialog.ShowModal() != wx.ID_CANCEL:
+                path = file_dialog.GetPath()
+
+                with open(path, "r") as file:
+                    reader = csv.reader(file)
+
+                    self._imported_data.clear()
+                    for row in reader:
+                        self._imported_data.append(row)
+                    
+                self._display_imported_data(self._chk_titles_are_included.GetValue())
+
+        event.Skip()
+    
+    def _bind_chk_titles_are_included_clicked(self, event):
+        self._display_imported_data(self._chk_titles_are_included.GetValue())
         event.Skip()
 
     #frame methods
@@ -67,3 +94,26 @@ class ImportFrame(forms.SubFrame):
         self._dvl_data = wx.dataview.DataViewListCtrl(self, wx.ID_ANY)
         self._gbs_main.Add(self._dvl_data, wx.GBPosition(1, 0), wx.GBSpan(1, 1), wx.ALL | wx.EXPAND)
         self.Layout()
+    
+    def _display_imported_data(self, data_has_titles = True):
+        self._recreate_dvl_data()
+
+        if len(self._imported_data) != 0:
+            titles: typing.List = None
+            if data_has_titles:
+                titles = self._imported_data[0]
+            else:
+                titles = []
+                for i in range(len(self._imported_data[0])):
+                    titles.append("Column {}".format(i))
+            
+            for title in titles:
+                self._dvl_data.AppendTextColumn(title)
+            
+            if data_has_titles:
+                start_index = 1
+            else:
+                start_index = 0
+
+            for row in self._imported_data[start_index:]:
+                self._dvl_data.AppendItem(row)
