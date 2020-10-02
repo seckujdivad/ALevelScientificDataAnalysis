@@ -33,7 +33,8 @@ class ImportFrame(forms.SubFrame):
         self._gbs_main.Add(self._btn_choose_csv, wx.GBPosition(0, 0), wx.GBSpan(1, 1), wx.ALL | wx.EXPAND)
 
         self._dvl_data: wx.dataview.DataViewListCtrl = None #DataViewListCtrls can't have their columns dynamically changed, so this is deferred to a method (more about this in forms.frame_data.py)
-        self._recreate_dvl_data()
+        self._dvl_data_columns: typing.List[wx.dataview.DataViewColumn] = []
+        self._recreate_dvl_data(False)
 
         self._chk_titles_are_included = wx.CheckBox(self, wx.ID_ANY, "Data contains column titles")
         self._chk_titles_are_included.Bind(wx.EVT_CHECKBOX, self._bind_chk_titles_are_included_clicked)
@@ -83,7 +84,7 @@ class ImportFrame(forms.SubFrame):
         event.Skip()
 
     #frame methods
-    def _recreate_dvl_data(self):
+    def _recreate_dvl_data(self, show_header = True):
         """
         DataViewListCtrls aren't fully dynamic, so I recreate them every time here
         See the same method in forms/frame_data.py for the same solution
@@ -91,12 +92,16 @@ class ImportFrame(forms.SubFrame):
         if self._dvl_data is not None:
             self._dvl_data.Destroy()
         
-        self._dvl_data = wx.dataview.DataViewListCtrl(self, wx.ID_ANY)
+        style = wx.dataview.DV_ROW_LINES
+        if not show_header:
+            style = style | wx.dataview.DV_NO_HEADER
+        
+        self._dvl_data = wx.dataview.DataViewListCtrl(self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, style)
         self._gbs_main.Add(self._dvl_data, wx.GBPosition(1, 0), wx.GBSpan(1, 1), wx.ALL | wx.EXPAND)
         self.Layout()
     
     def _display_imported_data(self, data_has_titles = True):
-        self._recreate_dvl_data()
+        self._recreate_dvl_data(data_has_titles)
 
         if len(self._imported_data) != 0:
             titles: typing.List = None
@@ -107,8 +112,10 @@ class ImportFrame(forms.SubFrame):
                 for i in range(len(self._imported_data[0])):
                     titles.append("Column {}".format(i))
             
+            self._dvl_data_columns.clear()
             for title in titles:
-                self._dvl_data.AppendTextColumn(title)
+                column = self._dvl_data.AppendTextColumn(title, flags = 0)
+                self._dvl_data_columns.append(column)
             
             if data_has_titles:
                 start_index = 1
@@ -117,3 +124,8 @@ class ImportFrame(forms.SubFrame):
 
             for row in self._imported_data[start_index:]:
                 self._dvl_data.AppendItem(row)
+        
+            #set column widths
+            column_width = (self._dvl_data.GetSize()[0] - 30) / len(self._dvl_data_columns)
+            for column in self._dvl_data_columns:
+                column.SetWidth(column_width)
