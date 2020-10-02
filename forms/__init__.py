@@ -85,6 +85,14 @@ import forms.frame_variables
 import forms.frame_graph
 import forms.frame_datapoints
 import forms.frame_constants
+import forms.frame_import
 
 
-manifest: typing.List[SubFrame] = [forms.frame_data.DataFrame, forms.frame_variables.VariablesFrame, forms.frame_datapoints.DataPointsFrame, forms.frame_graph.GraphFrame, forms.frame_constants.ConstantsFrame] #list of frames to be included in the bar at the top of the window
+manifest: typing.List[SubFrame] = [
+    forms.frame_data.DataFrame,
+    forms.frame_variables.VariablesFrame,
+    forms.frame_datapoints.DataPointsFrame,
+    forms.frame_graph.GraphFrame,
+    forms.frame_constants.ConstantsFrame,
+    forms.frame_import.ImportFrame
+    ] #list of frames to be included in the bar at the top of the window
