@@ -96,6 +96,7 @@ class VariablesFrame(forms.SubFrame):
     
     def hook_frame_selected(self):
         self._centre_dividers()
+        self.refresh_variable_list()
 
     def get_menu_items(self):
         return [['Help', [["Variables", self._bind_toolbar_showhelp]]]] #register the variable help message in the toolbar
