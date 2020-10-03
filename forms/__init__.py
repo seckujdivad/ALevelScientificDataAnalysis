@@ -3,6 +3,7 @@ import wx
 import typing
 
 import sciplot.database
+import sciplot.datafile
 
 
 class SubFrame(wx.Panel):
@@ -11,18 +12,18 @@ class SubFrame(wx.Panel):
 
     Provides a few utility methods and attributes, as well as specifying default values for all of the attributes and methods that need to exist, but might not need implementing by each frame
     """
-    def __init__(self, parent, root_frame):
+    def __init__(self, parent: wx.Simplebook, root_frame):
         super().__init__(parent, wx.ID_ANY)
 
         self.root_frame = root_frame
-        self.parent = parent
+        self.parent: wx.Simplebook = parent
 
         self.identifier = 'null' #identifier used internally to differentiate between frames
         self.styling_name = '<blank>' #name of the frame to be displayed to the user when they hover over it
         self.styling_icon = wx.Bitmap('resources/toolbar/blank.bmp') #icon to be displayed to the user in the bar at the top of the window
         self.toolbar_index = -1 #position of the window in the bar at the top of the window, set by the root frame
 
-        self.subframe_share = self.root_frame.subframe_share #dictionary containing data to be shared between frames
+        self.subframe_share: typing.Dict[str, typing.Any] = self.root_frame.subframe_share #dictionary containing data to be shared between frames
 
         self._datafile: sciplot.datafile.DataFile = self._datafile #property that gives the frame methods easy access to the database
 
@@ -31,7 +32,7 @@ class SubFrame(wx.Panel):
         #There are multiple different types and configurations depending on the type of GUI you want
         #to create, so I have left constructing one to the inheriting classes
     
-    def get_menu_items(self): #this method is to be queried by the root frame when it is creating the menu bar at the top of the screen and needs options to put in it
+    def get_menu_items(self) -> typing.List[typing.Tuple[str, typing.List[typing.Tuple[str, typing.Callable[[], None]]]]]: #this method is to be queried by the root frame when it is creating the menu bar at the top of the screen and needs options to put in it
         """
         Get custom menu items to display on menubar
 
@@ -68,7 +69,7 @@ class SubFrame(wx.Panel):
     
     #properties
     @property
-    def _datafile(self): #_datafile getter
+    def _datafile(self) -> sciplot.datafile.DataFile: #_datafile getter
         if 'file' in self.subframe_share:
             return self.subframe_share['file']
         else:
