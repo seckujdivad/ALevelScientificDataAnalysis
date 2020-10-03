@@ -12,10 +12,10 @@ class SubFrame(wx.Panel):
 
     Provides a few utility methods and attributes, as well as specifying default values for all of the attributes and methods that need to exist, but might not need implementing by each frame
     """
-    def __init__(self, parent: wx.Simplebook, root_frame):
+    def __init__(self, parent: wx.Simplebook, root_frame: "RootFrame"):
         super().__init__(parent, wx.ID_ANY)
 
-        self.root_frame = root_frame
+        self.root_frame: "RootFrame" = root_frame
         self.parent: wx.Simplebook = parent
 
         self.identifier = 'null' #identifier used internally to differentiate between frames

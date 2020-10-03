@@ -133,7 +133,7 @@ class Database:
         self._query_pipe.close()
         self._response_collected_event.clear() #release any other waiting threads
 
-    def query(self, query: typing.Union[Query, typing.List[Query]]):
+    def query(self, query: typing.Union[Query, typing.List[Query]]) -> typing.List[typing.Any]:
         """
         Sends a Query object (or a list of Query objects) to the database. If any Query objects expect a response, hang until one is received
 
@@ -221,7 +221,7 @@ class Database:
     #context management
     #these python magic methods allow it to be used in with .. as ..: syntax where the database is guaranteed to be closed automatically
     #magic methods are similar to operator overloading in cpp
-    def __enter__(self):
+    def __enter__(self) -> "Database":
         return self
     
     def __exit__(self, *args):

@@ -18,7 +18,7 @@ class RootFrame(wx.Frame):
     """
     This is the UI class that represents the application window
     """
-    def __init__(self, app):
+    def __init__(self, app: wx.App):
         super().__init__(None, wx.ID_ANY, title = "Data Analyser")
 
         self.app = app

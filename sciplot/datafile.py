@@ -25,7 +25,7 @@ class DataFile(Database):
         self.query(queries)
     
     #tables
-    def tables_are_valid(self):
+    def tables_are_valid(self) -> bool:
         """
         Make sure that the database contains the correct tables
         """
@@ -68,7 +68,7 @@ class DataFile(Database):
     
     ##dml
     #metadata
-    def get_metadata(self, key: str):
+    def get_metadata(self, key: str) -> str:
         result = self.query(Query('SELECT Value FROM Metadata WHERE Key = (?)', [key], 2))
         if result == []:
             return None
@@ -79,28 +79,28 @@ class DataFile(Database):
         self.query([Query('DELETE FROM Metadata WHERE Key = (?)', [key], 0),
                     Query('INSERT INTO Metadata VALUES ((?), (?))', [key, value], 0)])
     
-    def list_metadata(self):
+    def list_metadata(self) -> typing.List[typing.Tuple[str, str]]:
         return self.query(Query('SELECT * FROM Metadata', [], 1))[0]
     
     def remove_metadata(self, key: str):
         self.query(Query('DELETE FROM Metadata WHERE Key = (?)', [key], 0))
 
     #constants
-    def list_constants(self):
+    def list_constants(self) -> typing.List[typing.Tuple[float, str]]:
         query = Query("SELECT Value, Symbol FROM Constant ORDER BY Symbol DESC", [], 1)
         result = self.query(query)
         return result[0]
 
-    def create_constant(self, name: str, value: float, unit_id: int):
+    def create_constant(self, name: str, value: float, unit_id: int) -> int:
         queries = [Query('INSERT INTO Constant (UnitCompositeID, Value, Symbol) VALUES ((?), (?), (?));', [unit_id, value, name], 0),
                    Query('SELECT last_insert_rowid();', [], 2)]
         return self.query(queries)[0][0]
 
-    def get_constant(self, name: str):
+    def get_constant(self, name: str) -> typing.Tuple[int, float, int]:
         query = Query("SELECT ConstantID, Value, UnitCompositeID FROM Constant WHERE Symbol = (?)", [name], 2)
         return self.query(query)[0]
 
-    def get_constant_by_id(self, constant_id: int):
+    def get_constant_by_id(self, constant_id: int) -> typing.Tuple[str, int, int]:
         query = Query("SELECT Symbol, Value, UnitCompositeID FROM Constant WHERE ConstantID = (?)", [constant_id], 2)
         return self.query(query)[0]
     
@@ -108,26 +108,26 @@ class DataFile(Database):
         self.query(Query('DELETE FROM Constant WHERE ConstantID = (?)', [constant_id], 0))
 
     #base SI units
-    def list_base_units(self):
+    def list_base_units(self) -> typing.List[typing.Tuple[int, str]]:
         query = Query("SELECT * FROM Unit", [], 1)
         result = self.query(query)
         return result[0]
     
-    def get_base_unit(self, base_unit_id: int):
+    def get_base_unit(self, base_unit_id: int) -> str:
         query = Query("SELECT Symbol FROM Unit WHERE UnitID = (?)", [base_unit_id], 2)
         return self.query(query)[0][0]
     
     #composite units
-    def get_unit_id_by_symbol(self, symbol: str):
+    def get_unit_id_by_symbol(self, symbol: str) -> int:
         query = Query("SELECT UnitCompositeID FROM UnitComposite WHERE Symbol = (?)", [symbol], 2)
         return [tup[0] for tup in self.query(query)]
 
-    def get_unit_by_id(self, unit_id: int):
+    def get_unit_by_id(self, unit_id: int) -> typing.Tuple[str, typing.Tuple[int, float]]:
         unit_details = self.query(Query("SELECT Unit.UnitID, UnitCompositeDetails.Power FROM UnitCompositeDetails INNER JOIN Unit ON Unit.UnitID = UnitCompositeDetails.UnitID WHERE UnitCompositeDetails.UnitCompositeID = (?)", [unit_id], 1))[0]
         unit_symbol = self.query(Query('SELECT UnitComposite.Symbol FROM UnitComposite WHERE UnitComposite.UnitCompositeID = (?)', [unit_id], 2))[0][0]
         return unit_symbol, unit_details
     
-    def create_unit(self, symbol: str, base_units: typing.List[typing.Tuple[int, float]]):
+    def create_unit(self, symbol: str, base_units: typing.List[typing.Tuple[int, float]]) -> int:
         queries = [Query('INSERT INTO UnitComposite (Symbol) VALUES ((?));', [symbol], 0),
                    Query("SELECT last_insert_rowid();", [], 2)]
         unit_id = self.query(queries)[0][0]
@@ -138,15 +138,15 @@ class DataFile(Database):
             
         return unit_id
     
-    def list_units(self):
+    def list_units(self) -> typing.List[int]:
         return [val[0] for val in self.query(Query('SELECT UnitCompositeID FROM UnitComposite;', [], 1))[0]] #unpack tuples
     
     def remove_unit(self, unit_id: int):
         self.query([Query('DELETE FROM UnitComposite WHERE UnitCompositeID = (?)', [unit_id], 0),
                     Query('DELETE FROM UnitCompositeDetails WHERE UnitCompositeID = (?)', [unit_id], 0)])
     
-    def get_unit_id_by_table(self, unit_table: typing.List[typing.Tuple[int, float]]):
-        unitcomposite_ids = [tup[0] for tup in self.query(Query("SELECT UnitCompositeID FROM UnitComposite;", [], 1))[0]]
+    def get_unit_id_by_table(self, unit_table: typing.List[typing.Tuple[int, float]]) -> typing.List[int]:
+        unitcomposite_ids: typing.List[int] = [tup[0] for tup in self.query(Query("SELECT UnitCompositeID FROM UnitComposite;", [], 1))[0]]
 
         matches = []
         for i in range(len(unitcomposite_ids)):
@@ -215,15 +215,15 @@ class DataFile(Database):
                 self.query(Query("DELETE FROM UnitCompositeDetails WHERE UnitCompositeID = (?);", [composite_unit_id], 1))
     
     #data sets
-    def list_data_sets(self):
+    def list_data_sets(self) -> typing.List[int]:
         return [tup[0] for tup in self.query(Query('SELECT DataSetID FROM DataSet', [], 1))[0]]
     
-    def get_data_set(self, data_set_id: int):
+    def get_data_set(self, data_set_id: int) -> typing.Tuple[int, float, bool]:
         query = '''SELECT DataSet.UnitCompositeID, DataSet.Uncertainty, DataSet.UncIsPerc FROM DataSet
 WHERE DataSet.DataSetID = (?)'''
         return self.query(Query(query.replace('\n', ' '), [data_set_id], 2))[0]
     
-    def create_data_set(self, uncertainty: float, is_percentage: bool, unit_id: int):
+    def create_data_set(self, uncertainty: float, is_percentage: bool, unit_id: int) -> int:
         if is_percentage:
             isperc = 1
         else:
@@ -237,27 +237,27 @@ WHERE DataSet.DataSetID = (?)'''
         self.remove_variable(data_set_id = data_set_id, remove_plots = False, remove_columns = False)
     
     #data points
-    def get_data_points(self, data_set_id: int):
+    def get_data_points(self, data_set_id: int) -> typing.List[typing.Tuple[int, float]]:
         return self.query(Query('SELECT DataPointID, Value FROM DataPoint WHERE DataSetID = (?);', [data_set_id], 1))[0]
     
     def remove_data_point(self, data_point_id: int):
         self.query(Query('DELETE FROM DataPoint WHERE DataPointID = (?)', [data_point_id], 0))
     
-    def create_data_point(self, value: float, data_set_id: int):
+    def create_data_point(self, value: float, data_set_id: int) -> int:
         return self.query([Query('INSERT INTO DataPoint (DataSetID, Value) VALUES ((?), (?));', [data_set_id, value], 0),
                            Query('SELECT last_insert_rowid();', [], 2)])[0][0]
     
-    def get_data_point(self, data_point_id: int):
+    def get_data_point(self, data_point_id: int) -> typing.Tuple[int, float]:
         return self.query(Query('SELECT DataSetID, Value FROM DataPoint WHERE DataPointID = (?)', [data_point_id], 2))[0]
     
     #formulae
-    def list_formulae(self):
+    def list_formulae(self) -> typing.List[int]:
         return [tup[0] for tup in self.query(Query('SELECT FormulaID FROM Formula', [], 1))[0]]
     
-    def get_formula(self, formula_id: int):
+    def get_formula(self, formula_id: int) -> str:
         return self.query(Query('SELECT Expression FROM Formula WHERE FormulaID = (?)', [formula_id], 2))[0][0]
     
-    def create_formula(self, expression: str):
+    def create_formula(self, expression: str) -> int:
         return self.query([Query('INSERT INTO Formula (Expression) VALUES ((?))', [expression], 0),
                            Query('SELECT last_insert_rowid();', [], 2)])[0][0]
     
@@ -265,13 +265,13 @@ WHERE DataSet.DataSetID = (?)'''
         self.remove_variable(formula_id = formula_id, remove_plots = False, remove_columns = False)
     
     #variables
-    def list_variables(self):
+    def list_variables(self) -> typing.List[int]:
         return self.query(Query('SELECT VariableID FROM Variable', [], 1))[0]
     
-    def get_variable(self, variable_id: int):
+    def get_variable(self, variable_id: int) -> typing.Tuple[str, int, int]:
         return self.query(Query('SELECT Symbol, Type, ID FROM Variable WHERE VariableID = (?)', [variable_id], 2))[0]
     
-    def create_variable(self, symbol: int, type: int, type_id: int): #0: data set, 1: formula
+    def create_variable(self, symbol: int, type: int, type_id: int) -> int: #0: data set, 1: formula
         return self.query([Query('INSERT INTO Variable (Symbol, Type, ID) VALUES ((?), (?), (?))', [symbol, type, type_id], 0),
                            Query('SELECT last_insert_rowid();', [], 2)])[0]
     
@@ -314,22 +314,22 @@ WHERE DataSet.DataSetID = (?)'''
             self.query(Query("DELETE FROM Variable WHERE VariableID = (?);", [variable_id], 0))
     
     #tables
-    def list_tables(self):
+    def list_tables(self) -> typing.List[typing.Tuple[int, str]]:
         return self.query(Query('SELECT * FROM `Table`;', [], 1))[0]
     
     def remove_table(self, table_id: int):
         self.query([Query('DELETE FROM `Table` WHERE TableID = (?)', [table_id], 0),
                     Query('DELETE FROM TableColumn WHERE TableID = (?)', [table_id], 0)])
     
-    def create_table(self, title: str):
+    def create_table(self, title: str) -> int:
         return self.query([Query('INSERT INTO `Table` (Title) VALUES ((?))', [title], 0),
                            Query('SELECT last_insert_rowid();', [], 2)])[0][0]
     
     #table columns
-    def list_table_columns(self, table_id: int):
+    def list_table_columns(self, table_id: int) -> typing.List[typing.Tuple[int, str]]:
         return self.query(Query('SELECT VariableID, FormatPattern FROM TableColumn WHERE TableID = (?)', [table_id], 1))[0]
     
-    def create_table_column(self, table_id: int, variable_id: int, format_pattern: str):
+    def create_table_column(self, table_id: int, variable_id: int, format_pattern: str) -> int:
         num_matches = len(self.query(Query('SELECT TableID FROM TableColumn WHERE TableID = (?) AND VariableID = (?)', [table_id, variable_id], 1))[0])
         if num_matches > 0:
             raise sqlite3.OperationalError('Duplicate TableID-VariableID pairs are not allowed')
@@ -341,10 +341,10 @@ WHERE DataSet.DataSetID = (?)'''
         self.query(Query('DELETE FROM TableColumn WHERE TableID = (?) AND VariableID = (?)', [table_id, variable_id], 0))
     
     #plots
-    def list_plots(self):
+    def list_plots(self) -> typing.List[int]:
         return [tup[0] for tup in self.query(Query('SELECT PlotID FROM Plot', [], 1))[0]]
 
-    def create_plot(self, variable_x_id: int, variable_x_title: str, variable_y_id: int, variable_y_title: str, show_regression: bool = True):
+    def create_plot(self, variable_x_id: int, variable_x_title: str, variable_y_id: int, variable_y_title: str, show_regression: bool = True) -> int:
         if show_regression:
             showregress = 1
         else:
@@ -356,7 +356,7 @@ WHERE DataSet.DataSetID = (?)'''
     def remove_plot(self, plot_id: int):
         self.query(Query('DELETE FROM Plot WHERE PlotID = (?)', [plot_id], 0))
     
-    def get_unit_string(self, unit_table: typing.List[typing.Tuple[int, float]]): #format unit table containing a tuple of primary keys and powers in a human-readable way
+    def get_unit_string(self, unit_table: typing.List[typing.Tuple[int, float]]) -> str: #format unit table containing a tuple of primary keys and powers in a human-readable way
         unit_string = ""
         for unit_id, unit_power in unit_table:
             if unit_power != 0:
