@@ -19,16 +19,16 @@ class FitLines:
             raise ValueError("Datatable must have exactly 2 columns, not {}".format(len(self._datatable.as_columns())))
         
         #line with best gradient
-        self.fit_best_gradient = None
-        self.fit_best_intercept = None
+        self.fit_best_gradient: float = None
+        self.fit_best_intercept: float = None
 
         #line with max gradient
-        self.fit_worst_max_gradient = None
-        self.fit_worst_max_intercept = None
+        self.fit_worst_max_gradient: float = None
+        self.fit_worst_max_intercept: float = None
 
         #line with min gradient
-        self.fit_worst_min_gradient = None
-        self.fit_worst_min_intercept = None
+        self.fit_worst_min_gradient: float = None
+        self.fit_worst_min_intercept: float = None
     
     def calculate_all(self):
         """
@@ -118,7 +118,7 @@ class FitLines:
             self.fit_worst_max_gradient, self.fit_worst_max_intercept = potential_fit_lines[max_index]
             self.fit_worst_min_gradient, self.fit_worst_min_intercept = potential_fit_lines[min_index]
 
-    def _check_line(self, gradient: float, intercept: float, x_values: typing.List[sciplot.Value], y_values: typing.List[sciplot.Value]):
+    def _check_line(self, gradient: float, intercept: float, x_values: typing.List[sciplot.Value], y_values: typing.List[sciplot.Value]) -> bool:
         """
         Make sure a line goes through all of the points in a data set
 
@@ -136,7 +136,7 @@ class FitLines:
                 return False
         return True
 
-    def _line_covers_value(self, gradient, intercept, x_value, y_value):
+    def _line_covers_value(self, gradient, intercept, x_value, y_value) -> bool:
         """
         Checks whether or not a line, at some point, goes through the box produced by a value and its uncertainty
 
@@ -151,7 +151,7 @@ class FitLines:
         """
         return self._line_covers_value_axes(gradient, intercept, x_value, y_value) or self._line_covers_value_axes(gradient, intercept, y_value, x_value)
     
-    def _line_covers_value_axes(self, gradient, intercept, x_value, y_value):
+    def _line_covers_value_axes(self, gradient, intercept, x_value, y_value) -> bool:
         """
         Whether the line goes through the maximum or minimum x border of the value
         For internal use only
@@ -177,7 +177,7 @@ class FitLines:
         return touches_min_x or touches_max_x
 
     #worst fit properties
-    def _get_fit_worst_gradient(self):
+    def _get_fit_worst_gradient(self) -> float:
         if None in [self.fit_best_gradient, self.fit_worst_max_gradient, self.fit_worst_min_gradient]:
             raise RuntimeError('You must call calculate before accessing this value')
         else:
@@ -186,7 +186,7 @@ class FitLines:
             else:
                 return self.fit_worst_min_gradient
 
-    def _get_fit_worst_intercept(self):
+    def _get_fit_worst_intercept(self) -> float:
         if None in [self.fit_best_gradient, self.fit_worst_max_gradient, self.fit_worst_min_gradient, self.fit_worst_max_intercept, self.fit_worst_min_intercept]:
             raise RuntimeError('You must call calculate before accessing this value')
         else:
@@ -195,5 +195,5 @@ class FitLines:
             else:
                 return self.fit_worst_min_intercept
 
-    fit_worst_gradient = property(_get_fit_worst_gradient)
-    fit_worst_intercept = property(_get_fit_worst_gradient)
+    fit_worst_gradient: float = property(_get_fit_worst_gradient)
+    fit_worst_intercept: float = property(_get_fit_worst_gradient)
