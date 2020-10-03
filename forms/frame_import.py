@@ -94,6 +94,71 @@ class ImportFrame(forms.SubFrame):
     def _bind_chk_titles_are_included_clicked(self, event):
         self._display_imported_data(self._chk_titles_are_included.GetValue())
         event.Skip()
+    
+    def _bind_btns_column_pickers_clicked(self, index, event):
+        title: str = ""
+        data: typing.List[str] = []
+        user_interrupted_process = False
+
+        if self._chk_titles_are_included.GetValue():
+            title = self._imported_data[0][index]
+
+            for i in range(1, len(self._imported_data)):
+                data.append(self._imported_data[i][index])
+        
+        else:
+            with wx.TextEntryDialog(self, "Name of data set", "Provide a name for the imported data set") as dialog:
+                result = dialog.ShowModal()
+
+                if result == wx.ID_CANCEL:
+                    user_interrupted_process = True
+                
+                else:
+                    title = dialog.GetValue()
+
+                    for row in self._imported_data:
+                        data.append(row[index])
+
+        if not user_interrupted_process:
+            values: typing.List[float] = []
+            failed_values: typing.List[typing.Tuple[int, str]] = []
+            for i in range(len(data)):
+                string = data[i]
+                try:
+                    values.append(float(string))
+                except ValueError:
+                    failed_values.append((i, string))
+            
+            user_interrupted_process = False
+            if len(failed_values) != 0:
+                message = """Some imported values couldn't be converted to a floating point (decimal) representation.
+This normally happens when some of the data in the table was text rather than numerical.
+Pressing OK will import only those values that could be converted. Cancel will import no values.
+The values (with their row indices) that couldn't be converted were:"""
+
+                for i, failed_value in failed_values:
+                    message += "\n{}: {}".format(i + 1, failed_value)
+
+                with wx.MessageDialog(self, message, "Couldn't convert all values", wx.OK | wx.CANCEL | wx.CENTRE) as dialog:
+                    if dialog.ShowModal() == wx.ID_CANCEL:
+                        user_interrupted_process = True
+            
+            if not user_interrupted_process:
+                unit_id = self._datafile.create_unit("<blank>", [])
+                data_set_id = self._datafile.create_data_set(0, False, unit_id) #add a new blank data set to the database
+                self._datafile.create_variable(title, 0, data_set_id)
+
+                for value in values:
+                    self._datafile.create_data_point(value, data_set_id)
+
+                message = "Added data set '{}' containing {} item".format(title, len(values))
+                if len(values) != 1:
+                    message += "s"
+
+                with wx.MessageDialog(self, message, "Data set imported", wx.OK | wx.CENTRE) as dialog:
+                    dialog.ShowModal()
+        
+        event.Skip()
 
     #frame methods
     def _recreate_dvl_data(self, show_header = True):
@@ -157,6 +222,7 @@ class ImportFrame(forms.SubFrame):
             elif button_num_change > 0:
                 for i in range(button_num_change):
                     button = wx.Button(self._pnl_column_picker, wx.ID_ANY, "Add as dataset")
+                    button.Bind(wx.EVT_BUTTON, functools.partial(self._bind_btns_column_pickers_clicked, len(self._btns_column_pickers)))
                     self._bs_column_picker.Add(button, 1)
                     self._btns_column_pickers.append(button)
 
