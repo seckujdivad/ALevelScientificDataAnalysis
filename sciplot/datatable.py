@@ -355,7 +355,7 @@ class Datatable:
             elif len(self._value_table[key]) != length:
                 raise ValueError("Column length mismatch: {} is of length {}, but length {} is required".format(key, len(self._value_table[key]), length))
 
-    def as_rows(self):
+    def as_rows(self) -> typing.List[typing.List[sciplot.Value]]:
         """
         Get the variables table (after calling load()) as a list of lists where each list is a table row
 
@@ -385,7 +385,7 @@ class Datatable:
         else:
             return []
 
-    def as_columns(self): #matches internal layout, simply return
+    def as_columns(self) -> typing.List[typing.List[sciplot.Value]]: #matches internal layout, simply return
         """
         Get the variables table (after calling load()) as a list of lists where each list is a table column
 
