@@ -21,7 +21,7 @@ class IMathematicalFunction:
         autoparse (bool) = True: whether or not strings in args should be processed and turned into new IMathematicalFunctions
     """
     def __init__(self, *args: typing.List[typing.Union[object, str]], autoparse: bool = True):
-        self._subfuncs = []
+        self._subfuncs: typing.List["IMathematicalFunction"] = []
         
         if autoparse:
             for item in args: #check sub functions - if they have already been parsed into objects, leave them. if they are still strings, parse into objects
@@ -30,7 +30,7 @@ class IMathematicalFunction:
                 else:
                     self._subfuncs.append(self.generate_from(item))
 
-    def evaluate(self, datatable: t_datatable):
+    def evaluate(self, datatable: t_datatable) -> Value:
         """
         Evaluate this function using the variables provided in datatable. Recursively evaluates the whole function tree.
         To change the evaluation method, you should override _evaluate_value, _evaluate_uncertainty and _evaluate_units
@@ -60,7 +60,7 @@ class IMathematicalFunction:
         return Value(value, uncertainty, uncertainty_is_percentage, units)
 
     @abc.abstractclassmethod
-    def _evaluate_value(self, datatable: t_datatable, evaluated_subfuncs: typing.List[Value]):
+    def _evaluate_value(self, datatable: t_datatable, evaluated_subfuncs: typing.List[Value]) -> float:
         """
         Calculate the resultant value of this function using the variables provided in datatable
 
@@ -73,7 +73,7 @@ class IMathematicalFunction:
         raise NotImplementedError()
 
     @abc.abstractclassmethod
-    def _evaluate_uncertainty(self, datatable: t_datatable, evaluated_subfuncs: typing.List[Value]):
+    def _evaluate_uncertainty(self, datatable: t_datatable, evaluated_subfuncs: typing.List[Value]) -> typing.Tuple[float, bool]:
         """
         Calculates the uncertainty of the Value object to be returned by evaluate
         The uncertainty is calculated using approximations of functions that are taught to Physics students at A-Level, not by calculating the range of outputs
@@ -87,7 +87,7 @@ class IMathematicalFunction:
         raise NotImplementedError()
 
     @abc.abstractclassmethod
-    def _evaluate_units(self, datatable: t_datatable, evaluated_subfuncs: typing.List[Value]):
+    def _evaluate_units(self, datatable: t_datatable, evaluated_subfuncs: typing.List[Value]) -> typing.List[typing.Tuple[int, float]]:
         """
         Calculates the resulting units of the Value object to be returned by evaluate
 
@@ -101,7 +101,7 @@ class IMathematicalFunction:
         """
         raise NotImplementedError()
 
-    def generate_from(self, string: str):
+    def generate_from(self, string: str) -> "IMathematicalFunction":
         """
         Breaks down a string into a function that operates on two subfunctions (to be determined by that function). Effectively recursive.
 
@@ -259,7 +259,7 @@ class IMathematicalFunction:
 
             return operator[1]['class'](*items) #construct the next section of the tree
     
-    def is_static(self, constants: t_datatable): #to be overridden by leaves
+    def is_static(self, constants: t_datatable) -> bool: #to be overridden by leaves
         """
         Returns whether or not this branch of the tree is static (depends on the datatable)
 
@@ -271,7 +271,7 @@ class IMathematicalFunction:
         """
         return False not in [subfunc.is_static(constants) for subfunc in self._subfuncs]
     
-    def pre_evaluate(self, constants: t_datatable):
+    def pre_evaluate(self, constants: t_datatable) -> "IMathematicalFunction":
         """
         Pre-evaluate sections of the tree that are static as determined by is_static
 
@@ -291,7 +291,7 @@ class IMathematicalFunction:
 
             return self
     
-    def num_nodes(self, include_branches = True): #to be overwritten by leaves
+    def num_nodes(self, include_branches = True) -> int: #to be overwritten by leaves
         """
         Calculates the complexity of tree based on the number of nodes
 
@@ -308,7 +308,7 @@ class IMathematicalFunction:
         else:
             return total
     
-    def evaluate_dependencies(self): #to be overwritten by leaves
+    def evaluate_dependencies(self) -> typing.List[str]: #to be overwritten by leaves
         """
         Finds the variables that this function is dependent on (the variables that must be included in the datatable)
 
@@ -333,7 +333,7 @@ class Function(IMathematicalFunction):
 
         self._subfuncs.append(self.generate_from(string))
 
-    def evaluate(self, datatable: t_datatable):
+    def evaluate(self, datatable: t_datatable) -> Value:
         return self._subfuncs[0].evaluate(datatable)
 
 
@@ -804,7 +804,7 @@ operator_register = [
 
 
 #tree operations
-def check_circular_dependencies(function_name: str, functions: typing.Dict[str, Function]):
+def check_circular_dependencies(function_name: str, functions: typing.Dict[str, Function]) -> bool:
     """
     Performs a depth-first search of a function's dependencies to determine if, in one branch, the same function appears twice (signifying a cycle that can't be evaluated)
 
@@ -817,7 +817,7 @@ def check_circular_dependencies(function_name: str, functions: typing.Dict[str, 
     """
     return _chk_circular([function_name], functions[function_name].evaluate_dependencies(), functions)
 
-def _chk_circular(tree: typing.List[str], function_names: typing.List[str], functions: typing.Dict[str, Function]):
+def _chk_circular(tree: typing.List[str], function_names: typing.List[str], functions: typing.Dict[str, Function]) -> bool:
     """
     Recursive part of circular dependency checker. Not meant for use by anything other than check_circular_dependencies
     """
@@ -842,7 +842,7 @@ def _chk_circular(tree: typing.List[str], function_names: typing.List[str], func
     
     return False
 
-def evaluate_dependencies(function_name: str, functions: typing.Dict[str, Function], step_into_processed_sets = True, split_graphs = False):
+def evaluate_dependencies(function_name: str, functions: typing.Dict[str, Function], step_into_processed_sets = True, split_graphs = False) -> typing.List[typing.Tuple[str, str]]:
     """
     Performs a depth-first search of the given function to get all the dependencies
 
@@ -859,7 +859,7 @@ def evaluate_dependencies(function_name: str, functions: typing.Dict[str, Functi
     """
     return _eval_deps([], functions[function_name].evaluate_dependencies(), functions, step_into_processed_sets, split_graphs)
 
-def _eval_deps(deps: typing.List[typing.Tuple[str, str]], func_deps: typing.List[str], functions: typing.Dict[str, Function], step_into_processed_sets, split_graphs):
+def _eval_deps(deps: typing.List[typing.Tuple[str, str]], func_deps: typing.List[str], functions: typing.Dict[str, Function], step_into_processed_sets, split_graphs) -> typing.List[typing.Tuple[str, str]]:
     """
     Evaluate a list of function dependencies. Recursive 'body' of evaluate_dependencies, not meant for use anywhere else
     """
@@ -887,7 +887,7 @@ def _eval_deps(deps: typing.List[typing.Tuple[str, str]], func_deps: typing.List
     
     return deps
 
-def get_variable_names(full_name: str, split_graphs = False):
+def get_variable_names(full_name: str, split_graphs = False) -> typing.Union[str, typing.List[str]]:
     """
     Get the name of a variable from a processed variable like a.MEAN
     
@@ -936,7 +936,7 @@ def get_variable_names(full_name: str, split_graphs = False):
     else:
         return full_name
 
-def evaluate_tree(function_name: str, functions: typing.Dict[str, Function], data_table = {}):
+def evaluate_tree(function_name: str, functions: typing.Dict[str, Function], data_table = {}) -> Value:
     """
     Recursively evaluates a function and its tree of dependencies (depth first). Doesn't check for cycles or existing dependencies.
 
@@ -968,7 +968,7 @@ def evaluate_tree(function_name: str, functions: typing.Dict[str, Function], dat
 
 
 #utility functions
-def _strip_brackets(string: str):
+def _strip_brackets(string: str) -> str:
     """
     Strips leading and trailing bracket pairs from a string
 
@@ -983,7 +983,7 @@ def _strip_brackets(string: str):
     
     return string
 
-def _remove_all_spaces(string: str):
+def _remove_all_spaces(string: str) -> str:
     """
     Removes spaces from a string. Doesn't remove strings from variables (enclosed in {})
 
