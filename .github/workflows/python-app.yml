@@ -21,11 +21,11 @@ jobs:
       with:
         python-version: 3.8
     - name: Install wxPython
-      run: pip install -U -f https://extras.wxpython.org/wxPython4/extras/linux/gtk3/ubuntu-16.04 wxPython
+      run: python3 -m pip install -U -f https://extras.wxpython.org/wxPython4/extras/linux/gtk3/ubuntu-16.04 wxPython
     - name: Install dependencies
       run: |
-        pip install --upgrade pip
-        pip install -r requirements.txt
+        python3 -m pip install --upgrade pip
+        python3 -m pip install -r requirements.txt
     - name: Test with unittest
       run: |
-        unittest
+        python3 -m unittest
