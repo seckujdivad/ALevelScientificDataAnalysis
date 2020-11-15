@@ -26,4 +26,4 @@ jobs:
         pip install -r requirements.txt
     - name: Test with unittest
       run: |
-        unittest tests/test_database.py tests/test_datatable.py tests/test_functions.py
+        py -m unittest tests/test_database.py tests/test_datatable.py tests/test_functions.py
