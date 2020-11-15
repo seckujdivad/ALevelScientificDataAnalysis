@@ -22,8 +22,8 @@ jobs:
         python-version: 3.8
     - name: Install dependencies
       run: |
-        python3 -m pip install --upgrade pip
-        python3 -m pip install -r requirements.txt
+        pip install --upgrade pip
+        pip install -r requirements.txt
     - name: Test with unittest
       run: |
-        python3 -m unittest tests/test_database.py tests/test_datatable.py tests/test_functions.py
+        unittest tests/test_database.py tests/test_datatable.py tests/test_functions.py
