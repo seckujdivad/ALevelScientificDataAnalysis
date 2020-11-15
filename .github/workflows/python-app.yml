@@ -12,7 +12,7 @@ on:
 jobs:
   build:
 
-    runs-on: ubuntu-16.04
+    runs-on: windows-latest
 
     steps:
     - uses: actions/checkout@v2
@@ -20,12 +20,10 @@ jobs:
       uses: actions/setup-python@v2
       with:
         python-version: 3.8
-    - name: Install wxPython
-      run: python3 -m pip install -U -f https://extras.wxpython.org/wxPython4/extras/linux/gtk3/ubuntu-16.04 wxPython
     - name: Install dependencies
       run: |
         python3 -m pip install --upgrade pip
         python3 -m pip install -r requirements.txt
     - name: Test with unittest
       run: |
-        python3 -m unittest tests
+        python3 -m unittest tests/test_database.py tests/test_datatable.py tests/test_functions.py

@@ -14,7 +14,18 @@ sys.path.pop(0)
 
 class TestDatatable(unittest.TestCase):
     def create_datafile(self):
-        return sciplot.datafile.DataFile(os.path.join(sys.path[0], 'datasets', 'datafile.db'))
+        path = ''
+        for path_to_test in [
+            os.path.join(sys.path[0], 'datasets', 'datafile.db'),
+            os.path.join(sys.path[0], 'tests', 'datasets', 'datafile.db')
+        ]:
+            if os.path.isfile(path_to_test):
+                path = path_to_test
+        
+        if path == '':
+            raise IOError("No valid path")
+        
+        return sciplot.datafile.DataFile(path)
 
     def create_datatable(self, datafile):
         return sciplot.datatable.Datatable(datafile)

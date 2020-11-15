@@ -13,7 +13,18 @@ sys.path.pop(0)
 
 class TestDatabase(unittest.TestCase):
     def create_db(self):
-        return database.Database(os.path.join(sys.path[0], 'datasets', 'database.db'))
+        path = ''
+        for path_to_test in [
+            os.path.join(sys.path[0], 'datasets', 'database.db'),
+            os.path.join(sys.path[0], 'tests', 'datasets', 'database.db')
+        ]:
+            if os.path.isfile(path_to_test):
+                path = path_to_test
+        
+        if path == '':
+            raise IOError("No valid path")
+
+        return database.Database(path)
 
     def test_query(self):
         with self.create_db() as db:
@@ -68,7 +79,18 @@ class TestDatabase(unittest.TestCase):
 
 class TestDataFile(unittest.TestCase):
     def connect_datafile(self):
-        return datafile.DataFile(os.path.join(sys.path[0], 'datasets', 'datafile.db'))
+        path = ''
+        for path_to_test in [
+            os.path.join(sys.path[0], 'datasets', 'datafile.db'),
+            os.path.join(sys.path[0], 'tests', 'datasets', 'datafile.db')
+        ]:
+            if os.path.isfile(path_to_test):
+                path = path_to_test
+        
+        if path == '':
+            raise IOError("No valid path")
+        
+        return datafile.DataFile(path)
 
     def test_list_constants(self):
         with self.connect_datafile() as df:
